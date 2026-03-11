@@ -1,7 +1,8 @@
-from . import refactoring_pressure
+from . import pressure
 from .complexity import Complexity
 
 __all__ = [
-    'Complexity',
-    'refactoring_pressure',
+    "pressure",
+    "Complexity",
 ]
+

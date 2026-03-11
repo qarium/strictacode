@@ -2,6 +2,7 @@ import os
 import abc
 import dataclasses
 import typing as t
+from enum import Enum
 from pathlib import Path
 from functools import cached_property
 
@@ -18,7 +19,7 @@ from .source import (
 
 def _load_closures(file: ModuleSource,
                    source: t.Union[MethodSource, FunctionSource],
-                   closures: list['MetricItem']):
+                   closures: list['FileItem']):
     for closure in closures:
         func = FunctionSource(file,
                               closure.name,
@@ -30,16 +31,22 @@ def _load_closures(file: ModuleSource,
         _load_closures(file, func, closure.closures)
 
 
+class FileItemTypes(str, Enum):
+    CLASS = "class"
+    METHOD = "method"
+    FUNCTION = "function"
+
+
 @dataclasses.dataclass(kw_only=True)
-class MetricItem:
+class FileItem:
     type: str
     name: str
     lineno: int = 0
     endline: int = 0
     complexity: int = 0
     class_name: t.Optional[str] = None
-    methods: list['MetricItem'] = dataclasses.field(default_factory=list)
-    closures: list['MetricItem'] = dataclasses.field(default_factory=list)
+    methods: list['FileItem'] = dataclasses.field(default_factory=list)
+    closures: list['FileItem'] = dataclasses.field(default_factory=list)
 
 
 class Loader(metaclass=abc.ABCMeta):
@@ -53,22 +60,32 @@ class Loader(metaclass=abc.ABCMeta):
 
         self._class_loc_from_methods = class_loc_from_methods
 
-        self._packages: dict[str, PackageSource] = {}
-        self._files: dict[str, ModuleSource] = {}
-        self._classes: dict[str, ClassSource] = {}
-        self._methods: dict[str, MethodSource] = {}
-        self._functions: dict[str, FunctionSource] = {}
+        self.__sources = Sources(self.root, self.__lang__)
+
+        self.__packages: dict[str, PackageSource] = {}
+        self.__modules: dict[str, ModuleSource] = {}
+        self.__classes: dict[str, ClassSource] = {}
+        self.__methods: dict[str, MethodSource] = {}
+        self.__functions: dict[str, FunctionSource] = {}
 
     @property
     def root(self):
         return self._root
+
+    @property
+    def sources(self) -> Sources:
+        return self.__sources
 
     @cached_property
     def ignores(self) -> list[str]:
         return list(set(self.__ignore_dirs__ + utils.ignore_dirs(self._root)))
 
     @abc.abstractmethod
-    def extract_metrics(self) -> dict[str, list[MetricItem]]:
+    def collect(self) -> dict[str, list[FileItem]]:
+        pass
+
+    @abc.abstractmethod
+    def build(self):
         pass
 
     def _should_exclude_file(self, filepath: str) -> bool:
@@ -81,77 +98,82 @@ class Loader(metaclass=abc.ABCMeta):
 
         return False
 
-    def __load_file(self, filepath: str, metrics: list[MetricItem]):
-        if (file := self._files.get(filepath)) is None:
-            self._files[filepath] = file = ModuleSource(filepath)
+    def __load_items_from_file(self, filepath: str, items: list[FileItem]):
+        if (module := self.__modules.get(filepath)) is None:
+            self.__modules[filepath] = module = ModuleSource(filepath)
 
             package_path = os.path.dirname(filepath)
 
-            if (package := self._packages.get(package_path)) is None:
-                self._packages[package_path] = package = PackageSource(package_path)
+            if (package := self.__packages.get(package_path)) is None:
+                self.__packages[package_path] = package = PackageSource(package_path)
 
-            package.modules.append(file)
+            package.modules.append(module)
 
-        for item in metrics:
-            if item.type == "class":
+        for item in items:
+            if item.type == FileItemTypes.CLASS:
                 key = f"{filepath}:{item.name}"
-                self._classes[key] = ClassSource(file,
-                                                 item.name,
-                                                 lineno=item.lineno,
-                                                 endline=item.endline,
-                                                 complexity=item.complexity,
-                                                 loc_from_methods=self._class_loc_from_methods,
-                                                 comment_line_prefixes=self.__comment_line_prefixes__)
-                file.classes.append(self._classes[key])
-                self.__load_file(filepath, item.methods)
-                continue
-            elif item.type == "method":
-                class_key = f"{filepath}:{item.class_name}"
-                class_item = self._classes[class_key]
-
-                key = f"{filepath}:{class_item.name}.{item.name}"
-                self._methods[key] = MethodSource(file,
-                                                  class_item,
+                self.__classes[key] = ClassSource(module,
                                                   item.name,
                                                   lineno=item.lineno,
                                                   endline=item.endline,
                                                   complexity=item.complexity,
+                                                  loc_from_methods=self._class_loc_from_methods,
                                                   comment_line_prefixes=self.__comment_line_prefixes__)
-                file.methods.append(self._methods[key])
-                class_item.methods.append(self._methods[key])
-                _load_closures(file, self._methods[key], item.closures)
+                module.classes.append(self.__classes[key])
+                self.__load_items_from_file(filepath, item.methods)
                 continue
-            elif item.type == "function":
+
+            if item.type == FileItemTypes.METHOD:
+                class_key = f"{filepath}:{item.class_name}"
+                class_item = self.__classes[class_key]
+
+                key = f"{filepath}:{class_item.name}.{item.name}"
+                self.__methods[key] = MethodSource(module,
+                                                   class_item,
+                                                   item.name,
+                                                   lineno=item.lineno,
+                                                   endline=item.endline,
+                                                   complexity=item.complexity,
+                                                   comment_line_prefixes=self.__comment_line_prefixes__)
+                module.methods.append(self.__methods[key])
+                class_item.methods.append(self.__methods[key])
+                _load_closures(module, self.__methods[key], item.closures)
+                continue
+
+            if item.type == FileItemTypes.FUNCTION:
                 key = f"{filepath}:{item.name}"
-                self._functions[key] = FunctionSource(file,
-                                                      item.name,
-                                                      lineno=item.lineno,
-                                                      endline=item.endline,
-                                                      complexity=item.complexity,
-                                                      comment_line_prefixes=self.__comment_line_prefixes__)
-                file.functions.append(self._functions[key])
-                _load_closures(file, self._functions[key], item.closures)
+                self.__functions[key] = FunctionSource(module,
+                                                       item.name,
+                                                       lineno=item.lineno,
+                                                       endline=item.endline,
+                                                       complexity=item.complexity,
+                                                       comment_line_prefixes=self.__comment_line_prefixes__)
+                module.functions.append(self.__functions[key])
+                _load_closures(module, self.__functions[key], item.closures)
                 continue
 
             raise ValueError(f"Unknown metric type: {item.type}")
 
     def load(self) -> Sources:
-        sources = Sources(self.root, self.__lang__)
-        metrics = self.extract_metrics()
+        file_to_items = self.collect()
 
-        for filepath in metrics:
-            self.__load_file(filepath, metrics[filepath])
+        for filepath, items in file_to_items.items():
+            self.__load_items_from_file(filepath, items)
 
-        sources.packages.extend(self._packages.values())
-        sources.modules.extend(self._files.values())
-        sources.classes.extend(self._classes.values())
-        sources.methods.extend(self._methods.values())
-        sources.functions.extend(self._functions.values())
+        self.__sources.packages.extend(self.__packages.values())
+        self.__sources.modules.extend(self.__modules.values())
+        self.__sources.classes.extend(self.__classes.values())
+        self.__sources.methods.extend(self.__methods.values())
+        self.__sources.functions.extend(self.__functions.values())
 
-        self._packages = {}
-        self._files = {}
-        self._classes = {}
-        self._methods = {}
-        self._functions = {}
+        self.__packages = {}
+        self.__modules = {}
+        self.__classes = {}
+        self.__methods = {}
+        self.__functions = {}
 
-        return sources
+        self.build()
+
+        self.__sources.compile()
+
+        return self.__sources

@@ -24,9 +24,9 @@ class Stat:
     p50: int = 0
 
 
-class RP:
+class Metric:
     def __init__(self, score: int, data: Data, *,
-                 children: t.Optional[list['RP']] = None):
+                 children: t.Optional[list['Metric']] = None):
         self._score = score
         self._data = data
 
@@ -61,7 +61,7 @@ class RP:
                     p50=int(round(percentile(scores, 50), 0)))
 
 
-def peak_scale(loc: int) -> float:
+def _peak_scale(loc: int) -> float:
     """
     Scale factor для peak_pressure.
 
@@ -77,7 +77,7 @@ def peak_scale(loc: int) -> float:
     return 1.0
 
 
-def density_scale(loc: int) -> float:
+def _density_scale(loc: int) -> float:
     """
     Scale factor для density.
 
@@ -94,7 +94,7 @@ def density_scale(loc: int) -> float:
     return 3.0
 
 
-def peak_pressure(max_complexity: int, p90_complexity: int, loc: int) -> int:
+def _peak_pressure(max_complexity: int, p90_complexity: int, loc: int) -> int:
     """
     Пиковое давление от самых сложных функций.
 
@@ -113,11 +113,11 @@ def peak_pressure(max_complexity: int, p90_complexity: int, loc: int) -> int:
     """
     combined = max_complexity * 0.6 + p90_complexity * 0.4
     raw_peak = 100 * (1 - math.exp(-0.08 * combined))
-    scale = peak_scale(loc)
+    scale = _peak_scale(loc)
     return int(raw_peak * scale)
 
 
-def base_pressure(complexity_density: float, loc: int) -> int:
+def _base_pressure(complexity_density: float, loc: int) -> int:
     """
     Базовое давление от качества кода.
 
@@ -125,7 +125,7 @@ def base_pressure(complexity_density: float, loc: int) -> int:
         complexity_density: (total_complexity / loc) * 100
         loc: Количество строк кода (для масштабирования)
     """
-    scale = density_scale(loc)
+    scale = _density_scale(loc)
     adjusted_density = complexity_density * scale
     return int(100 * (1 - math.exp(-0.02 * adjusted_density)))
 
@@ -133,7 +133,7 @@ def base_pressure(complexity_density: float, loc: int) -> int:
 def calculate(data: Data, *,
               w_peak: float = W_PEAK,
               w_base: float = W_BASE,
-              children: t.Optional[list[RP]] = None) -> RP:
+              children: t.Optional[list[Metric]] = None) -> Metric:
     """
     Refactoring Pressure — давление на рефакторинг.
 
@@ -157,10 +157,10 @@ def calculate(data: Data, *,
         - 60-80: Сильное давление
         - 80-100: Критическое состояние
     """
-    peak = peak_pressure(data.max_complexity, data.p90_complexity, data.loc)
-    base = base_pressure(data.complexity_density, data.loc)
+    peak = _peak_pressure(data.max_complexity, data.p90_complexity, data.loc)
+    base = _base_pressure(data.complexity_density, data.loc)
 
     value = w_peak * peak + w_base * base
     score = int(round(min(100, int(value))))
 
-    return RP(score, data, children=children)
+    return Metric(score, data, children=children)

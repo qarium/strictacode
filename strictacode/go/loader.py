@@ -3,22 +3,23 @@ import json
 import tempfile
 import subprocess
 
-from ..loader import Loader, MetricItem
+from ..loader import Loader, FileItem
 
 from . import constants
+from ..source import Sources
 
 
-def _create_item(**kwargs) -> MetricItem:
+def _create_item(**kwargs) -> FileItem:
     item_type = "class" if kwargs["type"] == "structure" else kwargs["type"]
 
-    return MetricItem(type=item_type,
-                      name=kwargs["name"],
-                      lineno=kwargs["lineno"],
-                      endline=kwargs["endline"],
-                      complexity=kwargs["complexity"],
-                      class_name=kwargs.get("structure"),
-                      methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
-                      closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
+    return FileItem(type=item_type,
+                    name=kwargs["name"],
+                    lineno=kwargs["lineno"],
+                    endline=kwargs["endline"],
+                    complexity=kwargs["complexity"],
+                    class_name=kwargs.get("structure"),
+                    methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
+                    closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
 
 
 class GoLoder(Loader):
@@ -26,7 +27,7 @@ class GoLoder(Loader):
     __ignore_dirs__ = []
     __comment_line_prefixes__ = ["//", "/*", "*/"]
 
-    def extract_metrics(self) -> dict[str, list[MetricItem]]:
+    def collect(self) -> dict[str, list[FileItem]]:
         with tempfile.TemporaryDirectory() as tmpdir:
             go_file = os.path.join(tmpdir, "metrics.go")
             with open(go_file, "w") as f:
@@ -53,3 +54,6 @@ class GoLoder(Loader):
             metrics[filepath].sort(key=lambda i: 0 if i.type == "class" else 1)
 
         return metrics
+
+    def build(self, sources: Sources):
+        pass

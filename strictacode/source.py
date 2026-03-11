@@ -4,8 +4,10 @@ from functools import cached_property
 from dataclasses import dataclass, field
 
 from . import utils
+from .graph import DiGraph
 from .calculations import Complexity
-from .calculations import refactoring_pressure
+from .calculations.pressure import refactoring
+from .calculations.pressure import overengineering
 
 DEFAULT_STATUS: t.Final[str] = 'not_analyzed'
 
@@ -24,12 +26,14 @@ class Sources:
         self._lang = lang
 
         self._status: Status = Status()
+        self._graph: DiGraph = DiGraph()
 
         self._packages: list[PackageSource] = []
         self._modules: list[ModuleSource] = []
         self._classes: list[ClassSource] = []
         self._methods: list[MethodSource] = []
         self._functions: list[FunctionSource] = []
+        self._overengineering_pressure: t.Optional[overengineering.Metric] = None
 
     def __repr__(self):
         return  f"<{self.__class__.__name__}: {self.path} " \
@@ -46,6 +50,10 @@ class Sources:
     @property
     def status(self):
         return self._status
+
+    @property
+    def graph(self):
+        return self._graph
 
     @property
     def packages(self):
@@ -78,9 +86,9 @@ class Sources:
         return Complexity(score, loc=self.loc, children=children)
 
     @cached_property
-    def refactoring_pressure(self) -> refactoring_pressure.RP:
-        return refactoring_pressure.calculate(
-            refactoring_pressure.Data(
+    def refactoring_pressure(self) -> refactoring.Metric:
+        return refactoring.calculate(
+            refactoring.Data(
                 loc=self.loc,
                 max_complexity=self.complexity.stat.max,
                 p90_complexity=self.complexity.stat.p90,
@@ -88,6 +96,40 @@ class Sources:
             ),
             children=[i.refactoring_pressure for i in self.modules],
         )
+
+    @property
+    def overengineering_pressure(self) -> overengineering.Metric:
+        if self._overengineering_pressure is None:
+            raise ValueError('Overengineering_pressure not set')
+        return self._overengineering_pressure
+
+    def _compile_overengineering_pressure(self):
+        op = overengineering.calculate(self.graph)
+
+        for score in op.classes:
+            for cls in self.classes:
+                if cls.name == score.name and cls.module.path == score.path:
+                    cls.overengineering_pressure = overengineering.Metric(score.value)
+                    break
+
+        for score in op.modules:
+            for module in self.modules:
+                if module.name == score.name and module.path == score.path:
+                    module.overengineering_pressure = overengineering.Metric(score.value,
+                                                                                      children=[
+                                                                                      i.overengineering_pressure
+                                                                                      for i in self.classes
+                                                                                  ])
+                    break
+
+        self._overengineering_pressure = overengineering.Metric(op.score,
+                                                                         children=[
+                                                                         i.overengineering_pressure
+                                                                         for i in self.modules
+                                                                     ])
+
+    def compile(self):
+        self._compile_overengineering_pressure()
 
 
 class PackageSource:
@@ -129,9 +171,9 @@ class PackageSource:
         return Complexity(score, loc=self.loc, children=children)
 
     @cached_property
-    def refactoring_pressure(self) -> refactoring_pressure.RP:
-        return refactoring_pressure.calculate(
-            refactoring_pressure.Data(
+    def refactoring_pressure(self) -> refactoring.Metric:
+        return refactoring.calculate(
+            refactoring.Data(
                 loc=self.loc,
                 max_complexity=self.complexity.stat.max,
                 p90_complexity=self.complexity.stat.p90,
@@ -139,6 +181,12 @@ class PackageSource:
             ),
             children=[i.refactoring_pressure for i in self.modules],
         )
+
+    @cached_property
+    def overengineering_pressure(self) -> overengineering.Metric:
+        module_scores = [i.overengineering_pressure for i in self.modules]
+        score = sum(i.score for i in module_scores)
+        return overengineering.Metric(score, children=module_scores)
 
 
 class ModuleSource:
@@ -153,6 +201,7 @@ class ModuleSource:
         self._classes: list[ClassSource] = []
         self._methods: list[MethodSource] = []
         self._functions: list[FunctionSource] = []
+        self._overengineering_pressure: t.Optional[overengineering.Metric] = None
 
     def __repr__(self):
         return  f"<{self.__class__.__name__}: {self.path} " \
@@ -201,15 +250,25 @@ class ModuleSource:
         return Complexity(score, loc=self.loc, children=children)
 
     @cached_property
-    def refactoring_pressure(self) -> refactoring_pressure.RP:
-        return refactoring_pressure.calculate(
-            refactoring_pressure.Data(
+    def refactoring_pressure(self) -> refactoring.Metric:
+        return refactoring.calculate(
+            refactoring.Data(
                 loc=self.loc,
                 max_complexity=self.complexity.stat.max,
                 p90_complexity=self.complexity.stat.p90,
                 complexity_density=self.complexity.density,
             ),
         )
+
+    @property
+    def overengineering_pressure(self) -> overengineering.Metric:
+        if self._overengineering_pressure is None:
+            return overengineering.Metric(0)
+        return self._overengineering_pressure
+
+    @overengineering_pressure.setter
+    def overengineering_pressure(self, value):
+        self._overengineering_pressure = value
 
 
 class ClassSource:
@@ -235,6 +294,7 @@ class ClassSource:
         self._status: Status = Status()
 
         self._methods: list[MethodSource] = []
+        self._overengineering_pressure: t.Optional[overengineering.Metric] = None
 
     def __repr__(self):
         return f'<{self.__class__.__name__}: {self.name} methods={len(self.methods)}>'
@@ -277,6 +337,16 @@ class ClassSource:
     def complexity(self) -> Complexity:
         children = [i.complexity for i in self.methods]
         return Complexity(self._complexity, loc=self.loc, children=children)
+
+    @property
+    def overengineering_pressure(self) -> overengineering.Metric:
+        if self._overengineering_pressure is None:
+            return overengineering.Metric(0)
+        return self._overengineering_pressure
+
+    @overengineering_pressure.setter
+    def overengineering_pressure(self, value):
+        self._overengineering_pressure = value
 
 
 class MethodSource:

@@ -40,7 +40,6 @@ class TextReporter(BaseReporter):
         print('  * classes:', len(self._sources.classes))
         print('  * methods:', len(self._sources.methods))
         print('  * functions:', len(self._sources.functions))
-
         if self._sources.status.name != DEFAULT_STATUS:
             print('  * status:')
             print('    - name:', self._sources.status.name)
@@ -53,7 +52,14 @@ class TextReporter(BaseReporter):
                 print('    - suggestions:')
                 for suggestion in self._sources.status.suggestions:
                     print(f'      + {suggestion}')
-
+        print('  * overengineering_pressure:')
+        print('    - score:', self._sources.overengineering_pressure.score)
+        print('    - stat(modules):')
+        print('      + avg:', self._sources.overengineering_pressure.stat.avg)
+        print('      + min:', self._sources.overengineering_pressure.stat.min)
+        print('      + max:', self._sources.overengineering_pressure.stat.max)
+        print('      + p50:', self._sources.overengineering_pressure.stat.p50)
+        print('      + p90:', self._sources.overengineering_pressure.stat.p90)
         print('  * refactoring_pressure:')
         print('    - score:', self._sources.refactoring_pressure.score)
         print('    - stat(modules):')
@@ -84,9 +90,9 @@ class TextReporter(BaseReporter):
             print('Packages:')
             for package in packages[:self._top_packages]:
                 print(f'  * {package.name}:')
-                print('     - dir:', package.path)
-                print('     - loc:', package.loc)
-                print('     - modules:', len(package.modules))
+                print('    - dir:', package.path)
+                print('    - loc:', package.loc)
+                print('    - modules:', len(package.modules))
                 print('  * status:')
                 print('    - name:', package.status.name)
                 print('    - score:', package.status.score)
@@ -98,6 +104,14 @@ class TextReporter(BaseReporter):
                     print('    - suggestions:')
                     for suggestion in package.status.suggestions:
                         print(f'      + {suggestion}')
+                print('    - overengineering_pressure:')
+                print('      + score:', package.overengineering_pressure.score)
+                print('      + stat(modules):')
+                print('        - avg:', package.overengineering_pressure.stat.avg)
+                print('        - min:', package.overengineering_pressure.stat.min)
+                print('        - max:', package.overengineering_pressure.stat.max)
+                print('        - p50:', package.overengineering_pressure.stat.p50)
+                print('        - p90:', package.overengineering_pressure.stat.p90)
                 print('     - refactoring_pressure:')
                 print('       + score:', package.refactoring_pressure.score)
                 print('       + stat(modules):')
@@ -132,7 +146,6 @@ class TextReporter(BaseReporter):
                 print('     - loc:', module.loc)
                 print('     - classes:', len(module.classes))
                 print('     - functions:', len(module.functions))
-
                 if module.status.name != DEFAULT_STATUS:
                     print('  * status:')
                     print('    - name:', module.status.name)
@@ -145,7 +158,14 @@ class TextReporter(BaseReporter):
                         print('    - suggestions:')
                         for suggestion in module.status.suggestions:
                             print(f'      + {suggestion}')
-
+                print('     - overengineering_pressure:')
+                print('       + score:', module.overengineering_pressure.score)
+                print('       + stat(classes):')
+                print('         - avg:', module.overengineering_pressure.stat.avg)
+                print('         - min:', module.overengineering_pressure.stat.min)
+                print('         - max:', module.overengineering_pressure.stat.max)
+                print('         - p50:', module.overengineering_pressure.stat.p50)
+                print('         - p90:', module.overengineering_pressure.stat.p90)
                 print('     - refactoring_pressure:')
                 print('       + score:', module.refactoring_pressure.score)
                 print('     - complexity:')
@@ -187,6 +207,8 @@ class TextReporter(BaseReporter):
                         for suggestion in cls.status.suggestions:
                             print(f'      + {suggestion}')
 
+                print('     - overengineering_pressure:')
+                print('       + score:', cls.overengineering_pressure.score)
                 print('     - complexity:')
                 print('       + score:', cls.complexity.score)
                 print('       + density:', cls.complexity.density)
@@ -308,6 +330,9 @@ class JsonReporter(BaseReporter):
                     'dir': package.path,
                     'loc': package.loc,
                     'modules': len(package.modules),
+                    'overengineering_pressure': {
+                        'score': package.overengineering_pressure.score,
+                    },
                     'refactoring_pressure': {
                         'score': package.refactoring_pressure.score,
                         'stat(modules)': {
@@ -346,6 +371,9 @@ class JsonReporter(BaseReporter):
                     'loc': module.loc,
                     'classes': len(module.classes),
                     'functions': len(module.functions),
+                    'overengineering_pressure': {
+                        'score': module.overengineering_pressure.score,
+                    },
                     'refactoring_pressure': {
                         'score': module.refactoring_pressure.score,
                     },
@@ -376,6 +404,9 @@ class JsonReporter(BaseReporter):
                     'file': cls.module.path,
                     'loc': cls.loc,
                     'methods': len(cls.methods),
+                    'overengineering_pressure': {
+                        'score': cls.overengineering_pressure.score,
+                    },
                     'complexity': {
                         'score': cls.complexity.score,
                         'density': cls.complexity.density,
@@ -462,6 +493,9 @@ class JsonReporter(BaseReporter):
                 'classes': len(self._sources.classes),
                 'methods': len(self._sources.methods),
                 'functions': len(self._sources.functions),
+                'overengineering_pressure': {
+                    'score': self._sources.overengineering_pressure.score,
+                },
                 'refactoring_pressure': {
                     'score': self._sources.refactoring_pressure.score,
                     'stat(modules)': {

@@ -4,20 +4,21 @@ import json
 import tempfile
 import subprocess
 
-from ..loader import Loader, MetricItem
+from ..loader import Loader, FileItem
 
 from . import constants
+from ..source import Sources
 
 
-def _create_item(**kwargs) -> MetricItem:
-    return MetricItem(type=kwargs["type"],
-                      name=kwargs["name"],
-                      lineno=kwargs["lineno"],
-                      endline=kwargs["endline"],
-                      complexity=kwargs["complexity"],
-                      class_name=kwargs.get("classname"),
-                      methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
-                      closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
+def _create_item(**kwargs) -> FileItem:
+    return FileItem(type=kwargs["type"],
+                    name=kwargs["name"],
+                    lineno=kwargs["lineno"],
+                    endline=kwargs["endline"],
+                    complexity=kwargs["complexity"],
+                    class_name=kwargs.get("classname"),
+                    methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
+                    closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
 
 
 class JSLoder(Loader):
@@ -25,7 +26,7 @@ class JSLoder(Loader):
     __ignore_dirs__ = []
     __comment_line_prefixes__ = ["//", "/*", "*/"]
 
-    def extract_metrics(self) -> dict[str, list[MetricItem]]:
+    def collect(self) -> dict[str, list[FileItem]]:
         with tempfile.TemporaryDirectory() as tmpdir:
             js_file = os.path.join(tmpdir, "metrics.js")
             with open(js_file, "w") as f:
@@ -64,3 +65,6 @@ class JSLoder(Loader):
             metrics[filepath].sort(key=lambda i: 0 if i.type == "class" else 1)
 
         return metrics
+
+    def build(self, sources: Sources):
+        pass
