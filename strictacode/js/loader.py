@@ -1,3 +1,5 @@
+import os
+
 from ..loader import Loader, FileItem, FileItemTypes
 
 from . import collector
@@ -46,15 +48,15 @@ class JSLoder(Loader):
         edges = data.get("edges", [])
 
         # Use only modules that were collected
-        collected_paths = {m.path for m in self.sources.modules}
+        collected_paths = {os.path.abspath(m.path) for m in self.sources.modules}
 
         for node in nodes:
-            filepath = node.split(":")[0]
+            filepath = os.path.abspath(node.split(":")[0])
             if filepath in collected_paths:
                 self.sources.graph.add_node(node)
 
         for edge in edges:
-            source_path = edge["source"].split(":")[0]
-            target_path = edge["target"].split(":")[0]
+            source_path = os.path.abspath(edge["source"].split(":")[0])
+            target_path = os.path.abspath(edge["target"].split(":")[0])
             if source_path in collected_paths and target_path in collected_paths:
                 self.sources.graph.add_edge(edge["source"], edge["target"])
