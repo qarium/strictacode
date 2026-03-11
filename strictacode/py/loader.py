@@ -1,10 +1,8 @@
-import sys
-import json
-import subprocess
 from collections import defaultdict
 
 from ..loader import Loader, FileItem, FileItemTypes
 
+from . import collector
 from .analyzer import Analyzer
 
 
@@ -32,13 +30,7 @@ class PyLoder(Loader):
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:
-        cmd = [sys.executable, "-m", "radon", "cc", "-j", self.root]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            raise RuntimeError(result.stderr)
-
-        data = json.loads(result.stdout)
+        data = collector.collect(self.root)
 
         file_to_items = {}
 
