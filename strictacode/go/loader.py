@@ -33,7 +33,7 @@ class GoLoder(Loader):
         metrics = {}
 
         for filepath, items in data.items():
-            if self._should_exclude_file(filepath) or '/gen' in filepath:
+            if self._should_exclude_file(filepath):
                 continue
 
             if filepath not in metrics:
