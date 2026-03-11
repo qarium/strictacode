@@ -1,6 +1,7 @@
 from ..loader import Loader, FileItem, FileItemTypes
 
 from . import collector
+from . import analyzer
 
 
 def _create_item(**kwargs) -> FileItem:
@@ -42,4 +43,12 @@ class GoLoder(Loader):
         return metrics
 
     def build(self):
-        pass
+        data = analyzer.analyze(self.root)
+        nodes = data.get("nodes", [])
+        edges = data.get("edges", [])
+
+        for node in nodes:
+            self.sources.graph.add_node(node)
+
+        for edge in edges:
+            self.sources.graph.add_edge(edge["source"], edge["target"])
