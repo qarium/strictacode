@@ -398,7 +398,7 @@ import subprocess
 
 def collect(path: str) -> dict:
     with tempfile.TemporaryDirectory() as tmpdir:
-        go_file = os.path.join(tmpdir, "metrics.go")
+        go_file = os.path.join(tmpdir, "collector.go")
         with open(go_file, "w") as f:
             f.write(__doc__)
 
