@@ -1,12 +1,6 @@
-import os
-import sys
-import json
-import tempfile
-import subprocess
-
 from ..loader import Loader, FileItem, FileItemTypes
 
-from . import constants
+from . import collector
 
 
 def _create_item(**kwargs) -> FileItem:
@@ -29,30 +23,7 @@ class JSLoder(Loader):
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            js_file = os.path.join(tmpdir, "metrics.js")
-            with open(js_file, "w") as f:
-                f.write(constants.ANALYZE_SCRIPT)
-
-            npm_local_root = subprocess.check_output(["npm", "root"], text=True)
-            npm_global_root = subprocess.check_output(["npm", "root", "-g"], text=True)
-
-            env = os.environ.copy()
-            env["NODE_PATH"] = (";" if sys.platform == "win32" else ":").join(
-                [npm_local_root.strip(), npm_global_root.strip()],
-            )
-
-            cmd = ["node", js_file, self.root]
-            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            if '@babel' in result.stderr:
-                result.stderr = result.stderr + '\nTry to install:\n' \
-                                                '  * npm install @babel/parser\n' \
-                                                '  * npm install @babel/traverse'
-            raise RuntimeError(result.stderr)
-
-        data = json.loads(result.stdout)
+        data = collector.collect(self.root)
 
         metrics = {}
 

@@ -1,11 +1,6 @@
-import os
-import json
-import tempfile
-import subprocess
-
 from ..loader import Loader, FileItem, FileItemTypes
 
-from . import constants
+from . import collector
 
 
 def _create_item(**kwargs) -> FileItem:
@@ -30,18 +25,7 @@ class GoLoder(Loader):
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            go_file = os.path.join(tmpdir, "metrics.go")
-            with open(go_file, "w") as f:
-                f.write(constants.ANALYZE_SCRIPT)
-
-            cmd = ["go", "run", go_file, self.root]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            raise RuntimeError(result.stderr)
-
-        data = json.loads(result.stdout)
+        data = collector.collect(self.root)
 
         metrics = {}
 
