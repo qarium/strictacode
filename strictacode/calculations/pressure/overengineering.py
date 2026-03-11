@@ -56,8 +56,8 @@ class Metric:
             avg=round(sum(scores) / len(scores), 2),
             max=max(scores),
             min=min(scores),
-            p50=percentile(scores, 50),
-            p90=percentile(scores, 90),
+            p50=round(percentile(scores, 50), 2),
+            p90=round(percentile(scores, 90), 2),
         )
 
 
