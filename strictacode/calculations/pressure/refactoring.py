@@ -125,6 +125,7 @@ def _base_pressure(complexity_density: float, loc: int) -> int:
         complexity_density: (total_complexity / loc) * 100
         loc: Количество строк кода (для масштабирования)
     """
+    # тест коммента
     scale = _density_scale(loc)
     adjusted_density = complexity_density * scale
     return int(100 * (1 - math.exp(-0.02 * adjusted_density)))

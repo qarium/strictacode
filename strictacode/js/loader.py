@@ -24,7 +24,10 @@ def _create_item(**kwargs) -> FileItem:
 class JSLoder(Loader):
     __lang__ = "javascript"
     __ignore_dirs__ = []
-    __comment_line_prefixes__ = ["//", "/*", "*/"]
+    __comment_line_prefixes__ = ["//"]
+    __comment_code_blocks__ = [
+        ("/*", "*/"),
+    ]
 
     def collect(self) -> dict[str, list[FileItem]]:
         with tempfile.TemporaryDirectory() as tmpdir:

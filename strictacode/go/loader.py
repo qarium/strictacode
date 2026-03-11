@@ -25,7 +25,10 @@ def _create_item(**kwargs) -> FileItem:
 class GoLoder(Loader):
     __lang__ = "golang"
     __ignore_dirs__ = []
-    __comment_line_prefixes__ = ["//", "/*", "*/"]
+    __comment_line_prefixes__ = ["//"]
+    __comment_code_blocks__ = [
+        ("/*", "*/"),
+    ]
 
     def collect(self) -> dict[str, list[FileItem]]:
         with tempfile.TemporaryDirectory() as tmpdir:

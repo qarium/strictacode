@@ -53,6 +53,7 @@ class Loader(metaclass=abc.ABCMeta):
     __lang__ = 'Unknown'
     __ignore_dirs__: list[str] = []
     __comment_line_prefixes__: list[str] = []
+    __comment_code_blocks__: list[tuple[str, str]] = []
 
     def __init__(self, root: str = '.', *,
                  class_loc_from_methods: bool = False):

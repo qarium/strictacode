@@ -7,12 +7,22 @@ from pathlib import Path
 def lines_of_code(file_path: str, *,
                   lineno: t.Optional[int] = None,
                   endline: t.Optional[int] = None,
-                  ignore_prefixes: t.Optional[list[str]] = None) -> int:
+                  ignore_prefixes: t.Optional[list[str]] = None,
+                  ignore_blocks: t.Optional[list[tuple[str, str]]] = None) -> int:
     line_count = 0
     line_number = 0
+    ignore_blocks = ignore_blocks or []
     ignore_prefixes = ignore_prefixes or []
 
+    def get_stop_pointer(l):
+        for block in ignore_blocks:
+            if l.startswith(block[0]):
+                return block[1]
+        return None
+
     with open(file_path, 'r', encoding='utf-8') as file:
+        stop_pointer = None
+
         for line in file:
             line_number += 1
 
@@ -23,7 +33,19 @@ def lines_of_code(file_path: str, *,
 
             line = line.strip()
 
-            if not line or any(line.startswith(i) for i in ignore_prefixes):
+            if not line:
+                continue
+
+            if stop_pointer is not None and line.startswith(stop_pointer):
+                stop_pointer = None
+                continue
+
+            stop_pointer = get_stop_pointer(line)
+
+            if stop_pointer is not None:
+                continue
+
+            if any(line.startswith(i) for i in ignore_prefixes):
                 continue
 
             line_count += 1

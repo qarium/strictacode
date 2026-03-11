@@ -191,10 +191,13 @@ class PackageSource:
 
 class ModuleSource:
     def __init__(self, path: str, *,
-                 comment_line_prefixes: t.Optional[list[str]] = None):
+                 comment_line_prefixes: t.Optional[list[str]] = None,
+                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
         self._path = path
 
-        self._loc = utils.lines_of_code(path, ignore_prefixes=comment_line_prefixes)
+        self._loc = utils.lines_of_code(path,
+                                        ignore_blocks=comment_code_blocks,
+                                        ignore_prefixes=comment_line_prefixes)
 
         self._status: Status = Status()
 
@@ -277,7 +280,8 @@ class ClassSource:
                  endline: int = 0,
                  complexity: int = 0,
                  loc_from_methods: bool = False,
-                 comment_line_prefixes: t.Optional[list[str]] = None):
+                 comment_line_prefixes: t.Optional[list[str]] = None,
+                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
         self._module = module
         self._name = name
         self._lineno = lineno
@@ -287,6 +291,7 @@ class ClassSource:
         self._loc = utils.lines_of_code(module.path,
                                         lineno=lineno,
                                         endline=endline,
+                                        ignore_blocks=comment_code_blocks,
                                         ignore_prefixes=comment_line_prefixes)
 
         self._loc_from_methods = loc_from_methods
@@ -354,7 +359,8 @@ class MethodSource:
                  lineno: int = 0,
                  endline: int = 0,
                  complexity: int = 0,
-                 comment_line_prefixes: t.Optional[list[str]] = None):
+                 comment_line_prefixes: t.Optional[list[str]] = None,
+                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
         self._module = module
         self._cls = cls
         self._name = name
@@ -365,6 +371,7 @@ class MethodSource:
         self._loc = utils.lines_of_code(module.path,
                                         lineno=lineno,
                                         endline=endline,
+                                        ignore_blocks=comment_code_blocks,
                                         ignore_prefixes=comment_line_prefixes)
 
         self._status: Status = Status()
@@ -421,7 +428,8 @@ class FunctionSource:
                  lineno: int = 0,
                  endline: int = 0,
                  complexity: int = 0,
-                 comment_line_prefixes: t.Optional[list[str]] = None):
+                 comment_line_prefixes: t.Optional[list[str]] = None,
+                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
         self._module = module
         self._name = name
         self._lineno = lineno
@@ -431,6 +439,7 @@ class FunctionSource:
         self._loc = utils.lines_of_code(module.path,
                                         lineno=lineno,
                                         endline=endline,
+                                        ignore_blocks=comment_code_blocks,
                                         ignore_prefixes=comment_line_prefixes)
 
         self._status: Status = Status()

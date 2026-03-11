@@ -25,7 +25,11 @@ class PyLoder(Loader):
         ".venv", "venv",
         ".env", "env",
     ]
-    __comment_line_prefixes__ = ["#", "\"\"\""]
+    __comment_line_prefixes__ = ["#"]
+    __comment_code_blocks__ = [
+        ("'''", "'''"),
+        ("\"\"\"", "\"\"\""),
+    ]
 
     def collect(self) -> dict[str, list[FileItem]]:
         cmd = [sys.executable, "-m", "radon", "cc", "-j", self.root]

@@ -8,7 +8,7 @@ from collections import defaultdict, deque
 
 from numpy import percentile
 
-from ..graph import DiGraph
+from ...graph import DiGraph
 
 
 @dataclass(kw_only=True)
