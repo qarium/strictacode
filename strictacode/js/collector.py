@@ -285,7 +285,7 @@ import subprocess
 
 def collect(path: str) -> dict:
     with tempfile.TemporaryDirectory() as tmpdir:
-        js_file = os.path.join(tmpdir, "metrics.js")
+        js_file = os.path.join(tmpdir, "collector.js")
         with open(js_file, "w") as f:
             f.write(__doc__)
 
