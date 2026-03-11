@@ -7,7 +7,6 @@ import subprocess
 from ..loader import Loader, FileItem
 
 from . import constants
-from ..source import Sources
 
 
 def _create_item(**kwargs) -> FileItem:
@@ -69,5 +68,5 @@ class JSLoder(Loader):
 
         return metrics
 
-    def build(self, sources: Sources):
+    def build(self):
         pass
