@@ -3,7 +3,7 @@ import json
 import tempfile
 import subprocess
 
-from ..loader import Loader, FileItem
+from ..loader import Loader, FileItem, FileItemTypes
 
 from . import constants
 
@@ -53,7 +53,7 @@ class GoLoder(Loader):
                 metrics[filepath] = []
 
             metrics[filepath].extend((_create_item(**i) for i in items))
-            metrics[filepath].sort(key=lambda i: 0 if i.type == "class" else 1)
+            metrics[filepath].sort(key=lambda i: 0 if i.type == FileItemTypes.CLASS else 1)
 
         return metrics
 
