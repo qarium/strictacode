@@ -1,6 +1,7 @@
 from ..loader import Loader, FileItem, FileItemTypes
 
 from . import collector
+from . import analyzer
 
 
 def _create_item(**kwargs) -> FileItem:
@@ -40,4 +41,20 @@ class JSLoder(Loader):
         return metrics
 
     def build(self):
-        pass
+        data = analyzer.analyze(self.root)
+        nodes = data.get("nodes", [])
+        edges = data.get("edges", [])
+
+        # Use only modules that were collected
+        collected_paths = {m.path for m in self.sources.modules}
+
+        for node in nodes:
+            filepath = node.split(":")[0]
+            if filepath in collected_paths:
+                self.sources.graph.add_node(node)
+
+        for edge in edges:
+            source_path = edge["source"].split(":")[0]
+            target_path = edge["target"].split(":")[0]
+            if source_path in collected_paths and target_path in collected_paths:
+                self.sources.graph.add_edge(edge["source"], edge["target"])
