@@ -2,6 +2,7 @@ import os
 
 import click
 
+from strictacode import skill
 from strictacode.py import PyLoder
 from strictacode.go import GoLoder
 from strictacode.js import JSLoder
@@ -60,6 +61,23 @@ def analyze(path: str, format: str, short: bool, details: bool):
                               short=short,
                               details=details)
     reporter.report()
+
+
+@app.group()
+def agent():
+    pass
+
+
+@click.option('--skill-name', type=str, default='strictacode')
+@click.argument('agent_name', required=True, type=click.Choice([
+    "claude", "cursor", "codex",
+    "gemini", "antigravity",
+]))
+@agent.command()
+def install(agent_name: str, skill_name: str):
+    click.secho(f"Installing skill for agent \"{agent}\"...")
+    installed_path = skill.install(skill_name, agent_name)
+    click.secho(f"Successfully installed into \"{installed_path}\"")
 
 
 if __name__ == '__main__':
