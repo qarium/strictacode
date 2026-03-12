@@ -1,5 +1,6 @@
 import abc
 import json
+from sys import modules
 
 from .source import Sources
 
@@ -18,11 +19,177 @@ class BaseReporter(metaclass=abc.ABCMeta):
         self._short = short
         self._details = details
 
-        self._top_packages = top_packages
-        self._top_modules = top_modules
-        self._top_classes = top_classes
-        self._top_methods = top_methods
-        self._top_functions = top_functions
+        self._top_packages = []
+        self._top_modules = []
+        self._top_classes = []
+        self._top_methods = []
+        self._top_functions = []
+
+        self._make_top_packages(top_packages)
+        self._make_top_modules(top_modules)
+        self._make_top_classes(top_classes)
+        self._make_top_methods(top_methods)
+        self._make_top_functions(top_functions)
+
+    def _make_top_packages(self, top: int):
+        packages_by_score = list(sorted(self._sources.packages,
+                                             key=lambda x: x.status.score.value,
+                                             reverse=True))
+        packages_by_complexity = list(sorted(self._sources.packages,
+                                             key=lambda x: x.complexity.score,
+                                             reverse=True))
+        packages_by_density = list(sorted(self._sources.packages,
+                                          key=lambda x: x.complexity.density,
+                                          reverse=True))
+        packages_by_rp = list(sorted(self._sources.packages,
+                                     key=lambda x: x.refactoring_pressure.score,
+                                     reverse=True))
+        packages_by_op = list(sorted(self._sources.packages,
+                                     key=lambda x: x.overengineering_pressure.score,
+                                     reverse=True))
+
+        self._top_packages = []
+
+        for package in packages_by_score[:top]:
+            self._top_packages.append(package)
+        for package in packages_by_complexity[:top]:
+            if package not in self._top_packages:
+                self._top_packages.append(package)
+        for package in packages_by_density[:top]:
+            if package not in self._top_packages:
+                self._top_packages.append(package)
+        for package in packages_by_rp[:top]:
+            if package not in self._top_packages:
+                self._top_packages.append(package)
+        for package in packages_by_op[:top]:
+            if package not in self._top_packages:
+                self._top_packages.append(package)
+
+        self._top_packages = list(sorted(self._top_packages,
+                                         key=lambda x: x.status.score.value,
+                                         reverse=True))[:top]
+
+    def _make_top_modules(self, top: int):
+        modules_by_score = list(sorted(self._sources.modules,
+                                       key=lambda x: x.status.score.value,
+                                       reverse=True))
+        modules_by_complexity = list(sorted(self._sources.modules,
+                                            key=lambda x: x.complexity.score,
+                                            reverse=True))
+        modules_by_density = list(sorted(self._sources.modules,
+                                         key=lambda x: x.complexity.density,
+                                         reverse=True))
+        modules_by_rp = list(sorted(self._sources.modules,
+                                    key=lambda x: x.refactoring_pressure.score,
+                                    reverse=True))
+        modules_by_op = list(sorted(self._sources.modules,
+                                    key=lambda x: x.overengineering_pressure.score,
+                                    reverse=True))
+
+        self._top_modules = []
+
+        for package in modules_by_score[:top]:
+            self._top_modules.append(package)
+        for package in modules_by_complexity[:top]:
+            if package not in self._top_modules:
+                self._top_modules.append(package)
+        for package in modules_by_density[:top]:
+            if package not in self._top_modules:
+                self._top_modules.append(package)
+        for package in modules_by_rp[:top]:
+            if package not in self._top_modules:
+                self._top_modules.append(package)
+        for package in modules_by_op[:top]:
+            if package not in self._top_modules:
+                self._top_modules.append(package)
+
+        self._top_modules = list(sorted(self._top_modules,
+                                        key=lambda x: x.status.score.value,
+                                        reverse=True))[:top]
+
+    def _make_top_classes(self, top: int):
+        classes_by_score = list(sorted(self._sources.classes,
+                                       key=lambda x: x.status.score.value,
+                                       reverse=True))
+        classes_by_complexity = list(sorted(self._sources.classes,
+                                            key=lambda x: x.complexity.score,
+                                            reverse=True))
+        classes_by_density = list(sorted(self._sources.classes,
+                                         key=lambda x: x.complexity.density,
+                                         reverse=True))
+        classes_by_op = list(sorted(self._sources.classes,
+                                    key=lambda x: x.overengineering_pressure.score,
+                                    reverse=True))
+
+        self._top_classes = []
+
+        for cls in classes_by_score[:top]:
+            self._top_classes.append(cls)
+        for cls in classes_by_complexity[:top]:
+            if cls not in self._top_classes:
+                self._top_classes.append(cls)
+        for cls in classes_by_density[:top]:
+            if cls not in self._top_classes:
+                self._top_classes.append(cls)
+        for cls in classes_by_op[:top]:
+            if cls not in self._top_classes:
+                self._top_classes.append(cls)
+
+        self._top_classes = list(sorted(self._top_classes,
+                                        key=lambda x: x.status.score.value,
+                                        reverse=True))[:top]
+
+    def _make_top_methods(self, top: int):
+       methods_by_score = list(sorted(self._sources.methods,
+                                       key=lambda x: x.status.score.value,
+                                      reverse=True))
+       methods_by_complexity = list(sorted(self._sources.methods,
+                                           key=lambda x: x.complexity.score,
+                                           reverse=True))
+       methods_by_density = list(sorted(self._sources.methods,
+                                        key=lambda x: x.complexity.density,
+                                        reverse=True))
+
+       self._top_methods = []
+
+       for method in methods_by_score[:top]:
+           self._top_methods.append(method)
+       for method in methods_by_complexity[:top]:
+           if method not in self._top_methods:
+               self._top_methods.append(method)
+       for method in methods_by_density[:top]:
+           if method not in self._top_methods:
+               self._top_methods.append(method)
+
+       self._top_methods = list(sorted(self._top_methods,
+                                       key=lambda x: x.status.score.value,
+                                       reverse=True))[:top]
+
+    def _make_top_functions(self, top: int):
+        functions_by_score = list(sorted(self._sources.functions,
+                                         key=lambda x: x.status.score.value,
+                                         reverse=True))
+        functions_by_complexity = list(sorted(self._sources.functions,
+                                              key=lambda x: x.complexity.score,
+                                              reverse=True))
+        functions_by_density = list(sorted(self._sources.functions,
+                                           key=lambda x: x.complexity.density,
+                                           reverse=True))
+
+        self._top_functions = []
+
+        for function in functions_by_score[:top]:
+            self._top_functions.append(function)
+        for function in functions_by_complexity[:top]:
+            if function not in self._top_functions:
+                self._top_functions.append(function)
+        for function in functions_by_density[:top]:
+            if function not in self._top_functions:
+                self._top_functions.append(function)
+
+        self._top_functions = list(sorted(self._top_functions,
+                                          key=lambda x: x.status.score.value,
+                                          reverse=True))[:top]
 
     @abc.abstractmethod
     def report(self):
@@ -77,16 +244,12 @@ class TextReporter(BaseReporter):
         print('      + p90:', self._sources.complexity.stat.p90)
 
     def packages_report(self):
-        packages = list(sorted(self._sources.packages,
-                              reverse=True,
-                              key=lambda x: x.complexity.score))
-
-        if packages:
+        if self._top_packages:
             print()
             print('---')
             print()
             print('Packages:')
-            for package in packages[:self._top_packages]:
+            for package in self._top_packages:
                 print(f'  * {package.name}:')
                 print('    - dir:', package.path)
                 print('    - loc:', package.loc)
@@ -129,16 +292,12 @@ class TextReporter(BaseReporter):
                 print('        - p90:', package.complexity.stat.p90)
 
     def modules_report(self):
-        modules = list(sorted(self._sources.modules,
-                            reverse=True,
-                            key=lambda x: x.complexity.score))
-
-        if modules:
+        if self._top_modules:
             print()
             print('---')
             print()
             print('Modules:')
-            for module in modules[:self._top_modules]:
+            for module in self._top_modules:
                 print(f'  * {module.name}:')
                 print('    - file:', module.path)
                 print('    - loc:', module.loc)
@@ -176,16 +335,12 @@ class TextReporter(BaseReporter):
                 print('        - p90:', module.complexity.stat.p90)
 
     def classes_report(self):
-        classes = list(sorted(self._sources.classes,
-                              reverse=True,
-                              key=lambda x: x.complexity.score))
-
-        if classes:
+        if self._top_classes:
             print()
             print('---')
             print()
             print('Classes:')
-            for cls in classes[:self._top_classes]:
+            for cls in self._top_classes:
                 print(f'  * {cls.name}:')
                 print('    - file:', cls.module.path)
                 print('    - loc:', cls.loc)
@@ -214,18 +369,14 @@ class TextReporter(BaseReporter):
                 print('        - p90:', cls.complexity.stat.p90)
 
     def methods_report(self):
-        methods = list(sorted(self._sources.methods,
-                              reverse=True,
-                              key=lambda x: x.complexity.total))
-
-        if methods:
+        if self._top_methods:
             print()
             print('---')
             print()
             print('Methods:')
-            for method in methods[:self._top_methods]:
+            for method in self._top_methods:
                 print(f'  * {method.name}:')
-                print('    - file:', method.module.name)
+                print('    - file:', method.module.path)
                 print('    - class:', method.cls.name)
                 print('    - loc:', method.loc)
                 print('    - closures:', len(method.closures))
@@ -252,18 +403,14 @@ class TextReporter(BaseReporter):
                 print('        - p90:', method.complexity.stat.p90)
 
     def functions_report(self):
-        functions = list(sorted(self._sources.functions,
-                              reverse=True,
-                              key=lambda x: x.complexity.total))
-
-        if functions:
+        if self._top_functions:
             print()
             print('---')
             print()
             print('Functions:')
-            for func in functions[:self._top_functions]:
+            for func in self._top_functions:
                 print(f'  * {func.name}:')
-                print('    - file:', func.module.name)
+                print('    - file:', func.module.path)
                 print('    - loc:', func.loc)
                 print('    - closures:', len(func.closures))
                 print('    - status:')
@@ -307,12 +454,8 @@ class JsonReporter(BaseReporter):
     def make_packages_report(self, data: dict):
         data['packages'] = []
 
-        packages = list(sorted(self._sources.packages,
-                              reverse=True,
-                              key=lambda x: x.complexity.score))
-
-        if packages:
-            for package in packages[:self._top_packages]:
+        if self._top_packages:
+            for package in self._top_packages:
                 data['packages'].append({
                     'name': package.name,
                     'dir': package.path,
@@ -353,12 +496,8 @@ class JsonReporter(BaseReporter):
     def make_modules_report(self, data: dict):
         data['modules'] = []
 
-        modules = list(sorted(self._sources.modules,
-                            reverse=True,
-                            key=lambda x: x.complexity.score))
-
         if modules:
-            for module in modules[:self._top_modules]:
+            for module in self._top_modules:
                 data['modules'].append({
                     'name': module.name,
                     'file': module.path,
@@ -393,12 +532,8 @@ class JsonReporter(BaseReporter):
     def make_classes_report(self, data: dict):
         data['classes'] = []
 
-        classes = list(sorted(self._sources.classes,
-                              reverse=True,
-                              key=lambda x: x.complexity.score))
-
-        if classes:
-            for cls in classes[:self._top_classes]:
+        if self._top_classes:
+            for cls in self._top_classes:
                 data['classes'].append({
                     'name': cls.name,
                     'file': cls.module.path,
@@ -429,12 +564,8 @@ class JsonReporter(BaseReporter):
     def make_methods_report(self, data: dict):
         data['methods'] = []
 
-        methods = list(sorted(self._sources.methods,
-                              reverse=True,
-                              key=lambda x: x.complexity.total))
-
-        if methods:
-            for method in methods[:self._top_methods]:
+        if self._top_methods:
+            for method in self._top_methods:
                 data['methods'].append({
                     'name': method.name,
                     'file': method.module.path,
@@ -464,12 +595,8 @@ class JsonReporter(BaseReporter):
     def make_functions_report(self, data: dict):
         data['functions'] = []
 
-        functions = list(sorted(self._sources.functions,
-                              reverse=True,
-                              key=lambda x: x.complexity.total))
-
-        if functions:
-            for func in functions[:self._top_functions]:
+        if self._top_functions:
+            for func in self._top_functions:
                 data['functions'].append({
                     'name': func.name,
                     'file': func.module.path,

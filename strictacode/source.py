@@ -13,16 +13,13 @@ from .calc.pressure import overengineering
 
 @dataclass(kw_only=True)
 class Status:
-    custom_name: t.Optional[Enum] = None
     score: 'score.Metric' = score.Metric(value=0)
     reasons: list[str] = field(default_factory=list)
     suggestions: list[str] = field(default_factory=list)
 
     @property
     def name(self) -> Enum:
-        if self.custom_name is None:
-            return self.score.status
-        return self.custom_name
+        return self.score.status
 
 
 class Sources:
@@ -384,7 +381,12 @@ class ClassSource:
         self._overengineering_pressure = value
 
     def compile(self):
-        pass
+        self.status.score = score.calculate(self.module.refactoring_pressure.score,
+                                            self.overengineering_pressure.score,
+                                            self.complexity.density,
+                                            rp_weight=0.15,
+                                            oe_weight=0.35,
+                                            density_weight=0.5)
 
 
 class MethodSource:
@@ -456,7 +458,12 @@ class MethodSource:
         return Complexity(self._complexity, loc=self.loc, total_sum=True, children=children)
 
     def compile(self):
-        pass
+        self.status.score = score.calculate(self.module.refactoring_pressure.score,
+                                            self.cls.overengineering_pressure.score,
+                                            self.complexity.density,
+                                            rp_weight=0.1,
+                                            oe_weight=0.3,
+                                            density_weight=0.6)
 
 
 class FunctionSource:
@@ -523,4 +530,9 @@ class FunctionSource:
         return Complexity(self._complexity, loc=self.loc, total_sum=True, children=children)
 
     def compile(self):
-        pass
+        self.status.score = score.calculate(self.module.refactoring_pressure.score,
+                                            self.module.overengineering_pressure.score,
+                                            self.complexity.density,
+                                            rp_weight=0.2,
+                                            oe_weight=0.2,
+                                            density_weight=0.6)

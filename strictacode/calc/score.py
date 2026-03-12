@@ -94,11 +94,25 @@ def _calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, t.Optional
     return 1.08, None
 
 
-def calculate(rp: int, oe: int, complexity_density: float) -> Metric:
+def calculate(
+    rp: int,
+    oe: int,
+    complexity_density: float, *,
+    rp_weight: float = 0.4,
+    oe_weight: float = 0.4,
+    density_weight: float = 0.2,
+    use_imbalance: bool = True,
+) -> Metric:
     density = min(100, int(complexity_density))
-    extremum = max(rp, oe)
 
-    base_score = int(round(0.4 * rp + 0.4 * oe + 0.2 * density, 0))
+    base_score = int(round(
+        rp_weight * rp + oe_weight * oe + density_weight * density, 0
+    ))
+
+    if not use_imbalance:
+        return Metric(value=min(100, base_score))
+
+    extremum = max(rp, oe)
 
     # Гибридный подход:
     # аддитив для высокого экстремума
