@@ -85,6 +85,39 @@ Calculate: `diff = |RP - OP|`
 - `diff > 40` — imbalance, analysis needed
 - `diff > 50` — severe imbalance, critical problem
 
+#### Step 2.3: Explain Metric Origins
+
+When OP or RP is high, ALWAYS explain it through available statistics from the report.
+
+**For OP (overengineering_pressure):**
+Use `stat(modules)` from package level:
+- `max` — most overengineered module in package (identify by reading it)
+- `p90` — 90th percentile (if high → problem is systemic)
+- `avg` — average across modules
+
+**For RP (refactoring_pressure):**
+Use `stat(modules)` from project/package level:
+- `max` — module with highest complexity
+- `p90` — if > 25, problem is systemic
+- Also check `complexity.density` and `complexity.stat.max` for function-level detail
+
+**Output format for breakdown:**
+```
+<package> — OP=<value> breakdown:
+- stat(modules): avg=<X>, max=<Y>, p90=<Z>
+- Top contributor (max=<Y>): <module_name> — read file to understand why
+- Systemic assessment: p90=<Z> → <systemic/local> problem
+```
+
+**Example:**
+```
+<package_name> — OP=<value> breakdown:
+- stat(modules): avg=<X>, max=<Y>, p90=<Z>
+- Top contributor: <module_name> (after reading: <N> types, imported everywhere)
+- p90=<Z> → problem is systemic (90% of modules have OP up to <Z>)
+- Main driver: many small types with high fan-in (imported by <N>+ modules each)
+```
+
 ### Step 3: Identify Hotspots
 
 Extract elements from detailed report by thresholds:
@@ -121,6 +154,36 @@ Use `stat(modules)` and `stat(classes+functions)`:
 
 ### Step 4: Analyze Hotspot Code
 
+#### Step 4.1: Locate Problems Precisely
+
+JSON report provides `file` path but NOT line numbers. You MUST find exact locations.
+
+**To find line numbers:**
+1. **Use Grep tool** to find function/class definition:
+   - Python: `grep "def function_name"`
+   - Go: `grep "func FunctionName"` or `grep "func (.*FunctionName"`
+   - JavaScript: `grep "function functionName"\\|grep "const functionName"`
+2. **Use Read tool** to read the file and identify line range
+3. **Report format:** `file:start-end — description`
+
+**Example workflow:**
+```
+Problem: <function_name> has complexity 42
+
+1. Grep "func <FunctionName>" → found in <path/to/file>.go
+2. Read <file>.go → function spans lines 281-332 (52 lines)
+3. Analyze code → switch statement with many cases at lines 285-310
+4. Report: <path/to/file>.go:281-332 — <FunctionName>() complexity=42
+```
+
+**Required for EVERY hotspot:**
+- Full file path (relative to project root)
+- Line numbers (start-end)
+- Function/class name
+- Specific problematic lines (if applicable)
+
+#### Step 4.2: Understand Context
+
 For each hotspot:
 1. Read the file with problematic code
 2. Understand context — what the function/module does
@@ -128,11 +191,64 @@ For each hotspot:
 
 ### Step 5: Create Improvement Plan
 
+#### Step 5.1: Make Recommendations Actionable
+
+Every recommendation MUST include concrete details. Use report data + file analysis.
+
+**For package refactoring, provide:**
+| Field | Source |
+|-------|--------|
+| Files to move | Read package directory, identify patterns (e.g., `<prefix>_*.go`) |
+| Destination | Logical grouping (e.g., `db/drivers/`) |
+| File count | From directory listing |
+| LOC estimate | `package.loc` / `package.modules` * files_to_move |
+| Breaking imports | Grep for package import path |
+
+**Example:**
+```
+Refactor <package_name>:
+- From report: 35 modules, 10,192 LOC
+
+Files to move (after reading directory):
+| Pattern          | Destination       | Files | LOC est. |
+|------------------|-------------------|-------|----------|
+| <prefix1>_*.go   | <new_pkg>/<dir1>/ | 12    | ~3,500   |
+| <prefix2>_*.go   | <new_pkg>/<dir2>/ | 8     | ~2,300   |
+| <prefix3>_*.go   | <new_pkg>/<dir3>/ | 6     | ~1,700   |
+
+Breaking imports (grep "<package_name>"):
+- <service>/<module1>.go:45
+- <api>/<module2>.go:12
+- <cmd>/<module3>.go:23
+
+Effort: ~4-6 hours (rename imports + run tests)
+```
+
+**For function refactoring, provide:**
+| Field | Source |
+|-------|--------|
+| Current LOC | Read function code |
+| Extract candidates | Identify logical blocks in code |
+| Line ranges | From code analysis |
+| Effort estimate | Based on complexity |
+
+**Example:**
+```
+Split <FunctionName> (<path/to/file>.go:281-332):
+- Current: 52 LOC, complexity 42
+- Extract: <HelperFunction1>() — lines 285-310 (~25 LOC)
+- Extract: <HelperFunction2>() — lines 315-340 (~25 LOC)
+- Remaining: ~50 LOC with core business logic
+- Effort: ~2-3 hours + tests
+```
+
+#### Step 5.2: Prioritize and Format
+
 Form a prioritized list with:
 - Priority (P0 — critical, P1 — important, P2 — desirable)
-- Specific action
+- Specific action with file:line
 - Justification (which metrics will be affected)
-- Expected effect
+- Expected effect (concrete numbers when possible)
 
 ---
 
@@ -225,40 +341,60 @@ Present analysis results in the following format:
 **Complexity Density:** <value>
 ```
 
+### Metric Breakdown (if OP > 40 or RP > 40)
+
+REQUIRED when any metric is elevated. Use `stat()` data from report.
+
+```
+## 📊 Metric Breakdown
+
+### OP Breakdown (if OP > 40)
+| Package | OP  | stat.avg | stat.max | stat.p90 | Assessment |
+|---------|-----|----------|----------|----------|------------|
+| <name>  | <X> | <Y>      | <Z>      | <W>      | systemic/local |
+
+Top contributor: <file> — read analysis shows <reason>
+
+### RP Breakdown (if RP > 40)
+| Module | RP  | stat.avg | stat.max | stat.p90 | density | Problem function |
+|--------|-----|----------|----------|----------|---------|------------------|
+| <name> | <X> | <Y>      | <Z>      | <W>      | <D>     | <func>:<line>    |
+```
+
 ### Red Flags (if any)
 
 ```
 ## 🚨 Red Flags
 
-- max_complexity = <X> in <function> — <why critical>
-- p90_complexity = <X> — <systemic/local problem>
-- density = <X> in <module> — <rework required>
+1. `<file:start-end>` — <function_name>() has complexity <X>
+   - Threshold: 40 (almost impossible to change safely)
+   - Problem lines: <start>-<end> — <specific issue>
 ```
 
 ### Pain Points
 
 ```
-## Pain Points
+## 🔥 Pain Points
 
-### <File/Module 1>
+### <file:start-end> — <function/module name>
 - **Problem:** <brief description>
 - **Metrics:** complexity=<X> (threshold: <Y>), density=<Z>
 - **Context:** <what this code does>
-
-### <File/Module 2>
-...
+- **Specific issues:** <list with line numbers>
 ```
 
 ### Improvement Plan
 
 ```
-## Improvement Plan
+## 📋 Improvement Plan
 
 ### P0 — Critical
 1. **<Action>**
-   - File: <path>
-   - Justification: <why important>
-   - Expected effect: <which metrics affected>
+   - Location: `<file:start-end>`
+   - Justification: <why important, which metric>
+   - Expected effect: <concrete numbers>
+   - Effort: <time estimate>
+   - Breaking changes: <list files that need updates>
 
 ### P1 — Important
 ...
@@ -302,21 +438,31 @@ Present analysis results in the following format:
 
 ```json
 {
-  "name": "process_order",
-  "file": "order_service.py",
-  "loc": 85,
-  "status": {"name": "critical", "score": 78},
+  "name": "<function_name>",
+  "file": "<module_name>.py",
+  "loc": <N>,
+  "status": {"name": "critical", "score": <X>},
   "complexity": {
-    "score": 45,
-    "total": 45,
-    "density": 52.9
+    "score": <X>,
+    "total": <X>,
+    "density": <D>
   }
 }
 ```
 
-**Pain point:** `order_service.py:process_order`
-- complexity = 45 > 40 → red flag: function almost impossible to change safely
-- density = 52.9 > 50 → spaghetti code
+**Step 1 — Locate:**
+```
+Grep "def <function_name>" → <module_name>.py:<line>
+Read <module_name>.py → function spans lines <start>-<end> (<N> LOC)
+```
+
+**Step 2 — Report:**
+```
+<module_name>.py:<start>-<end> — <function_name>()
+- complexity = <X> > 40 → red flag
+- density = <D> > 50 → spaghetti code
+- Lines <l1>-<l2>: <specific_issue> (main complexity source)
+```
 
 ### Statistics Analysis Example
 
@@ -338,26 +484,120 @@ Present analysis results in the following format:
 - p90 = 16 → problem not systemic (p90 < 25)
 - Conclusion: local problem, focus on one module
 
+### OP Breakdown Example
+
+**Report data:**
+```json
+{
+  "packages": [
+    {
+      "name": "<package_name>",
+      "overengineering_pressure": {"score": <value>},
+      "complexity": {"density": <X>},
+      "loc": <N>,
+      "modules": <M>
+    }
+  ]
+}
+```
+
+**Note:** JSON report does NOT include fan_out/fan_in/depth/centrality.
+Use `stat()` and code analysis to explain.
+
+**Analysis workflow:**
+```
+1. Report shows: OP=<value>, <N> modules, density=<X> (low = many simple types)
+2. Read <package_name> directory → list files
+3. Read 2-3 largest files → count structs/types, find import patterns
+4. Grep "<package_name>" → count how many files import this package
+5. Conclude: high fan_in (types imported everywhere) drives OP
+```
+
+**Output:**
+```
+<package_name> — OP=<value> breakdown:
+- stat(modules): avg=<X>, max=<Y>, p90=<Z> (from detailed report)
+- Modules: <N> files, <LOC> lines, density=<D> (many simple types)
+- Code analysis:
+  - <file1>.go: <N1> struct definitions
+  - <file2>.go: <N2> struct definitions
+  - <file3>.go: <N3> struct definitions
+- Import analysis: <package_name> imported by <N>+ files across project
+- Main driver: high fan_in (types imported everywhere, not high fan_out)
+- p90=<Z> → problem is systemic (90% of modules have OP up to <Z>)
+- Recommendation: split by domain (<package>/<domain1>/, <package>/<domain2>/, ...)
+```
+
 ### Improvement Plan Example
 
 ```
 ### P0 — Critical
-1. Split process_order into sub-functions
-   - File: order_service.py
-   - Justification: complexity 45 > 40, function blocks changes
-   - Effect: reduce complexity to ~15, improve testability
+1. Split <function_name> into sub-functions
+   - Location: `<module_name>.py:<start>-<end>`
+   - Justification: complexity <X> > 40, function blocks changes
+   - Extract candidates:
+     - <helper1>() — lines <l1>-<l2> (~<n1> LOC)
+     - <helper2>() — lines <l3>-<l4> (~<n2> LOC)
+     - <helper3>() — lines <l5>-<l6> (~<n3> LOC)
+   - Expected effect: complexity ~15 per function
+   - Effort: ~3 hours + tests
+   - Breaking changes: none (internal refactoring)
 
 ### P1 — Important
-2. Simplify order_service module
-   - File: order_service.py
-   - Justification: module RP = 24, density = 52.9 > 50
-   - Effect: reduce overall project RP by ~10-15 points
+2. Simplify <module_name> module
+   - Location: `<module_name>.py`
+   - Justification: module RP = <X>, density = <Y> > 50
+   - Files affected: <module_name>.py (1 file, <N> LOC)
+   - Expected effect: reduce project RP by ~10-15 points
+   - Effort: ~4-6 hours
 
 ### P2 — Desirable
-3. Add tests for process_order before refactoring
-   - File: tests/test_order_service.py
+3. Add tests for <function_name> before refactoring
+   - Location: `tests/test_<module_name>.py`
    - Justification: refactoring safety
-   - Effect: reduce regression risk
+   - Test cases needed: 5-7 (happy path + edge cases)
+   - Effort: ~2 hours
+```
+
+### Package Refactoring Example
+
+**Report data:**
+```json
+{
+  "name": "<package_name>",
+  "dir": "<package_path>",
+  "loc": <N>,
+  "modules": <M>,
+  "overengineering_pressure": {"score": <value>}
+}
+```
+
+**Analysis workflow:**
+```
+1. Read <package_path> directory → list files
+2. Identify patterns: <prefix1>_*.go (<N1>), <prefix2>_*.go (<N2>), <prefix3>_*.go (<N3>)
+3. Grep "<package_name>" for breaking imports
+4. Calculate LOC per pattern
+```
+
+**Output:**
+```
+Refactor <package_name> (OP=<value>):
+- Current: <M> modules, <N> LOC
+
+Files to move:
+| Pattern           | Destination          | Files | LOC est. |
+|-------------------|----------------------|-------|----------|
+| <prefix1>_*.go    | <new_pkg>/<subdir1>/ | <N1>  | ~<LOC1>  |
+| <prefix2>_*.go    | <new_pkg>/<subdir2>/ | <N2>  | ~<LOC2>  |
+| <prefix3>_*.go    | <new_pkg>/<subdir3>/ | <N3>  | ~<LOC3>  |
+
+Breaking imports (grep "<package_name>"):
+- <module1>.go:<line1>,<line2>
+- <module2>.go:<line1>,<line2>
+- <module3>.go:<line1>
+
+Effort: ~4-6 hours (rename imports + run tests)
 ```
 
 ---
