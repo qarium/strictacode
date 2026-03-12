@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 
 from . import utils
 from .graph import DiGraph
-from .calculations import Complexity
-from .calculations.pressure import refactoring
-from .calculations.pressure import overengineering
+from .calc import Complexity
+from .calc.pressure import refactoring
+from .calc.pressure import overengineering
 
 DEFAULT_STATUS: t.Final[str] = 'not_analyzed'
 

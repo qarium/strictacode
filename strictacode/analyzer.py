@@ -1,7 +1,9 @@
+import typing as t
+
 from .source import Sources
 
 
-def calculate_imbalance_penalty(rp: int, oe: int) -> tuple[int, str | None]:
+def calculate_imbalance_penalty(rp: int, oe: int) -> tuple[int, t.Optional[str]]:
     """
     Рассчитывает штраф за перекос между RP и OE.
     Возвращает (penalty, imbalance_type) или (0, None) если перекоса нет.
@@ -17,20 +19,19 @@ def calculate_imbalance_penalty(rp: int, oe: int) -> tuple[int, str | None]:
     if rp > oe:  # Spaghetti — острая боль
         if diff > 50:
             return 25, "spaghetti"
-        elif diff > 40:
+        if diff > 40:
             return 15, "spaghetti"
-        else:
-            return 8, "spaghetti"
-    else:  # Overengineering — хроническая боль
-        if diff > 50:
-            return 12, "overengineering"
-        elif diff > 40:
-            return 7, "overengineering"
-        else:
-            return 3, "overengineering"
+        return 8, "spaghetti"
+
+    # Overengineering — хроническая боль
+    if diff > 50:
+        return 12, "overengineering"
+    if diff > 40:
+        return 7, "overengineering"
+    return 3, "overengineering"
 
 
-def calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, str | None]:
+def calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, t.Optional[str]]:
     """
     Рассчитывает множитель за перекос между RP и OE (для низкого экстремума).
     Возвращает (multiplier, imbalance_type) или (1.0, None) если перекоса нет.
@@ -43,17 +44,16 @@ def calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, str | None]
     if rp > oe:  # Spaghetti
         if diff > 50:
             return 1.8, "spaghetti"
-        elif diff > 40:
+        if diff > 40:
             return 1.5, "spaghetti"
-        else:
-            return 1.25, "spaghetti"
-    else:  # Overengineering
-        if diff > 50:
-            return 1.3, "overengineering"
-        elif diff > 40:
-            return 1.15, "overengineering"
-        else:
-            return 1.08, "overengineering"
+        return 1.25, "spaghetti"
+
+    # Overengineering
+    if diff > 50:
+        return 1.3, "overengineering"
+    if diff > 40:
+        return 1.15, "overengineering"
+    return 1.08, "overengineering"
 
 
 def overengineering_pressure_status(score: int):
@@ -108,6 +108,23 @@ def project_status(score: int):
     return "healthy"
 
 
+def calculate_project_score(rp: int, oe: int, complexity_density: float) -> tuple[int, t.Optional[str]]:
+    density = min(100, int(complexity_density))
+    extremum = max(rp, oe)
+
+    base_score = int(round(0.4 * rp + 0.4 * oe + 0.2 * density, 0))
+
+    # Гибридный подход:
+    # аддитив для высокого экстремума
+    if extremum >= 35:
+        penalty, imbalance_type = calculate_imbalance_penalty(rp, oe)
+        return min(100, base_score + penalty), imbalance_type
+
+    # множитель для низкого
+    multiplier, imbalance_type = calculate_imbalance_multiplier(rp, oe)
+    return min(100, int(base_score * multiplier)), imbalance_type
+
+
 class Analyzer:
     def __init__(self, sources: Sources):
         self._sources = sources
@@ -120,29 +137,17 @@ class Analyzer:
         }
 
         rp = self._sources.refactoring_pressure.score
-        oe = self._sources.overengineering_pressure.score
-        density = min(100, int(self._sources.complexity.density))
-        extremum = max(rp, oe)
+        op = self._sources.overengineering_pressure.score
+        density = self._sources.complexity.density
 
-        base_score = int(round(0.4 * rp + 0.4 * oe + 0.2 * density, 0))
-
-        # Гибридный подход: аддитив для высокого экстремума, множитель для низкого
-        imbalance_type = None
-        if extremum >= 35:
-            penalty, imbalance_type = calculate_imbalance_penalty(rp, oe)
-            final_score = min(100, base_score + penalty)
-        else:
-            multiplier, imbalance_type = calculate_imbalance_multiplier(rp, oe)
-            final_score = min(100, int(base_score * multiplier))
-
-        self._sources.status.score = final_score
-        self._sources.status.name = project_status(final_score)
+        self._sources.status.score, imbalance_type = calculate_project_score(rp, op, density)
+        self._sources.status.name = project_status(self._sources.status.score)
 
         # Добавить reason для перекоса
         if imbalance_type:
             imbalance_reasons = {
-                "spaghetti": "High RP/OE imbalance (spaghetti code pattern)",
-                "overengineering": "High OE/RP imbalance (overengineering pattern)",
+                "spaghetti": "High RP/OE imbalance - spaghetti code pattern",
+                "overengineering": "High OE/RP imbalance - overengineering pattern",
             }
             self._sources.status.reasons.append(imbalance_reasons[imbalance_type])
 
