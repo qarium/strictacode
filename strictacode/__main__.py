@@ -64,19 +64,19 @@ def analyze(path: str, format: str, short: bool, details: bool):
 
 
 @app.group()
-def agent():
+def install():
     pass
 
 
-@click.option('--skill-name', type=str, default='strictacode')
-@click.argument('agent_name', required=True, type=click.Choice([
+@click.option('--name', type=str, default='strictacode')
+@click.option('--agent', required=True, type=click.Choice([
     "claude", "cursor", "codex",
     "gemini", "antigravity",
 ]))
-@agent.command()
-def install(agent_name: str, skill_name: str):
+@install.command()
+def agent_skill(agent: str, name: str):
     click.secho(f"Installing skill for agent \"{agent}\"...")
-    installed_path = skill.install(skill_name, agent_name)
+    installed_path = skill.install(name, agent)
     click.secho(f"Successfully installed into \"{installed_path}\"")
 
 

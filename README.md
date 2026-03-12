@@ -108,6 +108,23 @@ strictacode analyze <path> --format json
 
 ---
 
+## Интеграция с AI-агентами
+
+Strictacode может быть установлен как навык (skill) в AI-агенты для автоматического анализа качества кода:
+
+```bash
+strictacode install agent-skill --agent <agent_name>
+```
+
+Поддерживаемые агенты:
+- `claude`
+- `cursor`
+- `codex`
+- `gemini`
+- `antigravity`
+
+---
+
 ## Документация
 
 - [Поля отчёта](docs/report-fields.md) — описание всех полей в отчёте с типами и примерами
