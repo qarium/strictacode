@@ -1,4 +1,5 @@
 import typing as t
+from enum import Enum
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -12,6 +13,16 @@ class Stat:
     max: int
     p50: int
     p90: int
+
+
+class Status(str, Enum):
+    UNREADABLE = "unreadable"
+    SPAGHETTI = "spaghetti"
+    VERY_DIRTY = "very-dirty"
+    DIRTY = "dirty"
+    MODERATE = "moderate"
+    GOOD = "good"
+    CLEAN = "clean"
 
 
 class Complexity:
@@ -30,6 +41,23 @@ class Complexity:
     @property
     def score(self) -> int:
         return self._score
+
+    @cached_property
+    def status(self):
+        if self.density > 100:
+            return Status.UNREADABLE
+        if self.density > 75:
+            return Status.SPAGHETTI
+        if self.density > 50:
+            return Status.VERY_DIRTY
+        if self.density > 30:
+            return Status.DIRTY
+        if self.density > 20:
+            return Status.MODERATE
+        if self.density > 10:
+            return Status.GOOD
+
+        return Status.CLEAN
 
     @property
     def loc(self) -> int:

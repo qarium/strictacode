@@ -1,7 +1,9 @@
 import math
 import typing as t
+from enum import Enum
 from numpy import percentile
 from dataclasses import dataclass
+from functools import cached_property
 
 W_PEAK: t.Final[float] = 0.6
 W_BASE: t.Final[float] = 0.4
@@ -24,6 +26,14 @@ class Stat:
     p50: int = 0
 
 
+class Status(str, Enum):
+    EXTREME = "extreme"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    MINIMAL = "minimal"
+
+
 class Metric:
     def __init__(self, score: int, data: Data, *,
                  children: t.Optional[list['Metric']] = None):
@@ -37,6 +47,19 @@ class Metric:
     @property
     def score(self) -> int:
         return self._score
+
+    @cached_property
+    def status(self) -> Status:
+        if self._score > 80:
+            return Status.EXTREME
+        if self._score > 60:
+            return Status.HIGH
+        if self._score > 40:
+            return Status.MEDIUM
+        if self._score > 20:
+            return Status.LOW
+
+        return Status.MINIMAL
 
     @property
     def data(self) -> Data:

@@ -3,7 +3,9 @@ Overengineering pressure.
 """
 import os
 import typing as t
+from enum import Enum
 from dataclasses import dataclass
+from functools import cached_property
 from collections import defaultdict, deque
 
 from numpy import percentile
@@ -20,22 +22,33 @@ class Score:
 
 @dataclass(kw_only=True)
 class Stat:
-    avg: float = 0
-    max: float = 0
-    min: float = 0
-    p90: float = 0
-    p50: float = 0
+    avg: int = 0
+    max: int = 0
+    min: int = 0
+    p90: int = 0
+    p50: int = 0
 
 
 @dataclass(kw_only=True)
 class CalcResult:
-    score: float
+    score: t.Union[float, int]
     classes: list[Score]
     modules: list[Score]
 
+    def __post_init__(self):
+        self.score = int(round(self.score, 0))
+
+
+class Status(str, Enum):
+    BLOATED = "bloated"
+    OVERENGINEERED = "overengineered"
+    COMPLEX = "complex"
+    MODERATE = "moderate"
+    SIMPLE = "simple"
+
 
 class Metric:
-    def __init__(self, score: float, *,
+    def __init__(self, score: int, *,
                  children: t.Optional[list['Metric']] = None):
         self._score = score
         self._children = children or []
@@ -43,21 +56,34 @@ class Metric:
         self._stat: Stat = self._create_stat()
 
     @property
-    def score(self) -> float:
+    def score(self) -> int:
         return self._score
 
     @property
     def stat(self) -> Stat:
         return self._stat
 
+    @cached_property
+    def status(self) -> Status:
+        if self._score > 80:
+            return Status.BLOATED
+        if self._score > 60:
+            return Status.OVERENGINEERED
+        if self._score > 40:
+            return Status.COMPLEX
+        if self._score > 20:
+            return Status.MODERATE
+
+        return Status.SIMPLE
+
     def _create_stat(self):
         scores = [i.score for i in self._children] or [0]
         return Stat(
-            avg=round(sum(scores) / len(scores), 2),
-            max=max(scores),
-            min=min(scores),
-            p50=round(percentile(scores, 50), 2),
-            p90=round(percentile(scores, 90), 2),
+            avg=int(round(sum(scores) / len(scores), 0)),
+            max=int(round(max(scores), 0)),
+            min=int(round(min(scores), 0)),
+            p50=int(round(percentile(scores, 50), 0)),
+            p90=int(round(percentile(scores, 90), 0)),
         )
 
 

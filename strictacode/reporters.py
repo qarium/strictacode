@@ -2,7 +2,6 @@ import abc
 import json
 
 from .source import Sources
-from .source import DEFAULT_STATUS
 
 
 class BaseReporter(metaclass=abc.ABCMeta):
@@ -40,18 +39,17 @@ class TextReporter(BaseReporter):
         print('  * classes:', len(self._sources.classes))
         print('  * methods:', len(self._sources.methods))
         print('  * functions:', len(self._sources.functions))
-        if self._sources.status.name != DEFAULT_STATUS:
-            print('  * status:')
-            print('    - name:', self._sources.status.name)
-            print('    - score:', self._sources.status.score)
-            if self._sources.status.reasons:
-                print('    - reasons:')
-                for reason in self._sources.status.reasons:
-                    print(f'      + {reason}')
-            if self._sources.status.suggestions:
-                print('    - suggestions:')
-                for suggestion in self._sources.status.suggestions:
-                    print(f'      + {suggestion}')
+        print('  * status:')
+        print('    - name:', self._sources.status.name.value)
+        print('    - score:', self._sources.status.score.value)
+        if self._sources.status.reasons:
+            print('    - reasons:')
+            for reason in self._sources.status.reasons:
+                print(f'      + {reason}')
+        if self._sources.status.suggestions:
+            print('    - suggestions:')
+            for suggestion in self._sources.status.suggestions:
+                print(f'      + {suggestion}')
         print('  * overengineering_pressure:')
         print('    - score:', self._sources.overengineering_pressure.score)
         print('    - stat(modules):')
@@ -94,8 +92,8 @@ class TextReporter(BaseReporter):
                 print('    - loc:', package.loc)
                 print('    - modules:', len(package.modules))
                 print('    - status:')
-                print('      + name:', package.status.name)
-                print('      + score:', package.status.score)
+                print('      + name:', package.status.name.value)
+                print('      + score:', package.status.score.value)
                 if package.status.reasons:
                     print('      + reasons:')
                     for reason in package.status.reasons:
@@ -146,18 +144,17 @@ class TextReporter(BaseReporter):
                 print('    - loc:', module.loc)
                 print('    - classes:', len(module.classes))
                 print('    - functions:', len(module.functions))
-                if module.status.name != DEFAULT_STATUS:
-                    print('    - status:')
-                    print('      + name:', module.status.name)
-                    print('      + score:', module.status.score)
-                    if module.status.reasons:
-                        print('      + reasons:')
-                        for reason in module.status.reasons:
-                            print(f'        - {reason}')
-                    if module.status.suggestions:
-                        print('      + suggestions:')
-                        for suggestion in module.status.suggestions:
-                            print(f'        - {suggestion}')
+                print('    - status:')
+                print('      + name:', module.status.name.value)
+                print('      + score:', module.status.score.value)
+                if module.status.reasons:
+                    print('      + reasons:')
+                    for reason in module.status.reasons:
+                        print(f'        - {reason}')
+                if module.status.suggestions:
+                    print('      + suggestions:')
+                    for suggestion in module.status.suggestions:
+                        print(f'        - {suggestion}')
                 print('    - overengineering_pressure:')
                 print('      + score:', module.overengineering_pressure.score)
                 print('      + stat(classes):')
@@ -193,20 +190,17 @@ class TextReporter(BaseReporter):
                 print('    - file:', cls.module.path)
                 print('    - loc:', cls.loc)
                 print('    - methods:', len(cls.methods))
-
-                if cls.status.name != DEFAULT_STATUS:
-                    print('    - status:')
-                    print('      + name:', cls.status.name)
-                    print('      + score:', cls.status.score)
-                    if cls.status.reasons:
-                        print('      + reasons:')
-                        for reason in cls.status.reasons:
-                            print(f'        - {reason}')
-                    if cls.status.suggestions:
-                        print('      + suggestions:')
-                        for suggestion in cls.status.suggestions:
-                            print(f'        - {suggestion}')
-
+                print('    - status:')
+                print('      + name:', cls.status.name.value)
+                print('      + score:', cls.status.score.value)
+                if cls.status.reasons:
+                    print('      + reasons:')
+                    for reason in cls.status.reasons:
+                        print(f'        - {reason}')
+                if cls.status.suggestions:
+                    print('      + suggestions:')
+                    for suggestion in cls.status.suggestions:
+                        print(f'        - {suggestion}')
                 print('    - overengineering_pressure:')
                 print('      + score:', cls.overengineering_pressure.score)
                 print('    - complexity:')
@@ -235,20 +229,17 @@ class TextReporter(BaseReporter):
                 print('    - class:', method.cls.name)
                 print('    - loc:', method.loc)
                 print('    - closures:', len(method.closures))
-
-                if method.status.name != DEFAULT_STATUS:
-                    print('    - status:')
-                    print('      + name:', method.status.name)
-                    print('      + score:', method.status.score)
-                    if method.status.reasons:
-                        print('      - reasons:')
-                        for reason in method.status.reasons:
-                            print(f'        + {reason}')
-                    if method.status.suggestions:
-                        print('      - suggestions:')
-                        for suggestion in method.status.suggestions:
-                            print(f'        + {suggestion}')
-
+                print('    - status:')
+                print('      + name:', method.status.name.value)
+                print('      + score:', method.status.score.value)
+                if method.status.reasons:
+                    print('      - reasons:')
+                    for reason in method.status.reasons:
+                        print(f'        + {reason}')
+                if method.status.suggestions:
+                    print('      - suggestions:')
+                    for suggestion in method.status.suggestions:
+                        print(f'        + {suggestion}')
                 print('    - complexity:')
                 print('      + score:', method.complexity.score)
                 print('      + total:', method.complexity.total)
@@ -275,20 +266,17 @@ class TextReporter(BaseReporter):
                 print('    - file:', func.module.name)
                 print('    - loc:', func.loc)
                 print('    - closures:', len(func.closures))
-
-                if func.status.name != DEFAULT_STATUS:
-                    print('    - status:')
-                    print('      + name:', func.status.name)
-                    print('      + score:', func.status.score)
-                    if func.status.reasons:
-                        print('      - reasons:')
-                        for reason in func.status.reasons:
-                            print(f'        + {reason}')
-                    if func.status.suggestions:
-                        print('      - suggestions:')
-                        for suggestion in func.status.suggestions:
-                            print(f'        + {suggestion}')
-
+                print('    - status:')
+                print('      + name:', func.status.name.value)
+                print('      + score:', func.status.score.value)
+                if func.status.reasons:
+                    print('      - reasons:')
+                    for reason in func.status.reasons:
+                        print(f'        + {reason}')
+                if func.status.suggestions:
+                    print('      - suggestions:')
+                    for suggestion in func.status.suggestions:
+                        print(f'        + {suggestion}')
                 print('    - complexity:')
                 print('      + score:', func.complexity.score)
                 print('      + total:', func.complexity.total)
@@ -330,6 +318,12 @@ class JsonReporter(BaseReporter):
                     'dir': package.path,
                     'loc': package.loc,
                     'modules': len(package.modules),
+                    'status': {
+                        'name': package.status.name.value,
+                        'score': package.status.score.value,
+                        'reasons': package.status.reasons,
+                        'suggestions': package.status.suggestions,
+                    },
                     'overengineering_pressure': {
                         'score': package.overengineering_pressure.score,
                     },
@@ -371,6 +365,12 @@ class JsonReporter(BaseReporter):
                     'loc': module.loc,
                     'classes': len(module.classes),
                     'functions': len(module.functions),
+                    'status': {
+                        'name': module.status.name.value,
+                        'score': module.status.score.value,
+                        'reasons': module.status.reasons,
+                        'suggestions': module.status.suggestions,
+                    },
                     'overengineering_pressure': {
                         'score': module.overengineering_pressure.score,
                     },
@@ -404,6 +404,12 @@ class JsonReporter(BaseReporter):
                     'file': cls.module.path,
                     'loc': cls.loc,
                     'methods': len(cls.methods),
+                    'status': {
+                        'name': cls.status.name.value,
+                        'score': cls.status.score.value,
+                        'reasons': cls.status.reasons,
+                        'suggestions': cls.status.suggestions,
+                    },
                     'overengineering_pressure': {
                         'score': cls.overengineering_pressure.score,
                     },
@@ -435,6 +441,12 @@ class JsonReporter(BaseReporter):
                     'class': method.cls.name,
                     'loc': method.loc,
                     'closures': len(method.closures),
+                    'status': {
+                        'name': method.status.name.value,
+                        'score': method.status.score.value,
+                        'reasons': method.status.reasons,
+                        'suggestions': method.status.suggestions,
+                    },
                     'complexity': {
                         'value': method.complexity.score,
                         'total': method.complexity.total,
@@ -463,6 +475,12 @@ class JsonReporter(BaseReporter):
                     'file': func.module.path,
                     'loc': func.loc,
                     'closures': len(func.closures),
+                    'status': {
+                        'name': func.status.name.value,
+                        'score': func.status.score.value,
+                        'reasons': func.status.reasons,
+                        'suggestions': func.status.suggestions,
+                    },
                     'complexity': {
                         'score': func.complexity.score,
                         'total': func.complexity.total,
@@ -482,17 +500,17 @@ class JsonReporter(BaseReporter):
             'project': {
                 'lang': self._sources.lang,
                 'loc': self._sources.loc,
-                'status': {
-                    'name': self._sources.status.name,
-                    'score': self._sources.status.score,
-                    'reasons': self._sources.status.reasons,
-                    'suggestions': self._sources.status.suggestions,
-                },
                 'packages': len(self._sources.packages),
                 'modules': len(self._sources.modules),
                 'classes': len(self._sources.classes),
                 'methods': len(self._sources.methods),
                 'functions': len(self._sources.functions),
+                'status': {
+                    'name': self._sources.status.name,
+                    'score': self._sources.status.score.value,
+                    'reasons': self._sources.status.reasons,
+                    'suggestions': self._sources.status.suggestions,
+                },
                 'overengineering_pressure': {
                     'score': self._sources.overengineering_pressure.score,
                 },

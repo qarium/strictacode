@@ -1,23 +1,28 @@
 import os
 import typing as t
+from enum import Enum
 from functools import cached_property
 from dataclasses import dataclass, field
 
 from . import utils
 from .graph import DiGraph
-from .calc import Complexity
+from .calc import score, Complexity
 from .calc.pressure import refactoring
 from .calc.pressure import overengineering
-
-DEFAULT_STATUS: t.Final[str] = 'not_analyzed'
 
 
 @dataclass(kw_only=True)
 class Status:
-    name: str = DEFAULT_STATUS
-    score: int = 0
+    custom_name: t.Optional[Enum] = None
+    score: 'score.Metric' = score.Metric(value=0)
     reasons: list[str] = field(default_factory=list)
     suggestions: list[str] = field(default_factory=list)
+
+    @property
+    def name(self) -> Enum:
+        if self.custom_name is None:
+            return self.score.status
+        return self.custom_name
 
 
 class Sources:
@@ -106,30 +111,45 @@ class Sources:
     def _compile_overengineering_pressure(self):
         op = overengineering.calculate(self.graph)
 
-        for score in op.classes:
+        for cls_score in op.classes:
             for cls in self.classes:
-                if cls.name == score.name and cls.module.path == score.path:
-                    cls.overengineering_pressure = overengineering.Metric(score.value)
+                if cls.name == cls_score.name and cls.module.path == cls_score.path:
+                    cls.overengineering_pressure = overengineering.Metric(int(round(cls_score.value, 0)))
                     break
 
-        for score in op.modules:
+        for mod_score in op.modules:
             for module in self.modules:
-                if module.name == score.name and module.path == score.path:
-                    module.overengineering_pressure = overengineering.Metric(score.value,
-                                                                                      children=[
-                                                                                      i.overengineering_pressure
-                                                                                      for i in self.classes
-                                                                                  ])
+                if module.name == mod_score.name and module.path == mod_score.path:
+                    module.overengineering_pressure = overengineering.Metric(int(round(mod_score.value, 0)),
+                                                                             children=[
+                                                                                 i.overengineering_pressure
+                                                                                 for i in self.classes
+                                                                             ])
                     break
 
         self._overengineering_pressure = overengineering.Metric(op.score,
-                                                                         children=[
-                                                                         i.overengineering_pressure
-                                                                         for i in self.modules
-                                                                     ])
+                                                                children=[
+                                                                    i.overengineering_pressure
+                                                                    for i in self.modules
+                                                                ])
 
     def compile(self):
         self._compile_overengineering_pressure()
+
+        self._status.score = score.calculate(self.refactoring_pressure.score,
+                                             self.overengineering_pressure.score,
+                                             self.complexity.density)
+
+        for package in self.packages:
+            package.compile()
+        for module in self.modules:
+            module.compile()
+        for cls in self.classes:
+            cls.compile()
+        for method in self.methods:
+            method.compile()
+        for function in self.functions:
+            function.compile()
 
 
 class PackageSource:
@@ -158,7 +178,7 @@ class PackageSource:
 
     @property
     def name(self):
-        return os.path.basename(self._path)
+        return os.path.basename(self._path) or "root"
 
     @property
     def loc(self):
@@ -187,6 +207,11 @@ class PackageSource:
         module_scores = [i.overengineering_pressure for i in self.modules]
         score = sum(i.score for i in module_scores)
         return overengineering.Metric(score, children=module_scores)
+
+    def compile(self):
+        self.status.score = score.calculate(self.refactoring_pressure.score,
+                                            self.overengineering_pressure.score,
+                                            self.complexity.density)
 
 
 class ModuleSource:
@@ -273,6 +298,11 @@ class ModuleSource:
     def overengineering_pressure(self, value):
         self._overengineering_pressure = value
 
+    def compile(self):
+        self.status.score = score.calculate(self.refactoring_pressure.score,
+                                            self.overengineering_pressure.score,
+                                            self.complexity.density)
+
 
 class ClassSource:
     def __init__(self, module: ModuleSource, name: str, *,
@@ -353,6 +383,9 @@ class ClassSource:
     def overengineering_pressure(self, value):
         self._overengineering_pressure = value
 
+    def compile(self):
+        pass
+
 
 class MethodSource:
     def __init__(self, module: ModuleSource, cls: ClassSource, name: str, *,
@@ -422,6 +455,9 @@ class MethodSource:
         children = [i.complexity for i in self.closures]
         return Complexity(self._complexity, loc=self.loc, total_sum=True, children=children)
 
+    def compile(self):
+        pass
+
 
 class FunctionSource:
     def __init__(self, module: ModuleSource, name, *,
@@ -485,3 +521,6 @@ class FunctionSource:
     def complexity(self):
         children = [i.complexity for i in self.closures]
         return Complexity(self._complexity, loc=self.loc, total_sum=True, children=children)
+
+    def compile(self):
+        pass
