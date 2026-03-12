@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "strictacode"
+dynamic = ["version"]
+description = "Codebase health diagnostics"
+requires-python = ">=3.10"
+license = {text = "BSD 3-Clause"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy",
+    "radon",
+    "click",
+]
+
+[project.scripts]
+strictacode = "strictacode.__main__:app"
+
+[project.urls]
+Homepage = "https://github.com/qarium/strictacode"
+
+[tool.setuptools_scm]
