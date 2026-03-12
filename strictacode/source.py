@@ -175,7 +175,7 @@ class PackageSource:
 
     @property
     def name(self):
-        return os.path.basename(self._path) or "root"
+        return os.path.basename(self._path) or "<root>"
 
     @property
     def loc(self):
