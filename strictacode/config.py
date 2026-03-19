@@ -16,6 +16,7 @@ class Language(str, Enum):
 
 @dataclass(kw_only=True)
 class Loader:
+    include: list[str] = field(default_factory=list)
     exclude: list[str] = field(default_factory=list)
 
 

@@ -72,6 +72,8 @@ def analyze(path: str, fmt: str, short: bool, details: bool,
     if config.lang == Language.GOLANG:
         loader_options['class_loc_from_methods'] = True
 
+    if config.loader.include is not None:
+        loader_options['include_patterns'] = config.loader.include
     if config.loader.exclude is not None:
         loader_options['exclude_patterns'] = config.loader.exclude
 

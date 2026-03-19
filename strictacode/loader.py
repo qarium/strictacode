@@ -57,10 +57,12 @@ class Loader(metaclass=abc.ABCMeta):
 
     def __init__(self, root: str = '.', *,
                  class_loc_from_methods: bool = False,
+                 include_patterns: t.Optional[list[str]] = None,
                  exclude_patterns: t.Optional[list[str]] = None):
         self._root = root
 
-        self._exclude_patterns = exclude_patterns
+        self._include_patterns = include_patterns or []
+        self._exclude_patterns = exclude_patterns or []
         self._class_loc_from_methods = class_loc_from_methods
 
         self.__sources = Sources(self.root, self.__lang__)
@@ -81,7 +83,7 @@ class Loader(metaclass=abc.ABCMeta):
 
     @cached_property
     def ignores(self) -> list[str]:
-        return list(set(self.__ignore_dirs__ + utils.ignore_dirs(self._root) + (self._exclude_patterns or [])))
+        return list(set(self.__ignore_dirs__ + utils.ignore_dirs(self._root) + self._exclude_patterns))
 
     @abc.abstractmethod
     def collect(self) -> dict[str, list[FileItem]]:
@@ -93,6 +95,16 @@ class Loader(metaclass=abc.ABCMeta):
 
     def _should_exclude_file(self, filepath: str) -> bool:
         path = Path(filepath).resolve()
+
+        included = False if self._include_patterns else True
+
+        for include in self._include_patterns:
+            inc_dir = Path(include).resolve()
+            if path == inc_dir or inc_dir in path.parents:
+                included = True
+
+        if not included:
+            return True
 
         for ignore in self.ignores:
             ex_dir = Path(ignore).resolve()
