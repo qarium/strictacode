@@ -5,12 +5,11 @@
 
 AI agent skill for deep code quality analysis using strictacode. The skill:
 
-1. **Reads configuration** — checks project config, understands settings
-2. **Runs analysis** — executes strictacode for the project
-3. **Interprets metrics** — determines project type and problem areas
-4. **Finds hotspots** — identifies problematic files/functions with iterative expansion
-5. **Reads code** — directly analyzes discovered problem areas (max 7 files)
-6. **Creates plan** — produces prioritized improvement list
+1. **Runs analysis** — executes strictacode for the project
+2. **Interprets metrics** — understands RP, OP, Complexity Density and their combinations
+3. **Finds hotspots** — identifies problematic files/functions by detailed metrics
+4. **Reads code** — directly analyzes discovered problem areas
+5. **Creates plan** — produces prioritized improvement list with concrete steps
 
 Use this skill when starting work with a new project, planning refactoring, or assessing technical debt.
 
@@ -18,19 +17,29 @@ Use this skill when starting work with a new project, planning refactoring, or a
 
 ## When to Use
 
+Use this skill when:
+
 - Starting work with a new or legacy project — understand codebase state
 - Planning refactoring — identify where maximum pain comes from minimal effort
+- Conducting sprint retrospective — objective quality data
 - Assessing technical debt before important decisions — quantify "bad code"
+- Onboarding new developers — show where complexity is concentrated
+- Before major changes — understand regression risks
 - On user request — any time diagnostics are needed
 
 ---
 
 ## Prerequisites
 
+Before running analysis, verify:
+
 1. **strictacode installed** — check via `pip show strictacode`
 2. **Project path specified** — if not, use current directory
 
-If not installed: `pip install strictacode`
+If strictacode is not installed:
+```
+pip install strictacode
+```
 
 ---
 
@@ -38,55 +47,45 @@ If not installed: `pip install strictacode`
 
 ### Step 1: Read Configuration
 
-Check for configuration file in project root: `.strictacode.yml`, `.strictacode.yaml`, or `.strictacode.json`. If present, read it.
-
-**Default top values** (when not configured):
-| Category   | Default |
-|------------|---------|
-| packages   | 5       |
-| modules    | 10      |
-| classes    | 20      |
-| methods    | 25      |
-| functions  | 25      |
+Check for configuration file in project root: `.strictacode.yml`, `.strictacode.yaml`, or `.strictacode.json`. If present, read it to understand project settings.
 
 **Configuration options:**
 - `lang` — project language (`python`, `golang`, `javascript`)
 - `loader.exclude` — paths and directories to exclude from analysis
-- `reporter.top.*` — number of top elements per category
 
 **Rules:**
 - DO read and account for configuration when analyzing the report
-- DO suggest excluding directories via `loader.exclude` if they distort metrics (vendor, generated code, mocks, migrations)
+- DO suggest excluding directories via `loader.exclude` if they distort metrics (vendor, generated code, mocks, migrations, proto)
 - DO NOT create or modify configuration files — only suggest changes to the user
-- DO NOT suggest changing `reporter.top.*` values — this is user's decision
 
 ### Step 2: Run Analysis
 
-strictacode automatically picks up config from project root. No need to pass config values via CLI flags.
-
+Execute strictacode command ALWAYS with these exact `--top-*` flags:
 ```bash
-strictacode analyze <path> --details --format json
+strictacode analyze <path> --details --format json --top-packages 5 --top-modules 5 --top-classes 10 --top-methods 15 --top-functions 15
 ```
+
+These limits keep the report size manageable. DO NOT increase them.
+
+strictacode automatically picks up config from project root. If `loader.exclude` is configured and relevant to analysis, note it in the report.
 
 Flags:
 - `--details` — get metrics at module, class, function level
 - `--format json` — structured output for parsing
 
-If `loader.exclude` is configured and relevant to analysis, note it in the report.
-
 ### Step 3: Interpret General Metrics
 
-#### 3.1 Evaluate Project Score
+#### Step 3.1: Evaluate Project Score
 
-| Score  | Status    | Action                          |
-|--------|-----------|---------------------------------|
-| 0-20   | healthy   | All good, proceed to monitoring |
-| 21-40  | normal    | Issues exist, should address    |
-| 41-60  | warning   | Attention needed                |
-| 61-80  | critical  | Refactoring is priority         |
-| 81-100 | emergency | Critical, act immediately       |
+| Score  | Status    | Action                              |
+|--------|-----------|-------------------------------------|
+| 0-20   | healthy   | All good, proceed to monitoring     |
+| 21-40  | normal    | Issues exist, should address        |
+| 41-60  | warning   | Attention needed, refactoring required |
+| 61-80  | critical  | Refactoring is priority             |
+| 81-100 | emergency | Critical, act immediately           |
 
-#### 3.2 Determine Project Type
+#### Step 3.2: Calculate diff and Determine Project Type
 
 Calculate: `diff = |RP - OP|`
 
@@ -100,10 +99,10 @@ Calculate: `diff = |RP - OP|`
 
 **Key diff indicator:**
 - `diff ≤ 30` — balanced project
-- `diff > 40` — imbalance, deeper analysis needed
+- `diff > 40` — imbalance, analysis needed
 - `diff > 50` — severe imbalance, critical problem
 
-#### 3.3 Explain Metric Origins
+#### Step 3.3: Explain Metric Origins
 
 When OP or RP is high, ALWAYS explain it through available statistics from the report.
 
@@ -119,36 +118,45 @@ Use `stat(modules)` from project/package level:
 - `p90` — if > 25, problem is systemic
 - Also check `complexity.density` and `complexity.stat.max` for function-level detail
 
-**Output format:**
+**Output format for breakdown:**
 ```
 <package> — OP=<value> breakdown:
 - stat(modules): avg=<X>, max=<Y>, p90=<Z>
-- Top contributor (max=<Y>): <module_name>
+- Top contributor (max=<Y>): <module_name> — read file to understand why
 - Systemic assessment: p90=<Z> → <systemic/local> problem
+```
+
+**Example:**
+```
+<package_name> — OP=<value> breakdown:
+- stat(modules): avg=<X>, max=<Y>, p90=<Z>
+- Top contributor: <module_name> (after reading: <N> types, imported everywhere)
+- p90=<Z> → problem is systemic (90% of modules have OP up to <Z>)
+- Main driver: many small types with high fan-in (imported by <N>+ modules each)
 ```
 
 ### Step 4: Identify Hotspots
 
 Extract elements from detailed report by thresholds:
 
-| Type     | Metric                           | Threshold | Meaning                              |
-|----------|----------------------------------|-----------|--------------------------------------|
-| Functions| `complexity.total`               | > 30      | Function hard to change safely       |
-| Functions| `complexity.total`               | > 40      | Almost impossible to change          |
-| Classes  | `overengineering_pressure.score` | > 70      | Class oversaturated with dependencies|
-| Modules  | `complexity.density`             | > 50      | Spaghetti code in module             |
-| Modules  | `complexity.density`             | > 75      | Rework required                      |
+| Type     | Metric                              | Threshold | Meaning                              |
+|----------|-------------------------------------|-----------|--------------------------------------|
+| Functions| `complexity.total`                  | > 30      | Function hard to change safely       |
+| Functions| `complexity.total`                  | > 40      | Almost impossible to change          |
+| Classes  | `overengineering_pressure.score`    | > 70      | Class oversaturated with dependencies|
+| Modules  | `complexity.density`                | > 50      | Spaghetti code in module             |
+| Modules  | `complexity.density`                | > 75      | Rework required                      |
 
 Also use `status.name`:
 - `"critical"` — requires immediate attention
 - `"warning"` — requires attention
 - `"normal"` / `"healthy"` — acceptable
 
-#### Analyze Statistics
+#### Analyze Statistics (stat fields)
 
 Use `stat(modules)` and `stat(classes+functions)`:
 - **max** — most problematic element
-- **p90** — 90th percentile (if high — problem is systemic)
+- **p90** — 90th percentile (if p90 is high — problem is systemic)
 - **avg** — project average
 
 **Red flags:**
@@ -159,46 +167,11 @@ Use `stat(modules)` and `stat(classes+functions)`:
 | `p90_complexity`  | > 25      | Problem is systemic, not local            |
 | `density`        | > 75      | Spaghetti code, rework required           |
 
-> Note: `coupling` and `depth` are NOT available in JSON report. They can only be assessed via direct code reading in Step 5.
-
-#### Prioritization Rules
-
-| Sign                                    | Priority |
-|-----------------------------------------|----------|
-| complexity > 40 in function             | P0       |
-| RP > 80 in critical module (core, api)  | P0       |
-| OP > 80 in any part of project          | P0       |
-| p90 > 25 (systemic problem)             | P0       |
-| RP 60-80 in multiple modules            | P1       |
-| OP 60-80 in isolated code               | P1       |
-| density > 50 in module                  | P1       |
-| Single functions with complexity 20-30  | P2       |
-
-Include 1-2 quick wins (P2, little effort) alongside main problems (P0-P1).
-
-#### Iterative Top Expansion
-
-Only applies when `--details` flag is used (classes/methods/functions data required).
-
-Check the **tail** of each top category (last 2-3 elements). If boundary elements have score > 40 (warning/critical), expand the top and re-run to capture potentially missed problem areas.
-
-**Algorithm:**
-1. For each category (packages, modules, classes, methods, functions), check the last 2-3 elements in the top
-2. If any boundary element has score > 40 → increase `--top-*` for that category by 50% and re-run
-3. Use the expanded run as the source of truth for that category
-4. Max 2 iterations
-
-```bash
-# Initial run (default top-modules = 10)
-strictacode analyze <path> --details --format json
-
-# Boundary element #10 has score 55 → expand
-strictacode analyze <path> --details --format json --top-modules 15
-```
+> Note: `coupling` and `depth` are NOT available in JSON report. Assess these via direct code reading in Step 5.
 
 ### Step 5: Analyze Hotspot Code
 
-#### 5.1 Locate Problems Precisely
+#### Step 5.1: Locate Problems Precisely
 
 JSON report provides `file` path but NOT line numbers. You MUST find exact locations.
 
@@ -206,9 +179,19 @@ JSON report provides `file` path but NOT line numbers. You MUST find exact locat
 1. **Use Grep tool** to find function/class definition:
    - Python: `grep "def function_name"`
    - Go: `grep "func FunctionName"` or `grep "func (.*FunctionName"`
-   - JavaScript: `grep "function functionName"`, `grep "const functionName"`, `grep "=>"`
+   - JavaScript: `grep "function functionName"\\|grep "const functionName"\\|grep "=>"`
 2. **Use Read tool** to read the file and identify line range
 3. **Report format:** `file:start-end — description`
+
+**Example workflow:**
+```
+Problem: <function_name> has complexity 42
+
+1. Grep "def <function_name>" → found in <path/to/file>.py
+2. Read <file>.py → function spans lines 281-332 (52 lines)
+3. Analyze code → switch statement with many cases at lines 285-310
+4. Report: <path/to/file>.go:281-332 — <FunctionName>() complexity=42
+```
 
 **Required for EVERY hotspot:**
 - Full file path (relative to project root)
@@ -216,17 +199,47 @@ JSON report provides `file` path but NOT line numbers. You MUST find exact locat
 - Function/class name
 - Specific problematic lines (if applicable)
 
-#### 5.2 Understand Context
+#### Step 5.2: Understand Context
 
-Read at most **7 files** with the highest scores (sorted by score DESC, then complexity.total DESC). For remaining hotspots, describe by metrics only — do not read files.
-
-For each file you read:
-1. Understand context — what the function/module does
-2. Identify specific problems (long functions, deep nesting, duplication)
+For each hotspot:
+1. Read the file with problematic code
+2. Understand context — what the function/module does
+3. Identify specific problems (long functions, deep nesting, duplication)
 
 ### Step 6: Create Improvement Plan
 
+#### Step 6.1: Make Recommendations Actionable
+
 Every recommendation MUST include concrete details. Use report data + file analysis.
+
+**For package refactoring, provide:**
+| Field | Source |
+|-------|--------|
+| Files to move | Read package directory, identify patterns |
+| Destination | Logical grouping (e.g., `db/drivers/`) |
+| File count | From directory listing |
+| LOC estimate | `package.loc` / `package.modules` * files_to_move |
+| Breaking imports | Grep for package import path |
+
+**Example:**
+```
+Refactor <package_name>:
+- From report: 35 modules, 10,192 LOC
+
+Files to move (after reading directory):
+| Pattern          | Destination       | Files | LOC est. |
+|------------------|-------------------|-------|----------|
+| <prefix1>_*.go   | <new_pkg>/<dir1>/ | 12    | ~3,500   |
+| <prefix2>_*.go   | <new_pkg>/<dir2>/ | 8     | ~2,300   |
+| <prefix3>_*.go   | <new_pkg>/<dir3>/ | 6     | ~1,700   |
+
+Breaking imports (grep "<package_name>"):
+- <service>/<module1>.go:45
+- <api>/<module2>.go:12
+- <cmd>/<module3>.go:23
+
+Effort: large (rename imports + run tests)
+```
 
 **For function refactoring, provide:**
 | Field | Source |
@@ -236,14 +249,17 @@ Every recommendation MUST include concrete details. Use report data + file analy
 | Line ranges | From code analysis |
 | Effort | `small` (single function) / `medium` (multiple functions) / `large` (package, breaking imports) |
 
-**For package refactoring, provide:**
-| Field | Source |
-|-------|--------|
-| Files to move | Read package directory, identify patterns |
-| Destination | Logical grouping |
-| File count | From directory listing |
-| LOC estimate | `package.loc` / `package.modules` * files_to_move |
-| Breaking imports | Grep for package import path |
+**Example:**
+```
+Split <FunctionName> (<path/to/file>:281-332):
+- Current: 52 LOC, complexity 42
+- Extract: <HelperFunction1>() — lines 285-310 (~25 LOC)
+- Extract: <HelperFunction2>() — lines 315-340 (~25 LOC)
+- Remaining: ~50 LOC with core business logic
+- Effort: medium
+```
+
+#### Step 6.2: Prioritize and Format
 
 Form a prioritized list with:
 - Priority (P0 — critical, P1 — important, P2 — desirable)
@@ -254,6 +270,8 @@ Form a prioritized list with:
 ---
 
 ## Output Format
+
+Present analysis results in the following format:
 
 ### Project Summary
 
@@ -268,15 +286,19 @@ Form a prioritized list with:
 **Complexity Density:** <value>
 ```
 
-### Metric Breakdown (REQUIRED if OP > 40 or RP > 40)
+### Metric Breakdown (if OP > 40 or RP > 40)
+
+REQUIRED when any metric is elevated. Use `stat()` data from report.
 
 ```
-## Metric Breakdown
+## 📊 Metric Breakdown
 
 ### OP Breakdown (if OP > 40)
 | Package | OP  | stat.avg | stat.max | stat.p90 | Assessment |
 |---------|-----|----------|----------|----------|------------|
 | <name>  | <X> | <Y>      | <Z>      | <W>      | systemic/local |
+
+Top contributor: <file> — read analysis shows <reason>
 
 ### RP Breakdown (if RP > 40)
 | Module | RP  | stat.avg | stat.max | stat.p90 | density | Problem function |
@@ -287,17 +309,29 @@ Form a prioritized list with:
 ### Red Flags (if any)
 
 ```
-## Red Flags
+## 🚨 Red Flags
 
 1. `<file:start-end>` — <function_name>() has complexity <X>
    - Threshold: 40 (almost impossible to change safely)
    - Problem lines: <start>-<end> — <specific issue>
 ```
 
+### Pain Points
+
+```
+## 🔥 Pain Points
+
+### <file:start-end> — <function/module name>
+- **Problem:** <brief description>
+- **Metrics:** complexity=<X> (threshold: <Y>), density=<Z>
+- **Context:** <what this code does>
+- **Specific issues:** <list with line numbers>
+```
+
 ### Improvement Plan
 
 ```
-## Improvement Plan
+## 📋 Improvement Plan
 
 ### P0 — Critical
 1. **<Action>**
@@ -316,17 +350,200 @@ Form a prioritized list with:
 
 ---
 
-## Report Fields Reference
+## Examples
 
-JSON report structure:
-- `project` — general project metrics (status, RP, OP, complexity)
-- `packages` — package metrics (OP, RP, density, stat)
-- `modules` — module metrics (OP, RP, density, stat)
-- `classes` — class metrics (OP, complexity, stat)
-- `methods` — method metrics (complexity, stat)
-- `functions` — function metrics (complexity, stat)
+### Report Analysis Example
 
-> Note: JSON report does NOT include fan_out/fan_in/depth/centrality. Use code reading to assess these.
+**Input:** JSON report from strictacode with fields:
+- `project` — general project metrics
+- `packages` — package metrics
+- `modules` — module metrics
+- `classes` — class metrics
+- `methods` — method metrics
+- `functions` — function metrics
+
+### Interpretation Example
+
+```json
+{
+  "project": {
+    "status": {"name": "warning", "score": 58},
+    "refactoring_pressure": {"score": 72},
+    "overengineering_pressure": {"score": 8},
+    "complexity": {"density": 42.5}
+  }
+}
+```
+
+**Calculation:** diff = |72 - 8| = 64 > 50 → critical imbalance
+
+**Diagnosis:** Spaghetti code (RP high, OP low, diff > 40)
+
+### Function Hotspot Example
+
+```json
+{
+  "name": "<function_name>",
+  "file": "<module_name>.py",
+  "loc": <N>,
+  "status": {"name": "critical", "score": <X>},
+  "complexity": {
+    "score": <X>,
+    "total": <X>,
+    "density": <D>
+  }
+}
+```
+
+**Step 1 — Locate:**
+```
+Grep "def <function_name>" → <module_name>.py:<line>
+Read <module_name>.py → function spans lines <start>-<end> (<N> LOC)
+```
+
+**Step 2 — Report:**
+```
+<module_name>.py:<start>-<end> — <function_name>()
+- complexity = <X> > 40 → red flag
+- density = <D> > 50 → spaghetti code
+- Lines <l1>-<l2>: <specific_issue> (main complexity source)
+```
+
+### Statistics Analysis Example
+
+```json
+{
+  "refactoring_pressure": {
+    "score": 72,
+    "stat(modules)": {
+      "avg": 8,
+      "max": 24,
+      "p90": 16
+    }
+  }
+}
+```
+
+**Interpretation:**
+- max = 24 → module with high RP exists
+- p90 = 16 → problem not systemic (p90 < 25)
+- Conclusion: local problem, focus on one module
+
+### OP Breakdown Example
+
+**Report data:**
+```json
+{
+  "packages": [
+    {
+      "name": "<package_name>",
+      "overengineering_pressure": {"score": <value>},
+      "complexity": {"density": <X>},
+      "loc": <N>,
+      "modules": <M>
+    }
+  ]
+}
+```
+
+**Note:** JSON report does NOT include fan_out/fan_in/depth/centrality.
+Use `stat()` and code analysis to explain.
+
+**Analysis workflow:**
+```
+1. Report shows: OP=<value>, <N> modules, density=<X> (low = many simple types)
+2. Read <package_name> directory → list files
+3. Read 2-3 largest files → count structs/types, find import patterns
+4. Grep "<package_name>" → count how many files import this package
+5. Conclude: high fan_in (types imported everywhere) drives OP
+```
+
+**Output:**
+```
+<package_name> — OP=<value> breakdown:
+- stat(modules): avg=<X>, max=<Y>, p90=<Z> (from detailed report)
+- Modules: <N> files, <LOC> lines, density=<D> (many simple types)
+- Code analysis:
+  - <file1>: <N1> type definitions
+  - <file2>: <N2> type definitions
+  - <file3>: <N3> type definitions
+- Import analysis: <package_name> imported by <N>+ files across project
+- Main driver: high fan_in (types imported everywhere, not high fan_out)
+- p90=<Z> → problem is systemic (90% of modules have OP up to <Z>)
+- Recommendation: split by domain (<package>/<domain1>/, <package>/<domain2>/, ...)
+```
+
+### Improvement Plan Example
+
+```
+### P0 — Critical
+1. Split <function_name> into sub-functions
+   - Location: `<module_name>.py:<start>-<end>`
+   - Justification: complexity <X> > 40, function blocks changes
+   - Extract candidates:
+     - <helper1>() — lines <l1>-<l2> (~<n1> LOC)
+     - <helper2>() — lines <l3>-<l4> (~<n2> LOC)
+     - <helper3>() — lines <l5>-<l6> (~<n3> LOC)
+   - Expected effect: complexity ~15 per function
+   - Effort: medium
+   - Breaking changes: none (internal refactoring)
+
+### P1 — Important
+2. Simplify <module_name> module
+   - Location: `<module_name>.py`
+   - Justification: module RP = <X>, density = <Y> > 50
+   - Files affected: <module_name>.py (1 file, <N> LOC)
+   - Expected effect: reduce project RP by ~10-15 points
+   - Effort: medium
+
+### P2 — Desirable
+3. Add tests for <function_name> before refactoring
+   - Location: `tests/test_<module_name>.py`
+   - Justification: refactoring safety
+   - Test cases needed: 5-7 (happy path + edge cases)
+   - Effort: small
+```
+
+### Package Refactoring Example
+
+**Report data:**
+```json
+{
+  "name": "<package_name>",
+  "dir": "<package_path>",
+  "loc": <N>,
+  "modules": <M>,
+  "overengineering_pressure": {"score": <value>}
+}
+```
+
+**Analysis workflow:**
+```
+1. Read <package_path> directory → list files
+2. Identify patterns by naming convention or responsibility
+3. Grep "<package_name>" for breaking imports
+4. Calculate LOC per pattern
+```
+
+**Output:**
+```
+Refactor <package_name> (OP=<value>):
+- Current: <M> modules, <N> LOC
+
+Files to move:
+| Pattern           | Destination          | Files | LOC est. |
+|-------------------|----------------------|-------|----------|
+| <pattern1>        | <new_pkg>/<subdir1>/ | <N1>  | ~<LOC1>  |
+| <pattern2>        | <new_pkg>/<subdir2>/ | <N2>  | ~<LOC2>  |
+| <pattern3>        | <new_pkg>/<subdir3>/ | <N3>  | ~<LOC3>  |
+
+Breaking imports (grep "<package_name>"):
+- <module1>:<line1>,<line2>
+- <module2>:<line1>,<line2>
+- <module3>:<line1>
+
+Effort: large (rename imports + run tests)
+```
 
 ---
 
@@ -342,6 +559,7 @@ If report contains little data (LOC < 100, modules < 3):
 
 If project.status.name = "healthy" and no elements with status.name = "critical" or "warning":
 - Confirm healthy project state
+- Point out best practices for maintaining quality (code review with complexity checks, linters with thresholds)
 - Recommend regular monitoring
 - Don't suggest excessive improvements
 
