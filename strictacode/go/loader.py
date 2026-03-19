@@ -33,9 +33,6 @@ class GoLoder(Loader):
         metrics = {}
 
         for filepath, items in data.items():
-            if self._should_exclude_file(filepath):
-                continue
-
             if filepath not in metrics:
                 metrics[filepath] = []
 
@@ -60,5 +57,6 @@ class GoLoder(Loader):
         for edge in edges:
             source_path = os.path.abspath(edge["source"].split(":")[0])
             target_path = os.path.abspath(edge["target"].split(":")[0])
+
             if source_path in collected_paths and target_path in collected_paths:
                 self.sources.graph.add_edge(edge["source"], edge["target"])

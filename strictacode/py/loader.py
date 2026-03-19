@@ -35,9 +35,6 @@ class PyLoder(Loader):
         file_to_items = {}
 
         for filepath, items in data.items():
-            if self._should_exclude_file(filepath):
-                continue
-
             if filepath not in file_to_items:
                 file_to_items[filepath] = []
 

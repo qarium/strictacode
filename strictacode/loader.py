@@ -56,9 +56,11 @@ class Loader(metaclass=abc.ABCMeta):
     __comment_code_blocks__: list[tuple[str, str]] = []
 
     def __init__(self, root: str = '.', *,
-                 class_loc_from_methods: bool = False):
+                 class_loc_from_methods: bool = False,
+                 exclude_patterns: t.Optional[list[str]] = None):
         self._root = root
 
+        self._exclude_patterns = exclude_patterns
         self._class_loc_from_methods = class_loc_from_methods
 
         self.__sources = Sources(self.root, self.__lang__)
@@ -79,7 +81,7 @@ class Loader(metaclass=abc.ABCMeta):
 
     @cached_property
     def ignores(self) -> list[str]:
-        return list(set(self.__ignore_dirs__ + utils.ignore_dirs(self._root)))
+        return list(set(self.__ignore_dirs__ + utils.ignore_dirs(self._root) + (self._exclude_patterns or [])))
 
     @abc.abstractmethod
     def collect(self) -> dict[str, list[FileItem]]:
@@ -159,6 +161,9 @@ class Loader(metaclass=abc.ABCMeta):
         file_to_items = self.collect()
 
         for filepath, items in file_to_items.items():
+            if self._should_exclude_file(filepath):
+                continue
+
             self.__load_items_from_file(filepath, items)
 
         self.__sources.packages.extend(self.__packages.values())

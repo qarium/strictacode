@@ -45,7 +45,31 @@ pip install strictacode
 
 ## Steps
 
-### Step 1: Run Analysis
+### Step 1: Read Configuration
+
+Check for configuration file in project root: `.strictacode.yml`, `.strictacode.yaml`, or `.strictacode.json`. If present, read it to understand project settings.
+
+**Default top values** (when not configured):
+| Category   | Default |
+|------------|---------|
+| packages   | 5       |
+| modules    | 10      |
+| classes    | 20      |
+| methods    | 25      |
+| functions  | 25      |
+
+**Configuration options:**
+- `lang` — project language (`python`, `golang`, `javascript`)
+- `loader.exclude` — paths and directories to exclude from analysis
+- `reporter.top.*` — number of top elements per category
+
+**Rules:**
+- DO read and account for configuration when analyzing the report
+- DO suggest excluding directories via `loader.exclude` if they distort metrics (vendor, generated code, mocks, migrations)
+- DO NOT create or modify configuration files — only suggest changes to the user
+- DO NOT suggest changing `reporter.top.*` values — this is user's decision
+
+### Step 2: Run Analysis
 
 Execute strictacode command:
 ```bash
@@ -56,9 +80,11 @@ Flags:
 - `--details` — get metrics at module, class, function level
 - `--format json` — structured output for parsing
 
-### Step 2: Interpret General Metrics
+If `loader.exclude` is configured and relevant to analysis, note it in the report.
 
-#### Step 2.1: Evaluate Project Score
+### Step 3: Interpret General Metrics
+
+#### Step 3.1: Evaluate Project Score
 
 | Score  | Status    | Action                              |
 |--------|-----------|-------------------------------------|
@@ -68,7 +94,7 @@ Flags:
 | 61-80  | critical  | Refactoring is priority             |
 | 81-100 | emergency | Critical, act immediately           |
 
-#### Step 2.2: Calculate diff and Determine Problem Type
+#### Step 3.2: Calculate diff and Determine Problem Type
 
 Calculate: `diff = |RP - OP|`
 
@@ -85,7 +111,7 @@ Calculate: `diff = |RP - OP|`
 - `diff > 40` — imbalance, analysis needed
 - `diff > 50` — severe imbalance, critical problem
 
-#### Step 2.3: Explain Metric Origins
+#### Step 3.3: Explain Metric Origins
 
 When OP or RP is high, ALWAYS explain it through available statistics from the report.
 
@@ -118,7 +144,7 @@ Use `stat(modules)` from project/package level:
 - Main driver: many small types with high fan-in (imported by <N>+ modules each)
 ```
 
-### Step 3: Identify Hotspots
+### Step 4: Identify Hotspots
 
 Extract elements from detailed report by thresholds:
 
@@ -152,9 +178,28 @@ Use `stat(modules)` and `stat(classes+functions)`:
 | `coupling`       | > 4       | Too many connections between classes      |
 | `depth`          | > 8       | Dependency chains too deep                |
 
-### Step 4: Analyze Hotspot Code
+#### Iterative Top Expansion
 
-#### Step 4.1: Locate Problems Precisely
+Check the **tail** of each top category (last 2-3 elements). If boundary elements have score > 40 (warning/critical), expand the top and re-run to capture potentially missed problem areas.
+
+**Algorithm:**
+1. For each category (packages, modules, classes, methods, functions), check the last 2-3 elements in the top
+2. If any boundary element has score > 40 → increase `--top-*` for that category by 50% and re-run
+3. Merge new results with previous, keeping only elements with score > 40
+4. Repeat once if needed (max 2 iterations)
+
+**Example:**
+```bash
+# Initial run (default top-modules = 10)
+strictacode analyze <path> --details --format json
+
+# Boundary element #10 has score 55 → expand
+strictacode analyze <path> --details --format json --top-modules 15
+```
+
+### Step 5: Analyze Hotspot Code
+
+#### Step 5.1: Locate Problems Precisely
 
 JSON report provides `file` path but NOT line numbers. You MUST find exact locations.
 
@@ -182,16 +227,16 @@ Problem: <function_name> has complexity 42
 - Function/class name
 - Specific problematic lines (if applicable)
 
-#### Step 4.2: Understand Context
+#### Step 5.2: Understand Context
 
 For each hotspot:
 1. Read the file with problematic code
 2. Understand context — what the function/module does
 3. Identify specific problems (long functions, deep nesting, duplication)
 
-### Step 5: Create Improvement Plan
+### Step 6: Create Improvement Plan
 
-#### Step 5.1: Make Recommendations Actionable
+#### Step 6.1: Make Recommendations Actionable
 
 Every recommendation MUST include concrete details. Use report data + file analysis.
 
@@ -242,7 +287,7 @@ Split <FunctionName> (<path/to/file>.go:281-332):
 - Effort: ~2-3 hours + tests
 ```
 
-#### Step 5.2: Prioritize and Format
+#### Step 6.2: Prioritize and Format
 
 Form a prioritized list with:
 - Priority (P0 — critical, P1 — important, P2 — desirable)
