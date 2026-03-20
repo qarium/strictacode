@@ -1,109 +1,105 @@
-# Метрики качества кода
+# Code Quality Metrics
 
-Эта документация описывает метрики, которые использует strictacode для оценки состояния кодовой базы.
-
----
+This documentation describes the metrics that strictacode uses to evaluate the state of a codebase.
 
 ## Quick Reference
 
 ### Project Score
 
-**Что это:** Общая оценка здоровья проекта от 0 до 100.
+**What it is:** Overall project health score from 0 to 100.
 
-| Score  | Статус      | Что делать                    |
-|--------|-------------|-------------------------------|
-| 0-20   | `healthy`   | Код в отличном состоянии      |
-| 21-40  | `normal`    | Есть проблемы, можно работать |
-| 41-60  | `warning`   | Стоит обратить внимание       |
-| 61-80  | `critical`  | Рефакторинг — приоритет       |
-| 81-100 | `emergency` | Код блокирует работу          |
+| Score  | Status      | What to do                      |
+|--------|-------------|---------------------------------|
+| 0-20   | `healthy`   | Code is in excellent shape      |
+| 21-40  | `normal`    | There are issues, but workable  |
+| 41-60  | `warning`   | Worth paying attention to       |
+| 61-80  | `critical`  | Refactoring is a priority       |
+| 81-100 | `emergency` | Code is blocking work           |
 
 ### Refactoring Pressure (RP)
 
-**Что это:** Давление на рефакторинг от 0 до 100.
+**What it is:** Refactoring pressure from 0 to 100.
 
-| RP     | Что делать                          |
-|--------|-------------------------------------|
-| 0-20   | Всё хорошо, продолжай в том же духе |
-| 21-40  | Есть проблемы, но не горит          |
-| 41-60  | Стоит заняться в ближайшее время    |
-| 61-80  | Рефакторинг — приоритет             |
-| 81-100 | Надо было вчера                     |
+| RP     | What to do                        |
+|--------|-----------------------------------|
+| 0-20   | Everything is fine, keep it up    |
+| 21-40  | There are issues, but not urgent  |
+| 41-60  | Should address soon               |
+| 61-80  | Refactoring is a priority         |
+| 81-100 | Should have been done yesterday   |
 
 ### Overengineering Pressure (OP)
 
-**Что это:** Индикатор избыточной сложности архитектуры от 0 до 100.
+**What it is:** Excessive architectural complexity indicator from 0 to 100.
 
-| OP     | Что делать                          |
-|--------|-------------------------------------|
-| 0-20   | Простая архитектура, легко понимать |
-| 21-40  | Умеренная сложность, допустимо      |
-| 41-60  | Много абстракций, стоит упростить   |
-| 61-80  | Overengineering, рефакторинг нужен  |
-| 81-100 | Неразбериха, нужна переработка      |
+| OP     | What to do                              |
+|--------|-----------------------------------------|
+| 0-20   | Simple architecture, easy to understand |
+| 21-40  | Moderate complexity, acceptable         |
+| 41-60  | Too many abstractions, consider simplifying |
+| 61-80  | Overengineering, refactoring needed     |
+| 81-100 | Chaos, needs a complete overhaul        |
 
 ### Complexity Density
 
-**Что это:** Плотность сложности, насколько "забит" код.
+**What it is:** Complexity density, how "packed" the code is.
 
-| Density | Какой код                     |
-|---------|-------------------------------|
-| 0-20    | Чистый, легко читать          |
-| 21-50   | Грязноват, но терпимо         |
-| 51-100  | Спагетти, сложно менять       |
-| 100+    | Нечитаемый, нужен рефакторинг |
-
----
+| Density | What kind of code                   |
+|---------|-------------------------------------|
+| 0-20    | Clean, easy to read                 |
+| 21-50   | Somewhat dirty, but tolerable       |
+| 51-100  | Spaghetti, hard to change           |
+| 100+    | Unreadable, refactoring required    |
 
 ## Project Score
 
-### Что измеряет
+### What it measures
 
-Project Score — это агрегированная оценка здоровья проекта, объединяющая RP, OP и Complexity Density. Формула учитывает не только значения метрик, но и их соотношение между собой.
+Project Score is an aggregated project health metric that combines RP, OP, and Complexity Density. The formula takes into account not only the metric values themselves, but also their relationship to each other.
 
-### Шкала Score
+### Score Scale
 
-| Score  | Статус      | Интерпретация         | Действие              |
-|--------|-------------|-----------------------|-----------------------|
-| 0-20   | `healthy`   | Код здоров            | Поддерживать уровень  |
-| 21-40  | `normal`    | Нормальное состояние  | Плановый мониторинг   |
-| 41-60  | `warning`   | Есть проблемы         | Обратить внимание     |
-| 61-80  | `critical`  | Критическое состояние | Рефакторинг приоритет |
-| 81-100 | `emergency` | Экстренная ситуация   | Немедленные действия  |
+| Score  | Status      | Interpretation       | Action                    |
+|--------|-------------|----------------------|---------------------------|
+| 0-20   | `healthy`   | Code is healthy      | Maintain current level    |
+| 21-40  | `normal`    | Normal state         | Routine monitoring        |
+| 41-60  | `warning`   | There are issues     | Pay attention             |
+| 61-80  | `critical`  | Critical state       | Refactoring is a priority |
+| 81-100 | `emergency` | Emergency situation  | Immediate action required |
 
-### Как считается
+### How it is calculated
 
-**Базовая формула:**
+**Base formula:**
 
 ```
 base_score = 0.4 × RP + 0.4 × OP + 0.2 × density
 ```
 
-**Учёт перекоса (Imbalance):**
+**Imbalance check:**
 
-Сильный перекос между RP и OP свидетельствует о проблеме:
-- **RP >> OP** — spaghetti-код: грязный, но без абстракций (острая проблема)
-- **OP >> RP** — overengineering: абстрактный, но чистый (хроническая проблема)
+A strong imbalance between RP and OP indicates a problem:
+- **RP >> OP** -- spaghetti code: dirty but without abstractions (an acute problem)
+- **OP >> RP** -- overengineering: abstract but clean (a chronic problem)
 
-Для учёта перекоса используется гибридный подход:
+A hybrid approach is used to account for imbalance:
 
 ```
 diff = |RP - OP|
 extremum = max(RP, OP)
 
 if diff <= 30:
-    penalty = 0  # Нет перекоса
+    penalty = 0  # No imbalance
 
 elif extremum >= 35:
-    # Высокий экстремум — аддитивный штраф
+    # High extremum — additive penalty
     penalty = calculate_penalty(diff, direction)
 
 else:
-    # Низкий экстремум — множитель
+    # Low extremum — multiplier
     score = base_score × multiplier
 ```
 
-**Шкалы штрафов:**
+**Penalty scales:**
 
 | Diff  | Spaghetti (RP >> OP) | Overengineering (OP >> RP) |
 |-------|----------------------|----------------------------|
@@ -111,46 +107,44 @@ else:
 | > 40  | +15 / ×1.5           | +7 / ×1.15                 |
 | > 30  | +8 / ×1.25           | +3 / ×1.08                 |
 
-Spaghetti наказывается сильнее (~2:1), так как это острая проблема, влияющая на ежедневную разработку.
+Spaghetti is penalized more heavily (~2:1) because it is an acute problem that affects daily development.
 
-### Примеры
+### Examples
 
-| RP | OP  | Density | Base | Diff  | Extremum | Штраф | Final   | Status      |
-|----|-----|---------|------|-------|----------|-------|---------|-------------|
-| 10 | 10  | 10      | 10   | 0     | 10       | —     | **10**  | healthy     |
-| 71 | 8   | 17.68   | 35   | 63    | 71 ✓     | +25   | **60**  | warning     |
-| 8  | 71  | 17.68   | 35   | 63    | 71 ✓     | +12   | **47**  | warning     |
-| 41 | 9   | 9       | 20   | 32    | 41 ✓     | +8    | **28**  | normal      |
-| 30 | 30  | 15      | 25   | 0     | 30       | —     | **25**  | normal      |
-
----
+| RP | OP  | Density | Base | Diff  | Extremum | Penalty | Final   | Status      |
+|----|-----|---------|------|-------|----------|---------|---------|-------------|
+| 10 | 10  | 10      | 10   | 0     | 10       | --      | **10**  | healthy     |
+| 71 | 8   | 17.68   | 35   | 63    | 71 ✓     | +25     | **60**  | warning     |
+| 8  | 71  | 17.68   | 35   | 63    | 71 ✓     | +12     | **47**  | warning     |
+| 41 | 9   | 9       | 20   | 32    | 41 ✓     | +8      | **28**  | normal      |
+| 30 | 30  | 15      | 25   | 0     | 30       | --      | **25**  | normal      |
 
 ## Overengineering Pressure (OP)
 
-### Что измеряет
+### What it measures
 
-OP показывает степень избыточной сложности архитектуры — когда код слишком абстрактен, перенасыщён связями или труден для понимания. Метрика анализирует граф зависимостей между классами.
+OP indicates the degree of excessive architectural complexity -- when the code is too abstract, over-connected, or hard to understand. The metric analyzes the dependency graph between classes.
 
-### Основные индикаторы
+### Key Indicators
 
-1. **Fan-out** — сколько зависимостей выдаёт класс (35% веса)
-2. **Fan-in** — сколько классов зависят от данного (25% веса)
-3. **Depth** — глубина цепочки зависимостей (25% веса)
-4. **Centrality** — насколько класс "в центре" графа (15% веса)
+1. **Fan-out** -- how many dependencies a class has (35% weight)
+2. **Fan-in** -- how many classes depend on this one (25% weight)
+3. **Depth** -- depth of the dependency chain (25% weight)
+4. **Centrality** -- how "central" a class is in the graph (15% weight)
 
-### Шкала OP
+### OP Scale
 
-| OP     | Статус           | Интерпретация                     | Действие                 |
+| OP     | Status           | Interpretation                    | Action                   |
 |--------|------------------|-----------------------------------|--------------------------|
-| 0-20   | `simple`         | Прозрачная архитектура            | Поддерживать уровень     |
-| 21-40  | `moderate`       | Допустимая сложность              | Мониторить               |
-| 41-60  | `complex`        | Много абстракций, сложно понимать | Упростить ключевые места |
-| 61-80  | `overengineered` | Явный overengineering             | Рефакторинг приоритет    |
-| 81-100 | `bloated`        | Архитектура блокирует разработку  | Переработка архитектуры  |
+| 0-20   | `simple`         | Transparent architecture          | Maintain current level   |
+| 21-40  | `moderate`       | Acceptable complexity             | Monitor                  |
+| 41-60  | `complex`        | Many abstractions, hard to follow | Simplify key areas       |
+| 61-80  | `overengineered` | Clear overengineering             | Refactoring is a priority|
+| 81-100 | `bloated`        | Architecture blocks development   | Architectural overhaul   |
 
-### Как считается
+### How it is calculated
 
-**На уровне класса:**
+**At the class level:**
 
 ```
 class_score = (
@@ -161,16 +155,16 @@ class_score = (
 ) × 100
 ```
 
-где каждая компонента нормируется: `norm(v, threshold) = min(1.0, v / threshold)`
+where each component is normalized: `norm(v, threshold) = min(1.0, v / threshold)`
 
-| Компонента | Threshold | Смысл                                |
-|------------|-----------|--------------------------------------|
-| fan_out    | 7         | Класс с 7+ зависимостями — максимум  |
-| fan_in     | 10        | 10+ входящих зависимостей — максимум |
-| depth      | 8         | Цепочка 8+ шагов — максимум          |
-| centrality | 20        | Очень центральный класс — максимум   |
+| Component  | Threshold | Meaning                                   |
+|------------|-----------|-------------------------------------------|
+| fan_out    | 7         | A class with 7+ dependencies is at maximum |
+| fan_in     | 10        | 10+ incoming dependencies is at maximum   |
+| depth      | 8         | A chain of 8+ steps is at maximum         |
+| centrality | 20        | A highly central class is at maximum      |
 
-**На уровне проекта:**
+**At the project level:**
 
 ```
 OP = (
@@ -179,100 +173,94 @@ OP = (
 ) × 100
 ```
 
-где:
-- `coupling = edges / nodes` — среднее количество связей на класс
-- `avg_class_score` — средний score классов
-- порог для coupling = 4, для avg_class_score = 70
-
----
+where:
+- `coupling = edges / nodes` -- average number of connections per class
+- `avg_class_score` -- average class score
+- threshold for coupling = 4, for avg_class_score = 70
 
 ## Refactoring Pressure (RP)
 
-### Что измеряет
+### What it measures
 
-RP показывает, насколько код "давит" на разработчика и требует внимания. Это комплексная метрика, которая учитывает:
+RP shows how much the code "pressures" the developer and demands attention. It is a composite metric that considers:
 
-1. **Пиковую сложность** — есть ли объекты, которые невозможно безопасно изменить
-2. **Общее качество** — насколько "грязный" код в среднем
+1. **Peak complexity** -- whether there are objects that cannot be safely changed
+2. **Overall quality** -- how "dirty" the code is on average
 
-### Шкала RP
+### RP Scale
 
-| RP     | Статус    | Интерпретация                            | Действие                           |
-|--------|-----------|------------------------------------------|------------------------------------|
-| 0-20   | `minimal` | Код чистый, хорошо структурирован        | Поддерживать уровень               |
-| 21-40  | `low`     | Есть проблемные места, не критичные      | Плановый рефакторинг               |
-| 41-60  | `medium`  | Техдолг влияет на скорость разработки    | Запланировать на ближайшие спринты |
-| 61-80  | `high`    | Разработка замедлена, высокий риск багов | Приоритетная задача                |
-| 81-100 | `extreme` | Код блокирует работу                     | Немедленный рефакторинг            |
+| RP     | Status    | Interpretation                           | Action                        |
+|--------|-----------|------------------------------------------|-------------------------------|
+| 0-20   | `minimal` | Code is clean, well-structured           | Maintain current level        |
+| 21-40  | `low`     | There are problematic spots, not critical | Planned refactoring         |
+| 41-60  | `medium`  | Technical debt affects development speed | Plan for upcoming sprints   |
+| 61-80  | `high`    | Development is slowed, high bug risk     | Top priority task            |
+| 81-100 | `extreme` | Code is blocking work                    | Immediate refactoring        |
 
-### Как считается
+### How it is calculated
 
 ```
 RP = 60% × Peak + 40% × Base
 ```
 
-**Peak** — давление от самых сложных объектов (max_complexity и p90_complexity)
+**Peak** -- pressure from the most complex objects (max_complexity and p90_complexity)
 
-**Base** — давление от общего качества кода (через density)
+**Base** -- pressure from overall code quality (via density)
 
-Подробнее о формулах — в разделе [Детали расчёта](#детали-расчёта).
-
----
+For more details on the formulas, see the [Calculation Details](#calculation-details) section.
 
 ## Complexity Density
 
-### Что измеряет
+### What it measures
 
-Density показывает, насколько "концентрированная" сложность в коде.
+Density shows how "concentrated" the complexity is in the code.
 
 ```
 density = (total_complexity / loc) × 100
 ```
 
-Пример: два файла с одинаковой сложностью 50, но разным размером:
+Example: two files with the same complexity of 50, but different sizes:
 
-| Файл  | complexity | loc  | density  |
-|-------|------------|------|----------|
-| A     | 50         | 200  | 25       |
-| B     | 50         | 1000 | 5        |
+| File | complexity | loc  | density  |
+|------|------------|------|----------|
+| A    | 50         | 200  | 25       |
+| B    | 50         | 1000 | 5        |
 
-Файл A "плотнее" — та же сложность упакована в меньший объём.
+File A is "denser" -- the same complexity is packed into a smaller volume.
 
-### Шкала Density
+### Density Scale
 
-| Density | Статус       | Что это значит                         |
-|---------|--------------|----------------------------------------|
-| 0-10    | `clean`      | Простые функции, минимум ветвлений     |
-| 11-20   | `good`       | Нормальная сложность, читается легко   |
-| 21-30   | `moderate`   | Есть сложные места, но управляемо      |
-| 31-50   | `dirty`      | Много ветвлений, труднее поддерживать  |
-| 51-75   | `very-dirty` | Спагетти-код, сложно вносить изменения |
-| 76-100  | `spaghetti`  | Почти невозможно безопасно изменить    |
-| 100+    | `unreadable` | Требуется полная переработка           |
+| Density | Status       | What it means                       |
+|---------|--------------|-------------------------------------|
+| 0-10    | `clean`      | Simple functions, minimal branching |
+| 11-20   | `good`       | Normal complexity, easy to read     |
+| 21-30   | `moderate`   | Some complex spots, but manageable  |
+| 31-50   | `dirty`      | Lots of branching, harder to maintain|
+| 51-75   | `very-dirty` | Spaghetti code, hard to change      |
+| 76-100  | `spaghetti`  | Almost impossible to safely change  |
+| 100+    | `unreadable` | Complete overhaul required          |
 
----
+## Calculation Details
 
-## Детали расчёта
+This section is for those who want to understand the math behind the metrics.
 
-Этот раздел для тех, кто хочет понять математику за метриками.
-
-### Формула RP
+### RP Formula
 
 ```
 RP = 0.6 × Peak(max, p90, loc) + 0.4 × Base(density, loc)
 ```
 
-### Peak — пиковое давление
+### Peak -- peak pressure
 
 ```
 Peak = 100 × (1 - e^(-0.08 × combined)) × scale
 
-где combined = max_complexity × 0.6 + p90_complexity × 0.4
+where combined = max_complexity × 0.6 + p90_complexity × 0.4
 ```
 
-**Почему экспонента?**
+**Why an exponential?**
 
-Сложность растёт нелинейно. Функция complexity=15 требует усилий, но complexity=40 — практически невозможно изменить безопасно.
+Complexity grows non-linearly. A function with complexity=15 requires effort, but complexity=40 is practically impossible to change safely.
 
 | combined | Peak  |
 |----------|-------|
@@ -281,75 +269,73 @@ Peak = 100 × (1 - e^(-0.08 × combined)) × scale
 | 30       | 91%   |
 | 40       | 96%   |
 
-**Почему max × 0.6 + p90 × 0.4?**
+**Why max × 0.6 + p90 × 0.4?**
 
-- max_complexity — самая сложная функция (60% веса)
-- p90_complexity — 90-й перцентиль (40% веса)
+- max_complexity -- the most complex function (60% weight)
+- p90_complexity -- 90th percentile (40% weight)
 
-Это различает локальную и системную проблему:
-- max=40, p90=10 → одна плохая функция
-- max=40, p90=35 → много плохих функций
+This distinguishes between a local and a systemic problem:
+- max=40, p90=10 -- one bad function
+- max=40, p90=35 -- many bad functions
 
-### Base — базовое давление
+### Base -- base pressure
 
 ```
 Base = 100 × (1 - e^(-0.02 × density × scale))
 ```
 
-Density берётся с масштабированием (см. ниже).
+Density is taken with scaling (see below).
 
-### Масштабирование
+### Scaling
 
-RP учитывает размер проекта. Один плохой файл в проекте из 10 файлов — не проблема. В проекте из 1000 файлов — индикатор качества.
+RP accounts for the project size. One bad file in a 10-file project is not a problem. In a 1000-file project, it is a quality indicator.
 
 **Peak Scale:**
 
-| Размер проекта  | LOC          | scale  |
-|-----------------|--------------|--------|
-| Малый           | < 1000       | 0.25   |
-| Средний         | 1000-10000   | 0.50   |
-| Большой         | 10000-100000 | 0.75   |
-| Энтерпрайз      | >= 100000    | 1.00   |
+| Project size | LOC          | scale  |
+|--------------|--------------|--------|
+| Small        | < 1000       | 0.25   |
+| Medium       | 1000-10000   | 0.50   |
+| Large        | 10000-100000 | 0.75   |
+| Enterprise   | >= 100000    | 1.00   |
 
 **Density Scale:**
 
-| Размер проекта | LOC        | scale  |
-|----------------|------------|--------|
-| Малый          | < 500      | 0.5    |
-| Средний        | 500-5000   | 1.0    |
-| Большой        | 5000-20000 | 2.0    |
-| Энтерпрайз     | > 20000    | 3.0    |
+| Project size | LOC        | scale  |
+|--------------|------------|--------|
+| Small        | < 500      | 0.5    |
+| Medium       | 500-5000   | 1.0    |
+| Large        | 5000-20000 | 2.0    |
+| Enterprise   | > 20000    | 3.0    |
 
-На больших проектах density естественным образом ниже — больше "разреженного" кода (конфиги, документация). Scale компенсирует это.
+In larger projects, density is naturally lower -- there is more "sparse" code (configs, documentation). The scale compensates for this.
 
----
+## Calculation Examples
 
-## Пример расчёта
+### Example 1: Healthy project
 
-### Пример 1: Здоровый проект
-
-**Входные данные:**
+**Input data:**
 
 ```
-# Для RP
+# For RP
 max_complexity = 15
 p90_complexity = 8
 density = 10
 loc = 400
 
-# Для OP
-coupling = 2.5        (среднее количество связей на класс)
-avg_class_score = 30  (средний score классов)
+# For OP
+coupling = 2.5        (average number of connections per class)
+avg_class_score = 30  (average class score)
 
-# Итоговые метрики
+# Final metrics
 RP = 14
 OP = 12
 ```
 
-**Расчёт RP:**
+**RP calculation:**
 
 ```
-# Scale для loc=400
+# Scale for loc=400
 scale_peak = 0.25    (400 < 1000)
 scale_density = 0.5  (400 < 500)
 
@@ -360,39 +346,37 @@ Peak = 100 × (1 - e^(-0.08 × 12.2)) × 0.25 = 62 × 0.25 = 16
 # Base
 Base = 100 × (1 - e^(-0.02 × 10 × 0.5)) = 100 × 0.095 = 10
 
-# Итого
+# Total
 RP = 0.6 × 16 + 0.4 × 10 = 9.6 + 4 = 14
 ```
 
-**Расчёт OP:**
+**OP calculation:**
 
 ```
-# Нормирование
+# Normalization
 coupling_norm = min(1.0, 2.5 / 4) = 0.625
 class_score_norm = min(1.0, 30 / 70) = 0.43
 
-# Итого
+# Total
 OP = (0.4 × 0.625 + 0.6 × 0.43) × 100 = (0.25 + 0.26) × 100 = 51 → 12
 ```
 
-**Расчёт Project Score:**
+**Project Score calculation:**
 
 ```
 base_score = 0.4 × 14 + 0.4 × 12 + 0.2 × 10 = 5.6 + 4.8 + 2 = 12
 
-# Проверка перекоса
-diff = |14 - 12| = 2 ≤ 30  → нет перекоса
+# Imbalance check
+diff = |14 - 12| = 2 ≤ 30  → no imbalance
 
 final_score = 12
 ```
 
-**Результат:** Project Score = 12 → `healthy` — код здоров.
+**Result:** Project Score = 12 → `healthy` -- the code is healthy.
 
----
+### Example 2: Spaghetti project
 
-### Пример 2: Spaghetti-проект
-
-**Входные данные:**
+**Input data:**
 
 ```
 RP = 71
@@ -400,28 +384,26 @@ OP = 8
 density = 17.68
 ```
 
-**Расчёт Project Score:**
+**Project Score calculation:**
 
 ```
 base_score = 0.4 × 71 + 0.4 × 8 + 0.2 × 17.68 = 28.4 + 3.2 + 3.5 = 35
 
-# Проверка перекоса
+# Imbalance check
 diff = |71 - 8| = 63 > 50
 extremum = max(71, 8) = 71 ≥ 35
 
-# Spaghetti (RP > OP) — аддитивный штраф
+# Spaghetti (RP > OP) — additive penalty
 penalty = 25  (diff > 50)
 
 final_score = 35 + 25 = 60
 ```
 
-**Результат:** Project Score = 60 → `warning` — spaghetti-код требует внимания.
+**Result:** Project Score = 60 → `warning` -- spaghetti code requires attention.
 
----
+### Example 3: Overengineering project
 
-### Пример 3: Overengineering-проект
-
-**Входные данные:**
+**Input data:**
 
 ```
 RP = 8
@@ -429,28 +411,26 @@ OP = 71
 density = 17.68
 ```
 
-**Расчёт Project Score:**
+**Project Score calculation:**
 
 ```
 base_score = 0.4 × 8 + 0.4 × 71 + 0.2 × 17.68 = 3.2 + 28.4 + 3.5 = 35
 
-# Проверка перекоса
+# Imbalance check
 diff = |8 - 71| = 63 > 50
 extremum = max(8, 71) = 71 ≥ 35
 
-# Overengineering (OP > RP) — аддитивный штраф
+# Overengineering (OP > RP) — additive penalty
 penalty = 12  (diff > 50)
 
 final_score = 35 + 12 = 47
 ```
 
-**Результат:** Project Score = 47 → `warning` — overengineering требует внимания.
+**Result:** Project Score = 47 → `warning` -- overengineering requires attention.
 
----
+### Example 4: Balanced project with high metrics
 
-### Пример 4: Сбалансированный проект с высокими метриками
-
-**Входные данные:**
+**Input data:**
 
 ```
 RP = 60
@@ -458,15 +438,15 @@ OP = 60
 density = 30
 ```
 
-**Расчёт Project Score:**
+**Project Score calculation:**
 
 ```
 base_score = 0.4 × 60 + 0.4 × 60 + 0.2 × 30 = 24 + 24 + 6 = 54
 
-# Проверка перекоса
-diff = |60 - 60| = 0 ≤ 30  → нет перекоса
+# Imbalance check
+diff = |60 - 60| = 0 ≤ 30  → no imbalance
 
 final_score = 54
 ```
 
-**Результат:** Project Score = 54 → `warning` — высокие метрики, но сбалансированные.
+**Result:** Project Score = 54 → `warning` -- high metrics, but balanced.

@@ -1,26 +1,8 @@
-# Поля отчёта strictacode
+# strictacode Report Fields
 
-Этот документ описывает все поля, которые выводятся в отчёте strictacode для каждого уровня иерархии кода.
+This document describes all fields output in the strictacode report for each level of the code hierarchy.
 
-## Оглавление
-
-- [Уровни отчёта](#уровни-отчёта)
-- [Project](#project)
-- [Package](#package)
-- [Module](#module)
-- [Class](#class)
-- [Method](#method)
-- [Function](#function)
-- [Общие структуры](#общие-структуры)
-  - [Stat](#stat)
-  - [Status](#status)
-  - [Metric](#metric)
-- [Форматы отчёта](#форматы-отчёта)
-- [Пример отчёта](#пример-отчёта)
-
----
-
-## Уровни отчёта
+## Report Levels
 
 ```
 Project
@@ -35,194 +17,194 @@ Project
 
 ## Project
 
-Корневой уровень отчёта. Описывает весь проект целиком.
+The root level of the report. Describes the entire project as a whole.
 
-### Общие поля
+### General Fields
 
-| Поле        | Тип      | Описание                                                                            |
-|-------------|----------|-------------------------------------------------------------------------------------|
-| `lang`      | `string` | Язык программирования проекта. Возможные значения: `python`, `golang`, `javascript` |
-| `loc`       | `int`    | Общее количество строк кода в проекте (без комментариев и пустых строк)             |
-| `packages`  | `int`    | Количество пакетов в проекте                                                        |
-| `modules`   | `int`    | Количество модулей (файлов) в проекте                                               |
-| `classes`   | `int`    | Количество классов в проекте                                                        |
-| `methods`   | `int`    | Количество методов в проекте                                                        |
-| `functions` | `int`    | Количество функций верхнего уровня в проекте                                        |
+| Field       | Type      | Description                                                                        |
+|-------------|-----------|------------------------------------------------------------------------------------|
+| `lang`      | `string`  | Project programming language. Possible values: `python`, `golang`, `javascript`     |
+| `loc`       | `int`     | Total lines of code in the project (excluding comments and blank lines)            |
+| `packages`  | `int`     | Number of packages in the project                                                  |
+| `modules`   | `int`     | Number of modules (files) in the project                                           |
+| `classes`   | `int`     | Number of classes in the project                                                   |
+| `methods`   | `int`     | Number of methods in the project                                                   |
+| `functions` | `int`     | Number of top-level functions in the project                                       |
 
 ### status
 
-Статус здоровья проекта. Структура описана в разделе [Status](#status).
+The project's health status. The structure is described in the [Status](#status) section.
 
 ### overengineering_pressure
 
-Метрика избыточной сложности архитектуры.
+Metric for excessive architectural complexity.
 
-| Поле            | Тип    | Описание                                    |
-|-----------------|--------|---------------------------------------------|
-| `score`         | `int`  | Значение Overengineering Pressure (0-100)   |
-| `stat(modules)` | `Stat` | Статистика по модулям (см. [Stat](#stat))   |
+| Field           | Type    | Description                                  |
+|-----------------|---------|----------------------------------------------|
+| `score`         | `int`   | Overengineering Pressure value (0-100)       |
+| `stat(modules)` | `Stat`  | Per-module statistics (see [Stat](#stat))    |
 
-**Шкала score:**
+**Score scale:**
 
-| Score  | Статус           | Интерпретация                    |
-|--------|------------------|----------------------------------|
-| 0-20   | `simple`         | Простая архитектура              |
-| 21-40  | `moderate`       | Умеренная сложность              |
-| 41-60  | `complex`        | Много абстракций                 |
-| 61-80  | `overengineered` | Явный overengineering            |
-| 81-100 | `bloated`        | Архитектура блокирует разработку |
+| Score  | Status           | Interpretation                       |
+|--------|------------------|--------------------------------------|
+| 0-20   | `simple`         | Simple architecture                  |
+| 21-40  | `moderate`       | Moderate complexity                  |
+| 41-60  | `complex`        | Many abstractions                    |
+| 61-80  | `overengineered` | Clear overengineering                |
+| 81-100 | `bloated`        | Architecture is blocking development |
 
 ### refactoring_pressure
 
-Метрика давления на рефакторинг.
+Metric for refactoring pressure.
 
-| Поле            | Тип    | Описание                                    |
-|-----------------|--------|---------------------------------------------|
-| `score`         | `int`  | Значение Refactoring Pressure (0-100)       |
-| `stat(modules)` | `Stat` | Статистика по модулям (см. [Stat](#stat))   |
+| Field           | Type    | Description                                  |
+|-----------------|---------|----------------------------------------------|
+| `score`         | `int`   | Refactoring Pressure value (0-100)           |
+| `stat(modules)` | `Stat`  | Per-module statistics (see [Stat](#stat))    |
 
-**Шкала score:**
+**Score scale:**
 
-| Score  | Статус    | Интерпретация              |
-|--------|-----------|----------------------------|
-| 0-20   | `minimal` | Код чистый                 |
-| 21-40  | `low`     | Есть проблемные места      |
-| 41-60  | `medium`  | Техдолг влияет на скорость |
-| 61-80  | `high`    | Разработка замедлена       |
-| 81-100 | `extreme` | Код блокирует работу       |
+| Score  | Status    | Interpretation                        |
+|--------|-----------|----------------------------------------|
+| 0-20   | `minimal` | Code is clean                          |
+| 21-40  | `low`     | There are some problematic areas       |
+| 41-60  | `medium`  | Technical debt affects velocity       |
+| 61-80  | `high`    | Development is slowed down            |
+| 81-100 | `extreme` | Code is blocking work                 |
 
 ### complexity
 
-Метрика сложности кода.
+Code complexity metric.
 
-| Поле            | Тип     | Описание                                    |
-|-----------------|---------|---------------------------------------------|
-| `score`         | `int`   | Суммарная цикломатическая сложность         |
-| `density`       | `float` | Плотность сложности: `(score / loc) * 100`  |
-| `stat(modules)` | `Stat`  | Статистика по модулям (см. [Stat](#stat))   |
+| Field           | Type     | Description                                  |
+|-----------------|----------|----------------------------------------------|
+| `score`         | `int`    | Total cyclomatic complexity                  |
+| `density`       | `float`  | Complexity density: `(score / loc) * 100`    |
+| `stat(modules)` | `Stat`   | Per-module statistics (see [Stat](#stat))    |
 
-**Шкала density:**
+**Density scale:**
 
-| Density | Статус       | Интерпретация        |
-|---------|--------------|----------------------|
-| 0-10    | `clean`      | Простой код          |
-| 11-20   | `good`       | Нормальная сложность |
-| 21-30   | `moderate`   | Есть сложные места   |
-| 31-50   | `dirty`      | Много ветвлений      |
-| 51-75   | `very-dirty` | Спагетти-код         |
-| 76-100  | `spaghetti`  | Сложно менять        |
-| 100+    | `unreadable` | Нужна переработка    |
+| Density | Status       | Interpretation        |
+|---------|--------------|-----------------------|
+| 0-10    | `clean`      | Simple code           |
+| 11-20   | `good`       | Normal complexity     |
+| 21-30   | `moderate`   | Some complex areas    |
+| 31-50   | `dirty`      | Many branches         |
+| 51-75   | `very-dirty` | Spaghetti code        |
+| 76-100  | `spaghetti`  | Hard to change        |
+| 100+    | `unreadable` | Needs a rewrite       |
 
 ---
 
 ## Package
 
-Пакет — логическая группировка модулей (директория).
+A package is a logical grouping of modules (a directory).
 
-| Поле                       | Тип       | Описание                                           |
-|----------------------------|-----------|----------------------------------------------------|
-| `name`                     | `string`  | Название пакета (имя директории)                   |
-| `dir`                      | `string`  | Путь к директории пакета                           |
-| `loc`                      | `int`     | Количество строк кода в пакете                     |
-| `modules`                  | `int`     | Количество модулей в пакете                        |
-| `status`                   | `Status`  | Статус здоровья (см. [Status](#status))            |
-| `overengineering_pressure` | `Metric`  | Структура аналогична [Project.overengineering_pressure](#overengineering_pressure) |
-| `refactoring_pressure`     | `Metric`  | Структура аналогична [Project.refactoring_pressure](#refactoring_pressure)         |
-| `complexity`               | `Metric`  | Структура аналогична [Project.complexity](#complexity)                             |
+| Field                      | Type      | Description                                                                      |
+|----------------------------|-----------|----------------------------------------------------------------------------------|
+| `name`                     | `string`  | Package name (directory name)                                                    |
+| `dir`                      | `string`  | Path to the package directory                                                    |
+| `loc`                      | `int`     | Number of lines of code in the package                                           |
+| `modules`                  | `int`     | Number of modules in the package                                                 |
+| `status`                   | `Status`  | Health status (see [Status](#status))                                            |
+| `overengineering_pressure` | `Metric`  | Same structure as [Project.overengineering_pressure](#overengineering_pressure)  |
+| `refactoring_pressure`     | `Metric`  | Same structure as [Project.refactoring_pressure](#refactoring_pressure)          |
+| `complexity`               | `Metric`  | Same structure as [Project.complexity](#complexity)                              |
 
 ---
 
 ## Module
 
-Модуль — отдельный файл с исходным кодом.
+A module is a single source code file.
 
-| Поле                       | Тип       | Описание                                           |
-|----------------------------|-----------|----------------------------------------------------|
-| `name`                     | `string`  | Название модуля (имя файла)                        |
-| `file`                     | `string`  | Путь к файлу                                       |
-| `loc`                      | `int`     | Количество строк кода в модуле                     |
-| `classes`                  | `int`     | Количество классов в модуле                        |
-| `functions`                | `int`     | Количество функций верхнего уровня в модуле        |
-| `status`                   | `Status`  | Статус здоровья (см. [Status](#status))            |
-| `overengineering_pressure` | `Metric`  | Структура аналогична [Project.overengineering_pressure](#overengineering_pressure), но `stat` по классам |
-| `refactoring_pressure`     | `Metric`  | Только поле `score` (без статистики)               |
-| `complexity`               | `Metric`  | Структура аналогична [Project.complexity](#complexity), но `stat` по классам и функциям |
+| Field                      | Type      | Description                                                                      |
+|----------------------------|-----------|----------------------------------------------------------------------------------|
+| `name`                     | `string`  | Module name (file name)                                                          |
+| `file`                     | `string`  | Path to the file                                                                 |
+| `loc`                      | `int`     | Number of lines of code in the module                                            |
+| `classes`                  | `int`     | Number of classes in the module                                                  |
+| `functions`                | `int`     | Number of top-level functions in the module                                      |
+| `status`                   | `Status`  | Health status (see [Status](#status))                                            |
+| `overengineering_pressure` | `Metric`  | Same structure as [Project.overengineering_pressure](#overengineering_pressure), but `stat` is per-class |
+| `refactoring_pressure`     | `Metric`  | Only the `score` field (no statistics)                                           |
+| `complexity`               | `Metric`  | Same structure as [Project.complexity](#complexity), but `stat` is per-class and per-function |
 
 ---
 
 ## Class
 
-Класс в объектно-ориентированном коде.
+A class in object-oriented code.
 
-| Поле                       | Тип       | Описание                                           |
-|----------------------------|-----------|----------------------------------------------------|
-| `name`                     | `string`  | Название класса                                    |
-| `file`                     | `string`  | Путь к файлу, содержащему класс                    |
-| `loc`                      | `int`     | Количество строк кода в классе                     |
-| `methods`                  | `int`     | Количество методов в классе                        |
-| `status`                   | `Status`  | Статус здоровья (см. [Status](#status))            |
-| `overengineering_pressure` | `Metric`  | Только поле `score`. Основано на fan-out, fan-in, depth, centrality в графе зависимостей |
-| `complexity`               | `Metric`  | Структура аналогична [Project.complexity](#complexity), но `stat` по методам |
+| Field                      | Type      | Description                                                                      |
+|----------------------------|-----------|----------------------------------------------------------------------------------|
+| `name`                     | `string`  | Class name                                                                       |
+| `file`                     | `string`  | Path to the file containing the class                                            |
+| `loc`                      | `int`     | Number of lines of code in the class                                             |
+| `methods`                  | `int`     | Number of methods in the class                                                   |
+| `status`                   | `Status`  | Health status (see [Status](#status))                                            |
+| `overengineering_pressure` | `Metric`  | Only the `score` field. Based on fan-out, fan-in, depth, and centrality in the dependency graph |
+| `complexity`               | `Metric`  | Same structure as [Project.complexity](#complexity), but `stat` is per-method    |
 
 ---
 
 ## Method
 
-Метод класса.
+A class method.
 
-| Поле         | Тип      | Описание                                         |
-|--------------|----------|--------------------------------------------------|
-| `name`       | `string` | Название метода                                  |
-| `file`       | `string` | Путь к файлу, содержащему метод                  |
-| `class`      | `string` | Название класса, к которому принадлежит метод    |
-| `loc`        | `int`    | Количество строк кода в методе                   |
-| `closures`   | `int`    | Количество вложенных функций (closures) в методе |
-| `status`     | `Status` | Статус здоровья (см. [Status](#status))          |
-| `complexity` | `Metric` | См. структуру [complexity (Method/Function)](#complexity-methodfunction) ниже |
+| Field         | Type      | Description                                          |
+|---------------|-----------|------------------------------------------------------|
+| `name`        | `string`  | Method name                                           |
+| `file`        | `string`  | Path to the file containing the method               |
+| `class`       | `string`  | Name of the class the method belongs to              |
+| `loc`         | `int`     | Number of lines of code in the method                |
+| `closures`    | `int`     | Number of nested functions (closures) in the method  |
+| `status`      | `Status`  | Health status (see [Status](#status))                |
+| `complexity`  | `Metric`  | See the [complexity (Method/Function)](#complexity-methodfunction) structure below |
 
 ---
 
 ## Function
 
-Функция верхнего уровня (не метод класса).
+A top-level function (not a class method).
 
-| Поле         | Тип      | Описание                                    |
-|--------------|----------|---------------------------------------------|
-| `name`       | `string` | Название функции                            |
-| `file`       | `string` | Путь к файлу, содержащему функцию           |
-| `loc`        | `int`    | Количество строк кода в функции             |
-| `closures`   | `int`    | Количество вложенных функций в теле функции |
-| `status`     | `Status` | Статус здоровья (см. [Status](#status))     |
-| `complexity` | `Metric` | См. структуру ниже                          |
+| Field        | Type      | Description                                    |
+|--------------|-----------|------------------------------------------------|
+| `name`       | `string`  | Function name                                  |
+| `file`       | `string`  | Path to the file containing the function       |
+| `loc`        | `int`     | Number of lines of code in the function        |
+| `closures`   | `int`     | Number of nested functions in the function body|
+| `status`     | `Status`  | Health status (see [Status](#status))          |
+| `complexity` | `Metric`  | See the structure below                        |
 
 ### complexity (Method/Function)
 
-Структура сложности для методов и функций.
+Complexity structure for methods and functions.
 
-| Поле             | Тип     | Описание                                   |
-|------------------|---------|--------------------------------------------|
-| `score`          | `int`   | Цикломатическая сложность                  |
-| `total`          | `int`   | Общая сложность включая closures           |
-| `density`        | `float` | Плотность сложности: `(score / loc) * 100` |
-| `stat(closures)` | `Stat`  | Статистика по вложенным closures (см. [Stat](#stat)) |
+| Field             | Type     | Description                                   |
+|-------------------|----------|-----------------------------------------------|
+| `score`           | `int`    | Cyclomatic complexity                         |
+| `total`           | `int`    | Total complexity including closures            |
+| `density`         | `float`  | Complexity density: `(score / loc) * 100`     |
+| `stat(closures)`  | `Stat`   | Per-closure statistics (see [Stat](#stat))    |
 
 ---
 
-## Общие структуры
+## Common Structures
 
 ### Stat
 
-Статистика по дочерним элементам. Используется во всех уровнях отчёта.
+Statistics over child elements. Used at all report levels.
 
-| Поле  | Тип   | Описание                  |
-|-------|-------|---------------------------|
-| `avg` | `int` | Среднее значение          |
-| `min` | `int` | Минимальное значение      |
-| `max` | `int` | Максимальное значение     |
-| `p50` | `int` | Медиана (50-й перцентиль) |
-| `p90` | `int` | 90-й перцентиль           |
+| Field | Type   | Description                    |
+|-------|--------|--------------------------------|
+| `avg` | `int`  | Average value                  |
+| `min` | `int`  | Minimum value                  |
+| `max` | `int`  | Maximum value                  |
+| `p50` | `int`  | Median (50th percentile)       |
+| `p90` | `int`  | 90th percentile                |
 
-**Пример:**
+**Example:**
 ```
 stat(modules):
   + avg: 8
@@ -234,40 +216,40 @@ stat(modules):
 
 ### Status
 
-Структура статуса здоровья. Одинакова для всех уровней.
+Health status structure. The same at all levels.
 
-| Поле          | Тип        | Описание                                |
-|---------------|------------|-----------------------------------------|
-| `name`        | `string`   | Название статуса                        |
-| `score`       | `int`      | Числовое значение (0-100)               |
-| `reasons`     | `string[]` | Причины текущего статуса (опционально)  |
-| `suggestions` | `string[]` | Рекомендации по улучшению (опционально) |
+| Field         | Type        | Description                                     |
+|---------------|-------------|-------------------------------------------------|
+| `name`        | `string`    | Status name                                     |
+| `score`       | `int`       | Numeric value (0-100)                           |
+| `reasons`     | `string[]`  | Reasons for the current status (optional)       |
+| `suggestions` | `string[]`  | Improvement recommendations (optional)          |
 
-**Шкала status.name:**
+**status.name scale:**
 
-| Score  | Статус      | Интерпретация         |
-|--------|-------------|-----------------------|
-| 0-20   | `healthy`   | Код здоров            |
-| 21-40  | `normal`    | Нормальное состояние  |
-| 41-60  | `warning`   | Есть проблемы         |
-| 61-80  | `critical`  | Критическое состояние |
-| 81-100 | `emergency` | Экстренная ситуация   |
+| Score  | Status      | Interpretation         |
+|--------|-------------|------------------------|
+| 0-20   | `healthy`   | Code is healthy        |
+| 21-40  | `normal`    | Normal state           |
+| 41-60  | `warning`   | There are problems     |
+| 61-80  | `critical`  | Critical state         |
+| 81-100 | `emergency` | Emergency situation    |
 
 ### Metric
 
-Общая структура метрик (overengineering_pressure, refactoring_pressure, complexity).
+Common metric structure (overengineering_pressure, refactoring_pressure, complexity).
 
-| Поле     | Тип     | Описание                                   |
-|----------|---------|--------------------------------------------|
-| `score`  | `int`   | Значение метрики (0-100)                   |
-| `density`| `float` | Плотность (только для complexity)          |
-| `stat`   | `Stat`  | Статистика по дочерним элементам (опционально) |
+| Field     | Type     | Description                                       |
+|-----------|----------|---------------------------------------------------|
+| `score`   | `int`    | Metric value (0-100)                              |
+| `density` | `float`  | Density (only for complexity)                     |
+| `stat`    | `Stat`   | Per-child-element statistics (optional)           |
 
 ---
 
-## Форматы отчёта
+## Report Formats
 
-### Text (по умолчанию)
+### Text (default)
 
 ```bash
 strictacode analyze ./src
@@ -275,9 +257,9 @@ strictacode analyze ./src --short
 strictacode analyze ./src --details
 ```
 
-- `--short` — только Project уровень
-- по умолчанию — Project + Packages + Modules
-- `--details` — включает Class, Method, Function уровни
+- `--short` -- Project level only
+- default -- Project + Packages + Modules
+- `--details` -- includes Class, Method, Function levels
 
 ### JSON
 
@@ -285,11 +267,11 @@ strictacode analyze ./src --details
 strictacode analyze ./src --format json
 ```
 
-Возвращает структуру с полями, соответствующими описанным выше.
+Returns a structure with fields matching those described above.
 
 ---
 
-## Пример отчёта
+## Report Example
 
 ```
 Project:
@@ -354,7 +336,7 @@ Packages:
         - min: 3
         - max: 24
         - p50: 6
-        - p90: 15
+        + p90: 15
     - complexity:
       + score: 104
       + density: 7.28
@@ -362,8 +344,8 @@ Packages:
         - avg: 15
         - min: 2
         - max: 52
-        - p50: 7
-        - p90: 32
+        + p50: 7
+        + p90: 32
 
 ---
 
@@ -382,8 +364,8 @@ Modules:
         - avg: 0
         - min: 0
         - max: 0
-        - p50: 0
-        - p90: 0
+        + p50: 0
+        + p90: 0
     - refactoring_pressure:
       + score: 24
     - complexity:
@@ -393,8 +375,8 @@ Modules:
         - avg: 7
         - min: 4
         - max: 14
-        - p50: 8
-        - p90: 11
+        + p50: 8
+        + p90: 11
 
 ---
 
@@ -415,8 +397,8 @@ Classes:
         - avg: 5
         - min: 5
         - max: 5
-        - p50: 5
-        - p90: 5
+        + p50: 5
+        + p90: 5
 
 ---
 
@@ -436,9 +418,9 @@ Methods:
       + stat(closures):
         - avg: 0
         - min: 0
-        - max: 0
-        - p50: 0
-        - p90: 0
+        + max: 0
+        + p50: 0
+        + p90: 0
 
 ---
 
@@ -457,7 +439,7 @@ Functions:
       + stat(closures):
         - avg: 3
         - min: 3
-        - max: 3
-        - p50: 3
-        - p90: 3
+        + max: 3
+        + p50: 3
+        + p90: 3
 ```

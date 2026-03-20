@@ -24,4 +24,4 @@ jobs:
 
       - name: Build and Deploy
         # gh-deploy creates the gh-pages branch and pushes static content there
-        run: mkdocs gh-deploy --force --config-file docs/mkdocs.yml
+        run: mkdocs gh-deploy --force

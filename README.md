@@ -1,134 +1,31 @@
 # Strictacode
 
-**Диагностика здоровья кодовой базы.**
+Codebase health diagnostics. Find spaghetti code, overengineering, and complexity that blocks development.
 
-Strictacode находит болевые точки проекта: спагетти-код, overengineering и сложность, которая блокирует разработку.
+Golang · Python · JavaScript
 
-> Работает с AI-агентами для автоматического анализа качества кода.
-
-> Легко интегрируется в CI/CD пайплайны и локальный REPL-цикл разработки.
-
----
-
-## Поддерживаемые языки
-
-Golang · Python · Javascript
-
----
-
-## Быстрый старт
+## Quick Start
 
 ```bash
 pip install strictacode
 strictacode analyze . --short
 ```
 
-Результат не очевиден? См. [Интерпретация метрик](docs/interpretation.md) — там сценарии и рекомендации.
-
----
-
-## Зачем это нужно
-
-Вы когда-нибудь заходили в "наследственный" проект и думали: *с чего начать?*
-Или смотрели на отчёт о покрытии тестами и понимали: *это не показывает реальную проблему*.
-
-Strictacode отвечает на вопрос: **насколько больно работать с этим кодом?**
-
-Он не считает строки. Он ищет:
-- Функции, которые сложно изменить без багов
-- Архитектуру, которая слишком сложная для задачи
-- Места, где техдолг уже блокирует разработку
-
----
-
-## Как это работает
-
-```
-$ strictacode analyze ./src --short
-
-Project:
-  * status:
-    - name: warning
-    - score: 58          ← здоровье проекта (0-100, меньше = лучше)
-  * refactoring_pressure:
-    - score: 72          ← насколько код "давит" на разработчика
-  * overengineering_pressure:
-    - score: 18          ← насколько архитектура избыточна
-  * complexity:
-    - density: 42.5      ← концентрация сложности
-```
-
-Вы узнаете:
-- **Spaghetti** (RP высокий, OP низкий) → чистите функции
-- **Overengineering** (OP высокий, RP низкий) → упрощайте архитектуру
-- **Кризис** (оба высокие) → изолируйте и переписывайте
-- **Здоровый** (оба низкие) → мониторьте
-
----
-
-## Метрики
-
-| Метрика                      | Что измеряет            | Хорошо | Плохо  |
-|------------------------------|-------------------------|--------|--------|
-| **Project Score**            | Общее здоровье          | 0-20   | 60+    |
-| **Refactoring Pressure**     | Давление на рефакторинг | 0-40   | 60+    |
-| **Overengineering Pressure** | Избыточная сложность    | 0-40   | 60+    |
-| **Complexity Density**       | Плотность сложности     | < 20   | > 50   |
-
----
-
-## Когда использовать
-
-| Ситуация                  | Что даст strictacode                                      |
-|---------------------------|-----------------------------------------------------------|
-| Оценка техдолга           | Оцифрует "код плохой" в метрики для менеджмента           |
-| Планирование тестирования | Укажет, какие проекты/компоненты требуют больше внимания  |
-| Планирование рефакторинга | Укажет, где "80% боли от 20% кода"                        |
-| Ретроспектива спринта     | Объективные данные вместо субъективных оценок             |
-| Onboarding в проект       | Покажет, какие модули самые сложные                       |
-| CI/CD pipeline            | Заблокирует деградацию качества                           |
-
----
-
-## Команды
+## AI Agent Integration
 
 ```bash
-# Полный отчёт
-strictacode analyze <path>
-
-# Короткий отчёт
-strictacode analyze <path> --short
-
-# Детализация по модулям, классам, функциям
-strictacode analyze <path> --details
-
-# JSON формат для CI/CD
-strictacode analyze <path> --format json
+strictacode install agent-skill --agent <name>
 ```
 
----
+Supported agents: `claude`, `cursor`, `codex`, `gemini`, `antigravity`
 
-## Интеграция с AI-агентами
+## Documentation
 
-Strictacode может быть установлен как навык (skill) в AI-агенты для автоматического анализа качества кода:
+**[qarium.github.io/strictacode](https://qarium.github.io/strictacode/)**
 
-```bash
-strictacode install agent-skill --agent <agent_name>
-```
-
-Поддерживаемые агенты:
-- `claude`
-- `cursor`
-- `codex`
-- `gemini`
-- `antigravity`
-
----
-
-## Документация
-
-- [Поля отчёта](docs/report-fields.md) — описание всех полей в отчёте с типами и примерами
-- [Как рассчитываются метрики](docs/metrics.md) — формулы и математика
-- [Интерпретация метрик](docs/interpretation.md) — сценарии анализа и рекомендации
-- [Конфигурация](docs/config.md) — файл конфигурации, опции и примеры
-- [Примеры использования](docs/examples.md) — реальные сценарии и алгоритмы действий
+- [Getting Started](https://qarium.github.io/strictacode/getting-started/) — run your first analysis
+- [CLI Reference](https://qarium.github.io/strictacode/cli-reference/) — commands and flags
+- [Metrics](https://qarium.github.io/strictacode/metrics/) — how metrics are calculated
+- [Interpretation](https://qarium.github.io/strictacode/interpretation/) — diagnostic scenarios
+- [Configuration](https://qarium.github.io/strictacode/configuration/) — config file options
+- [Examples](https://qarium.github.io/strictacode/examples/) — real-world usage

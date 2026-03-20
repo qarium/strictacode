@@ -1,249 +1,232 @@
-# Примеры использования
+# Usage Examples
 
-Эта документация содержит реальные сценарии использования strictacode с пошаговыми алгоритмами действий.
+This documentation contains real-world strictacode usage scenarios with step-by-step workflows.
 
----
+## Getting to Know a Project
 
-## Содержание
+### Onboarding a New Developer
 
-- [Знакомство с проектом](#знакомство-с-проектом)
-- [Повседневная разработка](#повседневная-разработка)
-- [Принятие решений](#принятие-решений)
-- [Процессы команды](#процессы-команды)
+**Context:** A new developer joins the project. The first task is to figure out where the complex code is and where it is safe to work. Without strictacode, this takes weeks of reading code and accidental discoveries.
 
----
-
-## Знакомство с проектом
-
-### Onboarding новичка
-
-**Контекст:** Новый разработчик приходит в проект. Первая задача — понять, где сложный код, а где можно работать спокойно. Без strictacode это недели чтения кода и случайные открытия.
-
-**Команда:**
+**Command:**
 ```bash
 strictacode analyze . --details
 ```
 
-**Результат:** Метрики по модулям/пакетам — где высокий RP (грязный код), где высокий OP (сложные связи), где density зашкаливает.
+**Result:** Metrics by modules/packages — where RP is high (messy code), where OP is high (complex dependencies), and where density is off the charts.
 
-**Алгоритм:**
-1. Запустить анализ с `--details`
-2. Найти модули с `status: healthy` — начинать работу лучше с них
-3. Посмотреть модули с `RP > 60` — там сложнее всего вносить изменения
-4. Изучить `density` — высокая плотность означает "спагетти в одном файле"
-5. Составить мысленную карту: "зелёные зоны" vs "красные зоны"
+**Workflow:**
+1. Run the analysis with `--details`
+2. Find modules with `status: healthy` — these are the best places to start working
+3. Look at modules with `RP > 60` — these are the hardest to change
+4. Examine `density` — high density means "spaghetti in a single file"
+5. Build a mental map: "green zones" vs. "red zones"
 
 ---
 
-### Оценка наследственного проекта
+### Evaluating a Legacy Project
 
-**Контекст:** Tech lead заходит в унаследованный проект. Нужно быстро понять состояние кодовой базы и ответить на вопрос: "с чего начать?"
+**Context:** A tech lead steps into a legacy project. The goal is to quickly understand the state of the codebase and answer the question: "where do I start?"
 
-**Команда:**
+**Command:**
 ```bash
 strictacode analyze . --short
 ```
 
-**Результат:** Project Score, RP, OP, density — общая картина здоровья.
+**Result:** Project Score, RP, OP, density — an overall picture of health.
 
-**Алгоритм:**
-1. Запустить короткий анализ — получить Project Score
-2. Интерпретировать score по шкале (healthy/normal/warning/critical/emergency)
-3. Сравнить RP и OP:
-   - RP >> OP → spaghetti-код, чистить функции
-   - OP >> RP → overengineering, упрощать архитектуру
-   - Оба высокие → кризис, изолировать и переписывать
-4. Сформировать отчёт для стейкхолдеров с конкретными метриками
+**Workflow:**
+1. Run a short analysis to get the Project Score
+2. Interpret the score using the scale (healthy/normal/warning/critical/emergency)
+3. Compare RP and OP:
+   - RP >> OP → spaghetti code, clean up the functions
+   - OP >> RP → overengineering, simplify the architecture
+   - Both high → crisis, isolate and rewrite
+4. Prepare a report for stakeholders with concrete metrics
 
----
+## Day-to-Day Development
 
-## Повседневная разработка
+### Planning Unit Tests
 
-### Планирование юнит-тестов
+**Context:** A developer is deciding which functions to cover with unit tests first. Time is limited — the goal is to maximize impact.
 
-**Контекст:** Разработчик планирует, какие функции покрыть unit-тестами в первую очередь. Ограниченное время — нужно найти максимальный выхлоп.
-
-**Команда:**
+**Command:**
 ```bash
 strictacode analyze . --details
 ```
 
-**Результат:** Детализация по модулям/классам/функциям с метриками сложности.
+**Result:** Breakdown by modules/classes/functions with complexity metrics.
 
-**Алгоритм:**
-1. Запустить анализ с `--details`
-2. Отсортировать функции по `complexity` — функции с complexity > 15 труднее тестировать и быстрее ломаются
-3. Смотреть на `density` в модуле — высокая плотность означает запутанный код, тесты будут сложными
-4. Приоритет: сначала функции с высокой complexity в модулях с низким OP (меньше моков)
-5. Функции в модулях с высоким OP отложить — там нужны интеграционные тесты
+**Workflow:**
+1. Run the analysis with `--details`
+2. Sort functions by `complexity` — functions with complexity > 15 are harder to test and break more often
+3. Look at `density` in the module — high density means tangled code, tests will be difficult
+4. Prioritization: start with high-complexity functions in modules with low OP (fewer mocks needed)
+5. Defer functions in modules with high OP — those need integration tests
 
 ---
 
-### Планирование интеграционных тестов на сервисы
+### Planning Integration Tests for Services
 
-**Контекст:** QA планирует тестирование микросервисной архитектуры. Нужно понять, какие сервисы изменяются с большими рисками, какие — с меньшими.
+**Context:** QA is planning testing for a microservice architecture. The goal is to understand which services carry higher risk when changed and which carry less.
 
-**Команда:**
+**Command:**
 ```bash
-# Для каждого сервиса
+# For each service
 strictacode analyze ./service-a --short
 strictacode analyze ./service-b --short
 strictacode analyze ./service-c --short
 ```
 
-**Результат:** Project Score, RP, OP, density по каждому сервису.
+**Result:** Project Score, RP, OP, density for each service.
 
-**Алгоритм:**
-1. Запустить анализ для каждого сервиса отдельно
-2. Сравнить метрики между сервисами:
-   - Высокий RP — сервис с "грязным" кодом, изменения рискованны
-   - Высокий OP — сложная архитектура, выше шанс сломать интеграции
-   - Высокий density — много логики в одном месте, сложнее покрыть тестами
-3. Приоритет тестирования:
-   - `status: critical/emergency` — максимальное внимание, regression-тесты обязательны
-   - `status: warning` — стандартное покрытие + smoke-тесты интеграций
-   - `status: healthy/normal` — минимальный набор smoke-тестов
-4. Заложить буфер времени на баги в сервисах с высоким RP
+**Workflow:**
+1. Run the analysis for each service separately
+2. Compare metrics across services:
+   - High RP — service with "messy" code, changes are risky
+   - High OP — complex architecture, higher chance of breaking integrations
+   - High density — a lot of logic in one place, harder to cover with tests
+3. Testing priority:
+   - `status: critical/emergency` — maximum attention, regression tests are mandatory
+   - `status: warning` — standard coverage + integration smoke tests
+   - `status: healthy/normal` — minimal set of smoke tests
+4. Allocate a time buffer for bugs in services with high RP
 
 ---
 
-### Приоритизация API-ручек для тестирования
+### Prioritizing API Endpoints for Testing
 
-**Контекст:** В сервисе много API-эндпоинтов, все протестировать невозможно. Нужно понять, какие ручки покрывать тестами в первую очередь.
+**Context:** A service has many API endpoints, and testing all of them is impossible. The goal is to figure out which endpoints to cover with tests first.
 
-**Команда:**
+**Command:**
 ```bash
 strictacode analyze . --details
 ```
 
-**Результат:** Детализация по пакетам/модулям с метриками.
+**Result:** Breakdown by packages/modules with metrics.
 
-**Алгоритм:**
-1. Запустить анализ с `--details`
-2. Найти пакеты с `status: warning` и выше — это проблемные зоны
-3. Сопоставить пакеты с API-ручками:
-   - Какой пакет обрабатывает какую ручку
-   - Какие ручки зависят от модулей с высоким RP
-4. Приоритет тестирования ручек:
-   - Ручки на базе пакетов с `status: critical` — тестировать первыми, максимальное покрытие
-   - Ручки на базе пакетов с `status: warning` — стандартное покрытие
-   - Ручки на базе пакетов с `status: healthy` — минимальные smoke-тесты
-5. Ручки, которые затрагивают несколько проблемных модулей — кандидаты на end-to-end тесты
+**Workflow:**
+1. Run the analysis with `--details`
+2. Find packages with `status: warning` and above — these are problem areas
+3. Map packages to API endpoints:
+   - Which package handles which endpoint
+   - Which endpoints depend on modules with high RP
+4. Endpoint testing priority:
+   - Endpoints backed by packages with `status: critical` — test first, maximum coverage
+   - Endpoints backed by packages with `status: warning` — standard coverage
+   - Endpoints backed by packages with `status: healthy` — minimal smoke tests
+5. Endpoints that touch multiple problem modules — candidates for end-to-end tests
 
----
+## Decision Making
 
-## Принятие решений
+### Choosing Whether to Rewrite or Refactor a Package/Service
 
-### Выбор: переписывать или рефакторить пакет/сервис
+**Context:** An entire package or service is problematic. A decision needs to be made at the architectural unit level.
 
-**Контекст:** Целый пакет или сервис проблемный. Нужно решить на уровне архитектурной единицы.
-
-**Команда:**
+**Command:**
 ```bash
 strictacode analyze .
 ```
 
-**Результат:** Метрики проекта с разбивкой по пакетам/модулям.
+**Result:** Project metrics broken down by packages/modules.
 
-**Алгоритм:**
-1. Запустить анализ всего проекта
-2. Найти нужный пакет/сервис в результатах
-3. Оценить общее состояние через его Project Score:
-   - Score < 40 — можно рефакторить постепенно
-   - Score 40-60 — серьёзные проблемы, нужен план
-   - Score > 60 — критическое состояние
-4. Посмотреть распределение проблем внутри:
-   - Проблемы в 1-2 подмодулях → изолировать и рефакторить/переписать только их
-   - Проблемы распределены равномерно → системная проблема архитектуры
-5. Оценить связи (OP): высокий OP означает, что модуль сильно связан с другими. Переписывание сломает интеграции.
-6. Решение:
-   - Локальные проблемы → точечный рефакторинг/переписывание
-   - Системные проблемы + низкий OP → кандидат на переписывание
-   - Системные проблемы + высокий OP → постепенный рефакторинг с сохранением интерфейсов
+**Workflow:**
+1. Run the analysis of the entire project
+2. Find the relevant package/service in the results
+3. Assess the overall state using its Project Score:
+   - Score < 40 — can be refactored incrementally
+   - Score 40-60 — serious issues, a plan is needed
+   - Score > 60 — critical state
+4. Look at the distribution of problems within:
+   - Problems in 1-2 submodules → isolate and refactor/rewrite only those
+   - Problems evenly distributed → systemic architectural issue
+5. Evaluate coupling (OP): high OP means the module is heavily tied to others. Rewriting will break integrations.
+6. Decision:
+   - Local problems → targeted refactoring/rewriting
+   - Systemic problems + low OP → candidate for rewriting
+   - Systemic problems + high OP → gradual refactoring while preserving interfaces
 
 ---
 
-### Обоснование рефакторинга менеджменту
+### Justifying Refactoring to Management
 
-**Контекст:** Нужно выделить время на рефакторинг в спринте. Менеджмент хочет понять: "зачем?" и "сколько?". Субъективное "код плохой" не работает.
+**Context:** Time needs to be allocated for refactoring within a sprint. Management wants to know: "why?" and "how much?" A subjective "the code is bad" does not work.
 
-**Команда:**
+**Command:**
 ```bash
 strictacode analyze . --short
 strictacode analyze . --format json > quality-baseline.json
 ```
 
-**Результат:** Метрики в читаемом виде + JSON для отслеживания прогресса.
+**Result:** Metrics in a human-readable format + JSON for tracking progress.
 
-**Алгоритм:**
-1. Запустить анализ, сохранить baseline
-2. Сформулировать проблему через метрики:
-   - "RP = 72 — это значит, что каждое изменение кода несёт высокий риск багов"
-   - "Density = 58 — код спагетти-подобный, время на задачу увеличивается в 2 раза"
-3. Показать тенденцию: запустить анализ на коде 3-месячной давности (git checkout), сравнить
-4. Перевести в бизнес-язык:
-   - Высокий RP → медленнее фичи, больше багов в проде
-   - Высокий OP → сложнее onboardить новичков, дольше code review
-5. Предложить план: "Снизим RP с 72 до 40 за 2 спринта, это ускорит разработку на X%"
-6. После рефакторинга: запустить анализ снова, показать динамику
+**Workflow:**
+1. Run the analysis and save the baseline
+2. Frame the problem using metrics:
+   - "RP = 72 — this means every code change carries a high risk of bugs"
+   - "Density = 58 — the code is spaghetti-like, task completion time doubles"
+3. Show the trend: run the analysis on code from 3 months ago (via git checkout), compare the results
+4. Translate into business language:
+   - High RP → slower feature delivery, more bugs in production
+   - High OP → harder to onboard new developers, longer code reviews
+5. Propose a plan: "We will reduce RP from 72 to 40 in 2 sprints, which will speed up development by X%"
+6. After refactoring: run the analysis again and show the improvement
 
----
+## Team Processes
 
-## Процессы команды
+### Sprint Retrospective
 
-### Ретроспектива спринта
+**Context:** The team is running a retro. Code quality is being discussed. Opinions diverge: "the code is fine" vs. "everything is falling apart." Objective data is needed.
 
-**Контекст:** Команда проводит ретро. Обсуждаем качество кода. Мнения расходятся: "нормальный код" vs "всё разваливается". Нужны объективные данные.
-
-**Команда:**
+**Command:**
 ```bash
-# До спринта
+# Before the sprint
 strictacode analyze . --format json > sprint-start.json
 
-# После спринта
+# After the sprint
 strictacode analyze . --format json > sprint-end.json
 ```
 
-**Результат:** Два снапшота состояния кодовой базы.
+**Result:** Two snapshots of the codebase state.
 
-**Алгоритм:**
-1. Запустить анализ в начале спринта, сохранить baseline
-2. В течение спринта — не трогать, просто работать
-3. В конце спринта — запустить анализ снова
-4. Сравнить метрики:
-   - RP вырос → накопили техдолг, следующий спринт нужно заложить время на чистку
-   - OP вырос → добавили абстракций, проверить — они нужны или преждевременны?
-   - Density вырос → начали писать "грязный" код, нужен code review строже
-5. Обсудить на ретро:
-   - Какие модули ухудшились и почему?
-   - Это нормальный рост или проблема?
-   - Что сделать в следующем спринте?
-6. Сохранить sprint-end.json как baseline для следующего спринта
+**Workflow:**
+1. Run the analysis at the start of the sprint and save the baseline
+2. During the sprint — do not touch the metrics, just work
+3. At the end of the sprint — run the analysis again
+4. Compare metrics:
+   - RP increased → technical debt accumulated, the next sprint needs time allocated for cleanup
+   - OP increased → abstractions were added; verify whether they are needed or premature
+   - Density increased → code is getting "dirtier," stricter code reviews are needed
+5. Discuss at the retro:
+   - Which modules deteriorated and why?
+   - Is this normal growth or a problem?
+   - What should be done in the next sprint?
+6. Save sprint-end.json as the baseline for the next sprint
 
 ---
 
-### CI/CD гейты
+### CI/CD Gates
 
-**Контекст:** Нужно заблокировать деградацию качества кода в пайплайне. Pull request с плохим кодом не должен попадать в main.
+**Context:** Code quality degradation needs to be blocked in the pipeline. A pull request with bad code should not land in main.
 
-**Команда (в CI):**
+**Command (in CI):**
 ```bash
 strictacode analyze . --format json > current.json
 ```
 
-**Результат:** JSON-отчёт для автоматической проверки.
+**Result:** JSON report for automated validation.
 
-**Алгоритм:**
-1. Определить baseline: запустить анализ на текущем main, сохранить `baseline.json` в репозиторий
-2. В CI-пайплайне добавить шаг после тестов:
-   - Запустить `strictacode analyze . --format json > current.json`
-   - Сравнить `current.json` с `baseline.json` по ключевым метрикам
-3. Блокировать PR если:
-   - Project Score вырос выше порога (например, > 60)
-   - RP вырос больше чем на N пунктов относительно baseline
-4. После мерджа в main — обновить `baseline.json`
+**Workflow:**
+1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
+2. Add a step in the CI pipeline after tests:
+   - Run `strictacode analyze . --format json > current.json`
+   - Compare `current.json` with `baseline.json` against key metrics
+3. Block the PR if:
+   - Project Score exceeds the threshold (e.g., > 60)
+   - RP has increased by more than N points relative to the baseline
+4. After merging into main — update `baseline.json`
 
-**Пример проверки (Python скрипт):**
+**Example validation script (Python):**
 ```python
 import json
 
@@ -263,8 +246,8 @@ if score > THRESHOLD_SCORE:
     exit(1)
 
 if rp_diff > THRESHOLD_RP_DIFF:
-    print(f"FAIL: RP вырос на {rp_diff} пунктов (порог: {THRESHOLD_RP_DIFF})")
+    print(f"FAIL: RP increased by {rp_diff} points (threshold: {THRESHOLD_RP_DIFF})")
     exit(1)
 
-print("OK: Метрики в пределах нормы")
+print("OK: Metrics within acceptable range")
 ```

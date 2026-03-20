@@ -1,10 +1,10 @@
-docs_dir: public
+docs_dir: docs
 
 site_name: Strictacode
 site_description: Code base health diagnostics — find spaghetti code, overengineering, and complexity that blocks development
 site_url: https://qarium.github.io/strictacode/
 repo_url: https://github.com/qarium/strictacode
-edit_uri: edit/main/docs/public/
+edit_uri: edit/main/docs/
 
 theme:
   name: material

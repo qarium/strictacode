@@ -1,451 +1,243 @@
-# Интерпретация метрик
+# Metric Interpretation
 
-**Для кого:** Технические лидеры и архитекторы, которые хотят понять состояние кодовой базы за 5-10 минут.
+This guide explains how to read strictacode results and what each metric means in practice.
 
-**Задача:** По результатам `strictacode analyze` определить тип проблем и приоритизировать действия.
+## Core Metrics
 
-> **Формулы расчёта** описаны в [docs/metrics.md](metrics.md). Здесь — практика интерпретации.
+strictacode produces four key metrics:
 
----
-
-## Содержание
-
-- [Быстрый диагноз](#быстрый-диагноз-таблица-состояний)
-- [Шпаргалка диагностики](#шпаргалка-алгоритм-диагностики)
-- [Сценарии анализа](#сценарий-1-spaghetti-код-rp--op)
-
-> Подробнее о полях отчёта — см. [Поля отчёта](docs/report-fields.md)`
+| Metric                       | What it measures                                  | Good  | Bad   |
+|------------------------------|---------------------------------------------------|-------|-------|
+| **Project Score**            | Overall codebase health (0--100, lower is better) | 0--20 | 60+   |
+| **Refactoring Pressure (RP)**| How much the code "pressures" the developer       | 0--40 | 60+   |
+| **Overengineering Pressure (OP)** | How excessive the architecture is            | 0--40 | 60+   |
+| **Complexity Density**       | Concentration of complexity per line of code      | < 20  | > 50  |
 
 ---
 
-## Пример отчёта
+## Project Score
 
-```
-$ strictacode analyze ./src --short
+The project score is a weighted combination of RP, OP, and complexity density, with an additional adjustment for imbalance between RP and OP.
 
-Project:
-  * lang: python
-  * loc: 3095
-  * packages: 6
-  * modules: 20
-  * classes: 34
-  * methods: 148
-  * functions: 36
-  * status:
-    - name: healthy
-    - score: 18
-  * overengineering_pressure:
-    - score: 8
-  * refactoring_pressure:
-    - score: 34
-  * complexity:
-    - score: 237
-    - density: 7.66
-```
+### Score Thresholds
+
+| Score  | Status    | Meaning                                |
+|--------|-----------|----------------------------------------|
+| 0--20  | healthy   | Code is in good condition              |
+| 21--40 | normal    | Issues exist but are manageable        |
+| 41--60 | warning   | Attention needed, refactoring required |
+| 61--80 | critical  | Refactoring is a priority              |
+| 81--100| emergency | Critical state, act immediately        |
 
 ---
 
-## Быстрый диагноз: Таблица состояний
+## Refactoring Pressure (RP)
 
-| Зона               | RP    | OP    | Что это значит                   | Приоритет   |
-|--------------------|-------|-------|----------------------------------|-------------|
-| 🟢 Здоровый        | 0-40  | 0-40  | Код в порядке                    | Мониторинг  |
-| 🟡 Spaghetti       | 60+   | 0-40  | Грязный код без абстракций       | Высокий     |
-| 🟡 Overengineering | 0-40  | 60+   | Абстрактный, но чистый           | Средний     |
-| 🟠 Умеренный       | 40-60 | 40-60 | Есть проблемы, но сбалансировано | Плановый    |
-| 🔴 Кризис          | 60+   | 60+   | И грязный, и абстрактный         | Критический |
+Measures how difficult it is to change the code without introducing bugs. Based on peak complexity (max and p90) and overall complexity density.
 
-**Ключевой индикатор:** разница между RP и OP (`diff = |RP - OP|`):
-- `diff ≤ 30` — сбалансированный проект
-- `diff > 40` — перекос, требуется анализ
-- `diff > 50` — сильный перекос, критическая проблема
+### RP Thresholds
 
----
+| Score  | Status   | Meaning                              |
+|--------|----------|--------------------------------------|
+| 0--20  | minimal  | Code is easy to change safely        |
+| 21--40 | low      | Light pressure, minor cleanup needed |
+| 41--60 | medium   | Noticeable pressure                  |
+| 61--80 | high     | Strong pressure, refactor priority   |
+| 81--100| extreme  | Critical state, immediate action     |
 
-## Шпаргалка: Алгоритм диагностики
+### What Drives RP
 
-### Шаг 1: Оцените Project Score
+- **Peak pressure (60% weight):** How complex are the most complex functions.
+  Non-linear scale: complexity 10 gives ~40%, complexity 25 gives ~85%, complexity 40 gives ~95%.
+- **Base pressure (40% weight):** Overall complexity density across the codebase.
+  Scales with project size -- larger projects naturally have lower density, so a scaling factor compensates.
 
-```
-strictacode analyze <path> --short
-```
+### How to Improve
 
-| Score  | Действие                             |
-|--------|--------------------------------------|
-| 0-20   | Всё хорошо, переходите к мониторингу |
-| 21-40  | Есть проблемы, стоит заняться        |
-| 41-60  | Внимание, нужен рефакторинг          |
-| 61-100 | Критично, действуйте немедленно      |
-
-### Шаг 2: Определите тип проблемы
-
-Посчитайте `diff = |RP - OP|`:
-
-| Diff             | Тип             | Следуйте сценарию  |
-|------------------|-----------------|--------------------|
-| ≤ 30 и оба < 40  | Здоровый        | Сценарий 4         |
-| ≤ 30 и один ≥ 40 | Умеренный       | Ниже               |
-| ≤ 30 и оба ≥ 60  | Кризис          | Сценарий 3         |
-| > 30 и RP > OP   | Spaghetti       | Сценарий 1         |
-| > 30 и OP > RP   | Overengineering | Сценарий 2         |
-
-### Сценарий 5: Умеренный (40-60, сбалансировано)
-
-**Пример отчёта:**
-```
-Project:
-  * status:
-    - name: warning
-    - score: 48
-  * overengineering_pressure:
-    - score: 45
-  * refactoring_pressure:
-    - score: 52
-  * complexity:
-    - density: 22.3
-```
-
-Когда RP и OP оба в диапазоне 40-60 и разница небольшая (≤ 30):
-
-- **Что это значит:** Код не критичен, но требует внимания. Есть и сложность, и абстракции в умеренных дозах.
-- **Что делать:**
-  1. Запустите `--details` и найдите топ-5 самых проблемных мест
-  2. Сосредоточьтесь на снижении либо RP, либо OP — не пытайтесь сразу исправить оба
-  3. Установите цель: снизить максимальный показатель до < 40 за 2-3 спринта
-
-### Шаг 3: Найдите болевые точки
-
-```bash
-strictacode analyze ./src --details
-```
-
-Ищите в отчёте:
-
-| Проблема             | Смотрите на                                  | Порог |
-|----------------------|----------------------------------------------|-------|
-| Сложные функции      | `Functions` → `complexity.total`             | > 30  |
-| Перегруженные классы | `Classes` → `overengineering_pressure.score` | > 70  |
-| Плотные модули       | `Modules` → `complexity.density`             | > 50  |
-
-### Шаг 4: Приоритизируйте исправления
-
-Порядок действий:
-1. **Сначала** — функции с `complexity > 40` (блокируют работу)
-2. **Потом** — классы с `score > 70` (замедляют разработку)
-3. **Затем** — модули с `density > 50` (ухудшают читаемость)
+- Extract methods from long, complex functions
+- Reduce nesting depth
+- Eliminate duplicated logic
+- Simplify conditional branches
 
 ---
 
-## Сценарий 1: Spaghetti-код (RP >> OP)
+## Overengineering Pressure (OP)
 
-### Пример отчёта
+Measures how excessive the architecture is -- coupling, abstraction depth, and unnecessary indirection. Based on dependency graph analysis (fan-out, fan-in, depth, centrality).
 
-```
-$ strictacode analyze ./legacy-module --short
+### OP Thresholds
 
-Project:
-  * loc: 2840
-  * status:
-    - name: warning
-    - score: 58
-  * overengineering_pressure:
-    - score: 18
-  * refactoring_pressure:
-    - score: 72
-    - stat(modules):
-      + max: 24
-      + p90: 16
-  * complexity:
-    - density: 42.5
-    - stat(modules):
-      + max: 52
-      + p90: 30
-```
+| Score  | Status           | Meaning                          |
+|--------|------------------|----------------------------------|
+| 0--20  | simple           | Architecture is straightforward  |
+| 21--40 | moderate         | Some unnecessary complexity      |
+| 41--60 | complex          | Approaching complexity threshold |
+| 61--80 | overengineered   | Excessive abstraction depth      |
+| 81--100| bloated          | Severely overengineered          |
 
-### Типичные показатели
+### What Drives OP
 
-```
-RP:  60-100  (высокий)
-OP:  0-40    (низкий)
-Diff: > 40   (RP значительно больше OP)
-```
+- **Coupling (40% weight):** Average number of edges per node in the dependency graph.
+- **Class-level scores (60% weight):** Each class is scored on:
+  - Fan-out (35%): How many other classes this one depends on
+  - Fan-in (25%): How many other classes depend on this one
+  - Depth (25%): Maximum shortest-path distance to any other node
+  - Centrality (15%): How often this node appears on shortest paths
 
-### Что это значит
+### How to Improve
 
-Код "грязный" — много ветвлений, высокая цикломатическая сложность, но архитектура простая без излишних абстракций.
-
-Это **острая боль**: разработчики чувствуют её каждый день. Изменения вносят с трудом, высок риск багов.
-
-### Где искать проблему
-
-```bash
-strictacode analyze ./legacy-module --details
-```
-
-Смотрите в отчёте на:
-
-**Modules с высокой density:**
-```
-Modules:
-  * order_processor.py:
-    - complexity:
-      + density: 68.2
-      + stat(classes+functions):
-        - max: 47
-        - p90: 38
-```
-
-**Functions с высоким complexity:**
-```
-Functions:
-  * process_order:
-    - file: order_processor.py
-    - complexity:
-      + total: 47
-      + density: 55.0
-```
-
-### Что делать
-
-**Приоритет: высокий**
-
-1. **Начните с топ-5 самых сложных функций** — 80% эффекта от 20% кода
-2. **Техники рефакторинга:**
-   - Extract Method — разбейте большие функции
-   - Simplify Conditional — упростите вложенные if/else
-   - Decompose Conditional — выделите сложные условия
-3. **Параллельно:** добавьте тесты на проблемные места перед рефакторингом
-
-### Красные флаги
-
-| Показатель       | Порог  | Что значит                                  |
-|------------------|--------|---------------------------------------------|
-| `max_complexity` | > 40   | Функцию почти невозможно изменить безопасно |
-| `p90_complexity` | > 25   | Проблема системная, не локальная            |
-| `density`        | > 75   | Спагетти-код, требуется переработка         |
+- Remove unused layers of abstraction
+- Reduce coupling between modules
+- Split large packages by domain
+- Consolidate types that are imported everywhere
 
 ---
 
-## Сценарий 2: Overengineering (OP >> RP)
+## Complexity Density
 
-### Пример отчёта
+Concentration of complexity per line of code. Calculated as `(complexity_score / LOC) * 100`.
 
-```
-$ strictacode analyze ./enterprise-core --short
+### Density Thresholds
 
-Project:
-  * loc: 12400
-  * status:
-    - name: warning
-    - score: 47
-  * overengineering_pressure:
-    - score: 71
-    - stat(modules):
-      + avg: 45
-      + max: 89
-      + p90: 78
-  * refactoring_pressure:
-    - score: 18
-  * complexity:
-    - density: 8.2
-```
-
-### Типичные показатели
-
-```
-RP:  0-40    (низкий)
-OP:  60-100  (высокий)
-Diff: > 40   (OP значительно больше RP)
-```
-
-### Что это значит
-
-Код чистый (мало ветвлений), но архитектура перенасыщена абстракциями, связями, слоями.
-
-Это **хроническая боль**: код работает, но его сложно понимать. Новые разработчики долго вникают. Простые задачи требуют изменений во многих местах.
-
-### Где искать проблему
-
-```bash
-strictacode analyze ./enterprise-core --details
-```
-
-Смотрите в отчёте на:
-
-**Classes с высоким overengineering_pressure:**
-```
-Classes:
-  * AbstractFactoryManager:
-    - overengineering_pressure:
-      + score: 89
-  * BaseRepository:
-    - overengineering_pressure:
-      + score: 76
-```
-
-**Modules с высоким avg score:**
-```
-Modules:
-  * factory.py:
-    - overengineering_pressure:
-      + score: 78
-      + stat(classes):
-        - avg: 45
-        - p90: 72
-```
-
-### Что делать
-
-**Приоритет: средний** (не блокирует работу, но замедляет)
-
-1. **Упростите ключевые абстракции:**
-   - Удалите неиспользуемые слои
-   - Объедините похожие интерфейсы
-   - Уберите "на всякий случай" абстракции
-2. **Уменьшите связность:**
-   - Разорвите циклические зависимости
-   - Внедрите dependency injection вместо жестких связей
-3. **Документируйте архитектуру:** если абстракция нужна — объясните почему
-
-### Красные флаги
-
-| Показатель        | Порог | Что значит                            |
-|-------------------|-------|---------------------------------------|
-| `coupling`        | > 4   | Слишком много связей между классами   |
-| `avg_class_score` | > 70  | Классы перенасыщены зависимостями     |
-| `depth`           | > 8   | Цепочки зависимостей слишком глубокие |
+| Density | Status        | Meaning                                    |
+|---------|---------------|--------------------------------------------|
+| 0--10   | clean         | Very low complexity concentration           |
+| 11--20  | good          | Healthy complexity level                    |
+| 21--30  | moderate      | Complexity requires attention               |
+| 31--50  | dirty         | High concentration of complexity            |
+| 51--75  | very-dirty    | Very high concentration, spaghetti territory|
+| 76--100 | spaghetti     | Severely tangled code                      |
+| > 100   | unreadable    | Code is practically impossible to follow    |
 
 ---
 
-## Сценарий 3: Кризисный проект (RP ≈ OP >> 0)
+## Diagnosing Your Project
 
-### Пример отчёта
-
-```
-$ strictacode analyze ./monolith --short
-
-Project:
-  * loc: 48500
-  * status:
-    - name: critical
-    - score: 78
-  * overengineering_pressure:
-    - score: 72
-    - stat(modules):
-      + avg: 52
-      + max: 94
-      + p90: 81
-  * refactoring_pressure:
-    - score: 68
-    - stat(modules):
-      + avg: 45
-      + max: 67
-      + p90: 58
-  * complexity:
-    - density: 35.2
-```
-
-### Типичные показатели
+The key to interpreting strictacode results is comparing **Refactoring Pressure** and **Overengineering Pressure**. Calculate the difference:
 
 ```
-RP:  60-100  (высокий)
-OP:  60-100  (высокий)
-Diff: ≤ 30   (сбалансировано, но оба высокие)
+diff = |RP - OP|
 ```
 
-### Что это значит
+### Project Types
 
-Худший сценарий: код и грязный, и абстрактный одновременно.
+| Diff | RP    | OP    | Type            | What it means                       | What to do                                     |
+|------|-------|-------|-----------------|-------------------------------------|------------------------------------------------|
+| <= 30| 0--40 | 0--40 | Healthy         | Code is in good condition           | Monitor regularly, set thresholds               |
+| <= 30| 40--60| 40--60| Moderate        | Both metrics elevated               | Focus on reducing one metric at a time          |
+| <= 30| 60+   | 60+   | Crisis          | Both high and balanced              | Isolate critical modules, rewrite from scratch  |
+| > 30 | 60+   | 0--40 | Spaghetti       | Dirty code, high complexity         | Refactor top complex functions, extract methods |
+| > 30 | 0--40 | 60+   | Overengineering | Excessive abstractions              | Remove unused layers, reduce coupling           |
 
-Это обычно происходит в "зрелых" проектах, которые:
-- Начинались как prototype/spaghetti
-- Обросли слоями абстракций "для порядка"
-- Не проходили системный рефакторинг
+### Diff Indicator
 
-### Что делать
+- `diff <= 30` -- balanced project
+- `diff > 40` -- imbalance, analysis needed
+- `diff > 50` -- severe imbalance, critical problem
 
-**Приоритет: критический**
+### Imbalance Penalty
 
-1. **Не пытайтесь исправить всё сразу** — проект развалится
-2. **Стратегия:**
-   - Выделите 2-3 критичных модуля (по бизнес-значимости)
-   - Изолируйте их от остального кода (interfaces, adapters)
-   - Перепишите эти модули с нуля
-3. **Для остального:** постепенно снижайте RP через локальный рефакторинг
+When RP and OP are severely imbalanced, the project score receives an additional penalty:
 
-### План действий
-
-| Этап | Что делать                         | Метрика успеха            |
-|------|------------------------------------|---------------------------|
-| 1    | Изоляция критичных модулей         | Чёткие boundaries         |
-| 2    | Перепись критичных модулей         | RP < 40 в новых модулях   |
-| 3    | Постепенный рефакторинг остального | RP снижается на 10/спринт |
+- **Spaghetti imbalance (RP >> OP):** Penalized more heavily because it represents acute pain -- code is actively blocking development.
+- **Overengineering imbalance (OP >> RP):** Penalized less because it is a chronic problem -- the code works but is harder to maintain than necessary.
 
 ---
 
-## Сценарий 4: Здоровый проект (baseline)
+## Red Flags
 
-### Пример отчёта
+Watch for these danger indicators:
 
-```
-$ strictacode analyze ./clean-service --short
-
-Project:
-  * loc: 1520
-  * status:
-    - name: healthy
-    - score: 12
-  * overengineering_pressure:
-    - score: 8
-    - stat(modules):
-      + avg: 3
-      + max: 9
-      + p90: 7
-  * refactoring_pressure:
-    - score: 14
-    - stat(modules):
-      + avg: 6
-      + max: 18
-      + p90: 12
-  * complexity:
-    - density: 6.8
-```
-
-### Типичные показатели
-
-```
-RP:  0-40    (низкий)
-OP:  0-40    (низкий)
-Diff: ≤ 30   (сбалансировано)
-```
-
-### Что это значит
-
-Код в хорошем состоянии. Можно сосредоточиться на фичах.
-
-### Что делать
-
-**Приоритет: мониторинг**
-
-1. **Запускайте анализ регулярно** (CI/CD или weekly)
-2. **Следите за трендами:** рост метрик = ранний сигнал
-3. **Установите пороги:** alarm при RP > 40 или OP > 40
-
-### Предотвращение деградации
-
-| Практика                           | Как помогает                           |
-|------------------------------------|----------------------------------------|
-| Code review с проверкой complexity | Ловит сложные функции до merge         |
-| Линтеры с порогами                 | Блокирует функции с complexity > 20    |
-| Архитектурные review               | Ловит overengineering на ранней стадии |
+| Indicator        | Threshold | Meaning                                      |
+|------------------|-----------|----------------------------------------------|
+| `max_complexity` | > 40      | Function almost impossible to change safely  |
+| `p90_complexity` | > 25      | Problem is systemic, not just local          |
+| `density`        | > 75      | Spaghetti code, rework required              |
+| RP score         | > 80      | Extreme refactoring pressure                 |
+| OP score         | > 80      | Bloated architecture                         |
 
 ---
 
-## Резюме
+## Using Statistics
 
-| Если...               | То...                                   |
-|-----------------------|-----------------------------------------|
-| RP высокий, OP низкий | Spaghetti — чистите функции             |
-| OP высокий, RP низкий | Overengineering — упрощайте архитектуру |
-| Оба высокие           | Кризис — изолируйте и переписывайте     |
-| Оба низкие            | Всё хорошо — мониторьте                 |
+Detailed reports include `stat()` fields that help distinguish local from systemic problems:
+
+- **max** -- most problematic element
+- **p90** -- 90th percentile. If p90 is high, the problem is systemic (affects most of the codebase)
+- **avg** -- average across all elements
+
+### Example Interpretation
+
+```
+refactoring_pressure:
+  score: 72
+  stat(modules):
+    avg: 8
+    max: 24
+    p90: 16
+```
+
+- `max = 24` -- one module has high RP
+- `p90 = 16` -- problem is not systemic (p90 < 25)
+- **Conclusion:** local problem, focus on the worst module
+
+---
+
+## Common Scenarios
+
+### Spaghetti Code (high RP, low OP, diff > 40)
+
+Symptoms:
+- RP > 60, OP < 40
+- High complexity density
+- Functions with complexity > 30
+
+Diagnosis: Code has accumulated complexity without proper abstractions.
+
+Actions:
+1. Identify top complex functions (`--details`)
+2. Extract helper methods
+3. Simplify conditional logic
+4. Add tests before refactoring
+
+### Overengineering (high OP, low RP, diff > 40)
+
+Symptoms:
+- OP > 60, RP < 40
+- Low complexity density (many simple types)
+- High coupling between packages
+
+Diagnosis: Architecture is overly complex for the problem it solves.
+
+Actions:
+1. Review dependency graph for unnecessary connections
+2. Consolidate types imported everywhere
+3. Remove unused abstraction layers
+4. Consider merging small packages
+
+### Crisis (both RP and OP high)
+
+Symptoms:
+- RP > 60 and OP > 60
+- Balanced (diff <= 30) or imbalanced
+
+Diagnosis: The worst case -- code is both complex and overarchitected.
+
+Actions:
+1. Do not try to fix everything at once
+2. Isolate critical modules
+3. Rewrite the worst modules from scratch
+4. Gradual refactoring for the rest
+
+### Healthy (both RP and OP low)
+
+Symptoms:
+- RP < 40 and OP < 40
+- Project score < 20
+
+Diagnosis: Code is in good shape.
+
+Actions:
+- Continue monitoring
+- Set quality thresholds in CI/CD
+- Maintain code review practices
