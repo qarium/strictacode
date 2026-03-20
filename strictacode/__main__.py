@@ -116,13 +116,13 @@ def analyze(path: str, fmt: str, short: bool, details: bool,
     if threshold is not None:
         thresholds = Threshold.from_string(threshold)
         errors = thresholds.check(score=sources.status.score.value,
+                                  complexity_density=sources.complexity.density,
                                   refactoring_pressure=sources.refactoring_pressure.score,
-                                  overengineering_pressure=sources.overengineering_pressure.score,
-                                  complexity_density=sources.complexity.density)
+                                  overengineering_pressure=sources.overengineering_pressure.score)
 
         if errors:
             for error in errors:
-                click.secho(error, fg="red")
+                click.secho(f"FAIL: {error}", fg="red")
             exit(1)
 
 
