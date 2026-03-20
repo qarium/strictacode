@@ -1,0 +1,43 @@
+docs_dir: public
+
+site_name: Strictacode
+site_description: Code base health diagnostics — find spaghetti code, overengineering, and complexity that blocks development
+site_url: https://qarium.github.io/strictacode/
+repo_url: https://github.com/qarium/strictacode
+edit_uri: edit/main/docs/public/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Installation: installation.md
+  - CLI Reference: cli-reference.md
+  - Metrics: metrics.md
+  - Interpretation: interpretation.md
+  - Configuration: configuration.md
+  - Examples: examples.md
+  - Report Fields: report-fields.md
+
+plugins:
+  - search
