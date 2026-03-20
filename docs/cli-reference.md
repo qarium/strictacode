@@ -26,6 +26,34 @@ strictacode analyze PATH [OPTIONS]
 | `--top-classes`     | from config | Number of top classes to show              |
 | `--top-methods`     | from config | Number of top methods to show              |
 | `--top-functions`   | from config | Number of top functions to show            |
+| `--threshold`       | —       | Fail if any metric exceeds the given threshold |
+
+### Thresholds
+
+The `--threshold` option enables quality gates. The command exits with code 1 if any specified metric exceeds its threshold.
+
+**Single value** (applies to Project Score only):
+
+```bash
+strictacode analyze . --threshold 60
+```
+
+**Multiple metrics** (`key=value`, comma-separated):
+
+```bash
+strictacode analyze . --threshold score=60,rp=70,op=50,density=40
+```
+
+**Available keys:**
+
+| Key         | Metric                     | Type   |
+|-------------|----------------------------|--------|
+| `score`     | Project Score              | int    |
+| `rp`        | Refactoring Pressure       | int    |
+| `op`        | Overengineering Pressure    | int    |
+| `density`   | Complexity Density         | float  |
+
+When a threshold is exceeded, the command prints an error and exits with code 1. All checks are performed — multiple thresholds can fail in a single run.
 
 ### Output Formats
 

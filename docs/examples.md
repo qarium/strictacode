@@ -209,12 +209,23 @@ strictacode analyze . --format json > sprint-end.json
 
 **Context:** Code quality degradation needs to be blocked in the pipeline. A pull request with bad code should not land in main.
 
-**Command (in CI):**
+**Approach 1: Absolute thresholds**
+
+Block PRs that push the codebase above a quality limit:
+
+```bash
+strictacode analyze . --threshold score=60,rp=70
+```
+
+Exits with code 1 if any metric exceeds the threshold. Add this as a CI step after tests — no scripts needed.
+
+**Approach 2: Relative thresholds (delta against baseline)**
+
+Track quality degradation over time by comparing against a saved baseline:
+
 ```bash
 strictacode analyze . --format json > current.json
 ```
-
-**Result:** JSON report for automated validation.
 
 **Workflow:**
 1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
