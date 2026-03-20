@@ -9,6 +9,7 @@ from strictacode.py import PyLoder
 from strictacode.go import GoLoder
 from strictacode.js import JSLoder
 from strictacode.analyzer import Analyzer
+from strictacode.threshold import Threshold
 from strictacode.utils import detect_language
 from strictacode.config import Config, Language
 from strictacode.reporters import TextReporter, JsonReporter
@@ -37,6 +38,7 @@ def app():
 @click.option('--top-classes', type=int, default=None)
 @click.option('--top-methods', type=int, default=None)
 @click.option('--top-functions', type=int, default=None)
+@click.option('--threshold', type=str, default=None)
 @click.option('--short/--no-short', is_flag=True, default=False)
 @click.option('--details/--no-details', is_flag=True, default=False)
 @click.option('--format', '-f', 'fmt', type=click.Choice(['text', 'json']), default='text')
@@ -45,7 +47,7 @@ def app():
 def analyze(path: str, fmt: str, short: bool, details: bool,
             top_packages: t.Optional[int], top_modules: t.Optional[int],
             top_classes: t.Optional[int], top_methods: t.Optional[int],
-            top_functions: t.Optional[int]):
+            top_functions: t.Optional[int], threshold: t.Optional[str]):
     if not os.path.exists(path):
         raise click.UsageError(f"Path \"{path}\" does not exist")
     if not os.path.isdir(path):
@@ -110,6 +112,18 @@ def analyze(path: str, fmt: str, short: bool, details: bool,
                               top_methods=config.reporter.top.methods,
                               top_functions=config.reporter.top.functions,)
     reporter.report()
+
+    if threshold is not None:
+        thresholds = Threshold.from_string(threshold)
+        errors = thresholds.check(score=sources.status.score.value,
+                                  refactoring_pressure=sources.refactoring_pressure.score,
+                                  overengineering_pressure=sources.overengineering_pressure.score,
+                                  complexity_density=sources.complexity.density)
+
+        if errors:
+            for error in errors:
+                click.secho(error, fg="red")
+            exit(1)
 
 
 @app.group()
