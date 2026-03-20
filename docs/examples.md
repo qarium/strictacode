@@ -221,44 +221,19 @@ Exits with code 1 if any metric exceeds the threshold. Add this as a CI step aft
 
 **Approach 2: Relative thresholds (delta against baseline)**
 
-Track quality degradation over time by comparing against a saved baseline:
+Track quality degradation over time by comparing against a saved baseline using the `compare` command:
 
 ```bash
-strictacode analyze . --format json > current.json
+strictacode analyze . --format json --output current.json
+strictacode compare baseline.json current.json --threshold score=10,rp=5
 ```
 
 **Workflow:**
 1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
-2. Add a step in the CI pipeline after tests:
-   - Run `strictacode analyze . --format json > current.json`
-   - Compare `current.json` with `baseline.json` against key metrics
-3. Block the PR if:
-   - Project Score exceeds the threshold (e.g., > 60)
-   - RP has increased by more than N points relative to the baseline
+2. Add a CI step after tests that:
+   - Runs `strictacode analyze . --format json --output current.json`
+   - Runs `strictacode compare baseline.json current.json --threshold score=10,rp=5`
+3. The PR is blocked if the diff exceeds the threshold (exit code 1)
 4. After merging into main — update `baseline.json`
 
-**Example validation script (Python):**
-```python
-import json
-
-THRESHOLD_SCORE = 60
-THRESHOLD_RP_DIFF = 10
-
-with open("baseline.json") as f:
-    baseline = json.load(f)
-with open("current.json") as f:
-    current = json.load(f)
-
-score = current["project"]["status"]["score"]
-rp_diff = current["project"]["refactoring_pressure"]["score"] - baseline["project"]["refactoring_pressure"]["score"]
-
-if score > THRESHOLD_SCORE:
-    print(f"FAIL: Project Score {score} > {THRESHOLD_SCORE}")
-    exit(1)
-
-if rp_diff > THRESHOLD_RP_DIFF:
-    print(f"FAIL: RP increased by {rp_diff} points (threshold: {THRESHOLD_RP_DIFF})")
-    exit(1)
-
-print("OK: Metrics within acceptable range")
-```
+The `compare` command calculates the absolute difference between two results for all four metrics (Score, Complexity Density, Refactoring Pressure, Overengineering Pressure) and checks each against the threshold.
