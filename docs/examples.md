@@ -28,6 +28,7 @@ strictacode compare baseline.json current.json --threshold "score=10,rp=5,op=5,d
 ```
 
 **Workflow:**
+
 1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
 2. Add a CI step after tests that:
    - Runs `strictacode analyze . --format json --output current.json`
@@ -55,6 +56,7 @@ strictacode analyze . --format json > sprint-end.json
 **Result:** Two snapshots of the codebase state.
 
 **Workflow:**
+
 1. Run the analysis at the start of the sprint and save the baseline
 2. During the sprint — do not touch the metrics, just work
 3. At the end of the sprint — run the analysis again
@@ -100,6 +102,7 @@ Analyze code quality with strictacode
 The agent automatically runs the analysis, interprets all metrics, identifies hotspots by reading the actual source code, and produces a prioritized improvement plan with concrete actions, file locations, and expected effects.
 
 **Workflow:**
+
 1. Install the skill once: `strictacode install agent-skill --agent <agent>`
 2. Open the AI agent in the project directory
 3. Send the prompt
@@ -190,6 +193,7 @@ jobs:
 For the JSON structure, see [Report Fields](report-fields.md).
 
 **Workflow:**
+
 1. Create `.strictacode.yml` with desired `reporter.top` values
 2. Set up an API endpoint that accepts the JSON report
 3. Add the CI workflow (or run manually during development)
@@ -213,6 +217,7 @@ strictacode analyze . --details
 **Result:** Metrics by modules/packages — where RP is high (messy code), where OP is high (complex dependencies), and where density is off the charts.
 
 **Workflow:**
+
 1. Run the analysis with `--details`
 2. Find modules with `status: healthy` — these are the best places to start working
 3. Look at modules with `RP > 60` — these are the hardest to change
@@ -233,6 +238,7 @@ strictacode analyze . --short
 **Result:** Project Score, RP, OP, density — an overall picture of health.
 
 **Workflow:**
+
 1. Run a short analysis to get the Project Score
 2. Interpret the score using the scale (healthy/normal/warning/critical/emergency)
 3. Compare RP and OP:
@@ -255,6 +261,7 @@ strictacode analyze . --details
 **Result:** Breakdown by modules/classes/functions with complexity metrics.
 
 **Workflow:**
+
 1. Run the analysis with `--details`
 2. Sort functions by `complexity` — functions with complexity > 15 are harder to test and break more often
 3. Look at `density` in the module — high density means tangled code, tests will be difficult
@@ -278,6 +285,7 @@ strictacode analyze ./service-c --short
 **Result:** Project Score, RP, OP, density for each service.
 
 **Workflow:**
+
 1. Run the analysis for each service separately
 2. Compare metrics across services:
    - High RP — service with "messy" code, changes are risky
@@ -303,6 +311,7 @@ strictacode analyze . --details
 **Result:** Breakdown by packages/modules with metrics.
 
 **Workflow:**
+
 1. Run the analysis with `--details`
 2. Find packages with `status: warning` and above — these are problem areas
 3. Map packages to API endpoints:
@@ -328,6 +337,7 @@ strictacode analyze .
 **Result:** Project metrics broken down by packages/modules.
 
 **Workflow:**
+
 1. Run the analysis of the entire project
 2. Find the relevant package/service in the results
 3. Assess the overall state using its Project Score:
@@ -358,6 +368,7 @@ strictacode analyze . --format json > quality-baseline.json
 **Result:** Metrics in a human-readable format + JSON for tracking progress.
 
 **Workflow:**
+
 1. Run the analysis and save the baseline
 2. Frame the problem using metrics:
    - "RP = 72 — this means every code change carries a high risk of bugs"
