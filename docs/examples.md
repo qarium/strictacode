@@ -237,3 +237,150 @@ strictacode analyze . --format json > quality-baseline.json
    - High OP → harder to onboard new developers, longer code reviews
 5. Propose a plan: "We will reduce RP from 72 to 40 in 2 sprints, which will speed up development by X%"
 6. After refactoring: run the analysis again and show the improvement
+
+## AI-Assisted Development
+
+### Analyzing Code Quality with an AI Agent
+
+**Context:** A developer wants an objective code quality assessment with concrete improvement suggestions. Instead of reading metrics manually and figuring out what to do, the AI agent does the interpretation and produces a prioritized plan.
+
+**Setup:**
+
+Install strictacode as a skill for the AI agent:
+
+```bash
+# Claude Code
+strictacode install agent-skill --agent claude
+
+# Cursor
+strictacode install agent-skill --agent cursor
+
+# OpenAI Codex
+strictacode install agent-skill --agent codex
+```
+
+Supported agents: `claude`, `cursor`, `codex`, `gemini`, `antigravity`.
+
+**Usage:**
+
+```text
+Проанализируй качество кода с strictacode
+```
+
+The agent automatically runs the analysis, interprets all metrics, identifies hotspots by reading the actual source code, and produces a prioritized improvement plan with concrete actions, file locations, and expected effects.
+
+**Workflow:**
+1. Install the skill once: `strictacode install agent-skill --agent <agent>`
+2. Open the AI agent in the project directory
+3. Send the prompt
+4. The agent runs `strictacode analyze . --details --format json`
+5. Review the output: project summary, metric breakdown, red flags, pain points, improvement plan (P0/P1/P2)
+6. Use the plan to guide refactoring work
+
+**Result:** A structured analysis with:
+- Project type diagnosis (Healthy / Spaghetti / Overengineering / Crisis)
+- Top problematic functions and classes with line numbers
+- Concrete refactoring steps ordered by priority
+- Expected metric improvements
+
+For details on what the agent analyzes and how it interprets each metric, see [CLI Reference — agent-skill](cli-reference.md#strictacode-install-agent-skill).
+
+## Dashboard Integration
+
+### Tracking Code Quality Over Time
+
+**Context:** The team wants to track code quality metrics on a dashboard (Grafana, Metabase, custom frontend). The workflow: strictacode generates a JSON report, CI sends it to an API, the dashboard visualizes trends.
+
+**Configuration:**
+
+Create `.strictacode.yml` in the project root to control the volume of data sent to the dashboard:
+
+```yaml
+reporter:
+  top:
+    packages: 10
+    modules: 20
+    classes: 30
+    methods: 50
+    functions: 50
+```
+
+Adjust the `top` values based on project size. Larger values produce more data — useful for dashboards but heavier on the API.
+
+**Generating the report:**
+
+Use `--details` to include analytics for functions, methods, and classes, and `--format json` for structured output:
+
+```bash
+strictacode analyze . --details --format json --output report.json
+```
+
+**Sending to an API:**
+
+```bash
+curl -X POST https://your-dashboard-api.example.com/api/metrics \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $DASHBOARD_TOKEN" \
+  --data @report.json
+```
+
+The server receives the full JSON report and can store metrics per project, branch, and timestamp.
+
+**CI integration (GitHub Actions):**
+
+```yaml
+name: Code Quality Dashboard
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install strictacode
+        run: pip install strictacode
+
+      - name: Analyze
+        run: strictacode analyze . --details --format json --output report.json
+
+      - name: Send to dashboard
+        env:
+          DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
+        run: |
+          curl -X POST https://your-dashboard-api.example.com/api/metrics \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $DASHBOARD_TOKEN" \
+            --data @report.json
+```
+
+**Key JSON fields for dashboard:**
+
+| Field                                            | Description                          |
+|--------------------------------------------------|--------------------------------------|
+| `project.status.score`                           | Overall project health (0-100)       |
+| `project.refactoring_pressure.score`             | Refactoring pressure (0-100)         |
+| `project.overengineering_pressure.score`         | Overengineering pressure (0-100)     |
+| `project.complexity.density`                     | Complexity density                   |
+| `project.loc`                                    | Lines of code                        |
+| `project.packages`                               | Number of packages                   |
+| `project.modules`                                | Number of modules                    |
+| `packages[].name`                                | Package name                         |
+| `packages[].status.score`                        | Package health (0-100)               |
+| `packages[].refactoring_pressure.score`          | Package RP                           |
+| `packages[].complexity.density`                  | Package complexity density           |
+
+For the full JSON structure, see [Report Fields](report-fields.md).
+
+**Workflow:**
+1. Create `.strictacode.yml` with desired `reporter.top` values
+2. Set up an API endpoint that accepts the JSON report
+3. Add the CI workflow (or run manually during development)
+4. Build dashboard visualizations using the stored metrics:
+   - Project Score trend over time
+   - RP and OP per branch
+   - Complexity density by package
+   - Comparison across projects/services
