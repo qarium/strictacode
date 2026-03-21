@@ -2,6 +2,72 @@
 
 This documentation contains real-world strictacode usage scenarios with step-by-step workflows.
 
+## Team Processes
+
+### CI/CD Gates
+
+**Context:** Code quality degradation needs to be blocked in the pipeline. A pull request with bad code should not land in main.
+
+**Approach 1: Absolute thresholds**
+
+Block PRs that push the codebase above a quality limit:
+
+```bash
+strictacode analyze . --threshold "score=60,rp=70,op=50,density=30"
+```
+
+Exits with code 1 if any metric exceeds the threshold. Add this as a CI step after tests — no scripts needed.
+
+**Approach 2: Relative thresholds (delta against baseline)**
+
+Track quality degradation over time by comparing against a saved baseline using the `compare` command:
+
+```bash
+strictacode analyze . --format json --output current.json
+strictacode compare baseline.json current.json --threshold "score=10,rp=5,op=5,density=5"
+```
+
+**Workflow:**
+1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
+2. Add a CI step after tests that:
+   - Runs `strictacode analyze . --format json --output current.json`
+   - Runs `strictacode compare baseline.json current.json --threshold score=10,rp=5`
+3. The PR is blocked if the diff exceeds the threshold (exit code 1)
+4. After merging into main — update `baseline.json`
+
+The `compare` command calculates the absolute difference between two results for all four metrics (Score, Complexity Density, Refactoring Pressure, Overengineering Pressure) and checks each against the threshold.
+
+---
+
+### Sprint Retrospective
+
+**Context:** The team is running a retro. Code quality is being discussed. Opinions diverge: "the code is fine" vs. "everything is falling apart." Objective data is needed.
+
+**Command:**
+```bash
+# Before the sprint
+strictacode analyze . --format json > sprint-start.json
+
+# After the sprint
+strictacode analyze . --format json > sprint-end.json
+```
+
+**Result:** Two snapshots of the codebase state.
+
+**Workflow:**
+1. Run the analysis at the start of the sprint and save the baseline
+2. During the sprint — do not touch the metrics, just work
+3. At the end of the sprint — run the analysis again
+4. Compare metrics:
+   - RP increased → technical debt accumulated, the next sprint needs time allocated for cleanup
+   - OP increased → abstractions were added; verify whether they are needed or premature
+   - Density increased → code is getting "dirtier," stricter code reviews are needed
+5. Discuss at the retro:
+   - Which modules deteriorated and why?
+   - Is this normal growth or a problem?
+   - What should be done in the next sprint?
+6. Save sprint-end.json as the baseline for the next sprint
+
 ## Getting to Know a Project
 
 ### Onboarding a New Developer
@@ -171,69 +237,3 @@ strictacode analyze . --format json > quality-baseline.json
    - High OP → harder to onboard new developers, longer code reviews
 5. Propose a plan: "We will reduce RP from 72 to 40 in 2 sprints, which will speed up development by X%"
 6. After refactoring: run the analysis again and show the improvement
-
-## Team Processes
-
-### Sprint Retrospective
-
-**Context:** The team is running a retro. Code quality is being discussed. Opinions diverge: "the code is fine" vs. "everything is falling apart." Objective data is needed.
-
-**Command:**
-```bash
-# Before the sprint
-strictacode analyze . --format json > sprint-start.json
-
-# After the sprint
-strictacode analyze . --format json > sprint-end.json
-```
-
-**Result:** Two snapshots of the codebase state.
-
-**Workflow:**
-1. Run the analysis at the start of the sprint and save the baseline
-2. During the sprint — do not touch the metrics, just work
-3. At the end of the sprint — run the analysis again
-4. Compare metrics:
-   - RP increased → technical debt accumulated, the next sprint needs time allocated for cleanup
-   - OP increased → abstractions were added; verify whether they are needed or premature
-   - Density increased → code is getting "dirtier," stricter code reviews are needed
-5. Discuss at the retro:
-   - Which modules deteriorated and why?
-   - Is this normal growth or a problem?
-   - What should be done in the next sprint?
-6. Save sprint-end.json as the baseline for the next sprint
-
----
-
-### CI/CD Gates
-
-**Context:** Code quality degradation needs to be blocked in the pipeline. A pull request with bad code should not land in main.
-
-**Approach 1: Absolute thresholds**
-
-Block PRs that push the codebase above a quality limit:
-
-```bash
-strictacode analyze . --threshold score=60,rp=70
-```
-
-Exits with code 1 if any metric exceeds the threshold. Add this as a CI step after tests — no scripts needed.
-
-**Approach 2: Relative thresholds (delta against baseline)**
-
-Track quality degradation over time by comparing against a saved baseline using the `compare` command:
-
-```bash
-strictacode analyze . --format json --output current.json
-strictacode compare baseline.json current.json --threshold score=10,rp=5
-```
-
-**Workflow:**
-1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
-2. Add a CI step after tests that:
-   - Runs `strictacode analyze . --format json --output current.json`
-   - Runs `strictacode compare baseline.json current.json --threshold score=10,rp=5`
-3. The PR is blocked if the diff exceeds the threshold (exit code 1)
-4. After merging into main — update `baseline.json`
-
-The `compare` command calculates the absolute difference between two results for all four metrics (Score, Complexity Density, Refactoring Pressure, Overengineering Pressure) and checks each against the threshold.
