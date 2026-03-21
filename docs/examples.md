@@ -264,7 +264,7 @@ Supported agents: `claude`, `cursor`, `codex`, `gemini`, `antigravity`.
 **Usage:**
 
 ```text
-Проанализируй качество кода с strictacode
+Analyze code quality with strictacode
 ```
 
 The agent automatically runs the analysis, interprets all metrics, identifies hotspots by reading the actual source code, and produces a prioritized improvement plan with concrete actions, file locations, and expected effects.
@@ -357,23 +357,7 @@ jobs:
             --data @report.json
 ```
 
-**Key JSON fields for dashboard:**
-
-| Field                                            | Description                          |
-|--------------------------------------------------|--------------------------------------|
-| `project.status.score`                           | Overall project health (0-100)       |
-| `project.refactoring_pressure.score`             | Refactoring pressure (0-100)         |
-| `project.overengineering_pressure.score`         | Overengineering pressure (0-100)     |
-| `project.complexity.density`                     | Complexity density                   |
-| `project.loc`                                    | Lines of code                        |
-| `project.packages`                               | Number of packages                   |
-| `project.modules`                                | Number of modules                    |
-| `packages[].name`                                | Package name                         |
-| `packages[].status.score`                        | Package health (0-100)               |
-| `packages[].refactoring_pressure.score`          | Package RP                           |
-| `packages[].complexity.density`                  | Package complexity density           |
-
-For the full JSON structure, see [Report Fields](report-fields.md).
+For the JSON structure, see [Report Fields](report-fields.md).
 
 **Workflow:**
 1. Create `.strictacode.yml` with desired `reporter.top` values
