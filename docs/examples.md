@@ -111,6 +111,7 @@ The agent automatically runs the analysis, interprets all metrics, identifies ho
 6. Use the plan to guide refactoring work
 
 **Result:** A structured analysis with:
+
 - Project type diagnosis (Healthy / Spaghetti / Overengineering / Crisis)
 - Top problematic functions and classes with line numbers
 - Concrete refactoring steps ordered by priority
