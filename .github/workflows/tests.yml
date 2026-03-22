@@ -7,7 +7,7 @@ on:
     branches: [master, main]
 
 jobs:
-  test:
+  test-python:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,13 +21,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "stable"
-
-      - name: Install @babel packages
-        run: npm install -g @babel/parser @babel/traverse
-
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -40,14 +33,58 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[test]"
 
-      - name: Run tests with coverage
-        run: |
-          pytest --cov --cov-report=term-missing --cov-report=xml
+      - name: Run tests
+        run: pytest --ignore=tests/go --ignore=tests/js
 
-      - name: Upload coverage artifact
-        if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v4
+  test-go:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.22", "1.23", "1.24"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
-          name: coverage-report
-          path: coverage.xml
-          retention-days: 7
+          python-version: "3.13"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Run Go integration tests
+        run: pytest tests/go
+
+  test-js:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["18", "20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install @babel packages
+        run: npm install -g @babel/parser @babel/traverse
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Run JS integration tests
+        run: pytest tests/js
