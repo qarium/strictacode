@@ -208,3 +208,6 @@ __marimo__/
 
 # tmp docs
 docs/plans
+
+# AI agents
+.claude/
