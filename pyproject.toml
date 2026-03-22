@@ -30,4 +30,19 @@ strictacode = "strictacode.__main__:app"
 [project.urls]
 Homepage = "https://github.com/qarium/strictacode"
 
+[project.optional-dependencies]
+test = ["pytest>=8.0", "pytest-cov>=5.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["strictacode"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
 [tool.setuptools_scm]
