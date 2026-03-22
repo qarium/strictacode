@@ -40,7 +40,8 @@ def lines_of_code(file_path: str, *,
                 stop_pointer = None
                 continue
 
-            stop_pointer = get_stop_pointer(line)
+            if stop_pointer is None:
+                stop_pointer = get_stop_pointer(line)
 
             if stop_pointer is not None:
                 continue
