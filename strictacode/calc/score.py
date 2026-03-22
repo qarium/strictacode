@@ -97,7 +97,8 @@ def _calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, ImbalanceT
 def calculate(
     rp: int,
     oe: int,
-    complexity_density: float, *,
+    complexity_density: float,
+    *,
     rp_weight: float = 0.4,
     oe_weight: float = 0.4,
     density_weight: float = 0.2,
@@ -105,9 +106,7 @@ def calculate(
 ) -> Metric:
     density = min(100, int(complexity_density))
 
-    base_score = int(round(
-        rp_weight * rp + oe_weight * oe + density_weight * density, 0
-    ))
+    base_score = int(round(rp_weight * rp + oe_weight * oe + density_weight * density, 0))
 
     if not use_imbalance:
         return Metric(value=min(100, base_score))

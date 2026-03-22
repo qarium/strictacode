@@ -17,11 +17,13 @@ from strictacode.source import (
 class TestStatus:
     def test_default_score(self):
         from strictacode.calc import score as score_mod
+
         s = Status()
         assert s.score == score_mod.Metric(value=0)
 
     def test_name_returns_score_status(self):
         from strictacode.calc import score as score_mod
+
         s = Status(score=score_mod.Metric(value=50))
         assert s.name == score_mod.Status.WARNING
 
@@ -134,15 +136,22 @@ class TestModuleSource:
     def test_overengineering_pressure_setter(self, tmp_py_file):
         mod = ModuleSource(tmp_py_file)
         from strictacode.calc.pressure import overengineering
+
         mod.overengineering_pressure = overengineering.Metric(42)
         assert mod.overengineering_pressure.score == 42
 
     def test_compile_sets_status_score(self, tmp_py_file):
         mod = ModuleSource(tmp_py_file)
         # Add a class so complexity > 0
-        cls = ClassSource(mod, "Foo", lineno=2, endline=4, complexity=5,
-                          comment_line_prefixes=["#"],
-                          comment_code_blocks=[('"""', '"""')])
+        cls = ClassSource(
+            mod,
+            "Foo",
+            lineno=2,
+            endline=4,
+            complexity=5,
+            comment_line_prefixes=["#"],
+            comment_code_blocks=[('"""', '"""')],
+        )
         mod.classes.append(cls)
         assert mod.complexity.score > 0
         assert mod.status.score.value == 0
@@ -180,9 +189,9 @@ class TestClassSource:
     def test_loc_from_methods_with_methods(self, tmp_py_file):
         mod = ModuleSource(tmp_py_file)
         cls = ClassSource(mod, "Foo", lineno=2, endline=10, loc_from_methods=True)
-        method = MethodSource(mod, cls, "bar", lineno=6, endline=10,
-                              comment_line_prefixes=["#"],
-                              comment_code_blocks=[('"""', '"""')])
+        method = MethodSource(
+            mod, cls, "bar", lineno=6, endline=10, comment_line_prefixes=["#"], comment_code_blocks=[('"""', '"""')]
+        )
         cls.methods.append(method)
         # bar spans lines 6-10: 5 non-blank
         assert cls.loc == 5
@@ -206,6 +215,7 @@ class TestClassSource:
     def test_overengineering_pressure_setter(self, tmp_py_file):
         mod = ModuleSource(tmp_py_file)
         from strictacode.calc.pressure import overengineering
+
         cls = ClassSource(mod, "Foo")
         cls.overengineering_pressure = overengineering.Metric(55)
         assert cls.overengineering_pressure.score == 55

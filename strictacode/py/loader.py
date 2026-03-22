@@ -6,26 +6,30 @@ from .analyzer import Analyzer
 
 
 def _create_item(**kwargs) -> FileItem:
-    return FileItem(type=kwargs["type"],
-                    name=kwargs["name"],
-                    lineno=kwargs["lineno"],
-                    endline=kwargs["endline"],
-                    complexity=kwargs["complexity"],
-                    class_name=kwargs.get("classname"),
-                    methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
-                    closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
+    return FileItem(
+        type=kwargs["type"],
+        name=kwargs["name"],
+        lineno=kwargs["lineno"],
+        endline=kwargs["endline"],
+        complexity=kwargs["complexity"],
+        class_name=kwargs.get("classname"),
+        methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
+        closures=[_create_item(**i) for i in (kwargs.get("closures") or [])],
+    )
 
 
 class PyLoder(Loader):
     __lang__ = "python"
     __ignore_dirs__ = [
-        ".venv", "venv",
-        ".env", "env",
+        ".venv",
+        "venv",
+        ".env",
+        "env",
     ]
     __comment_line_prefixes__ = ["#"]
     __comment_code_blocks__ = [
         ("'''", "'''"),
-        ("\"\"\"", "\"\"\""),
+        ('"""', '"""'),
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:

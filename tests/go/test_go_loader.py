@@ -32,8 +32,7 @@ class TestCreateItem:
         from strictacode.go.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(type="structure", name="User", lineno=1, endline=20,
-                            complexity=5, methods=[], closures=[])
+        item = _create_item(type="structure", name="User", lineno=1, endline=20, complexity=5, methods=[], closures=[])
         assert item.type == FileItemTypes.CLASS
         assert item.name == "User"
 
@@ -41,16 +40,16 @@ class TestCreateItem:
         from strictacode.go.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(type="function", name="main", lineno=1, endline=10,
-                            complexity=1, methods=[], closures=[])
+        item = _create_item(type="function", name="main", lineno=1, endline=10, complexity=1, methods=[], closures=[])
         assert item.type == FileItemTypes.FUNCTION
 
     def test_maps_method_with_structure(self):
         from strictacode.go.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(type="method", name="GetName", lineno=5, endline=10,
-                            complexity=1, structure="User", methods=[], closures=[])
+        item = _create_item(
+            type="method", name="GetName", lineno=5, endline=10, complexity=1, structure="User", methods=[], closures=[]
+        )
         assert item.type == FileItemTypes.METHOD
         assert item.class_name == "User"
 
@@ -112,6 +111,7 @@ class TestGoLoaderCollect:
         assert len(result[filepath]) == 2
 
         from strictacode.loader import FileItemTypes
+
         assert result[filepath][0].type == FileItemTypes.CLASS
         assert result[filepath][0].name == "App"
         assert result[filepath][1].type == FileItemTypes.FUNCTION

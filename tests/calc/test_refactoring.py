@@ -14,17 +14,20 @@ from strictacode.calc.pressure.refactoring import (
 
 
 class TestMetricStatus:
-    @pytest.mark.parametrize("value, expected", [
-        (0, Status.MINIMAL),
-        (20, Status.MINIMAL),
-        (21, Status.LOW),
-        (40, Status.LOW),
-        (41, Status.MEDIUM),
-        (60, Status.MEDIUM),
-        (61, Status.HIGH),
-        (80, Status.HIGH),
-        (81, Status.EXTREME),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (0, Status.MINIMAL),
+            (20, Status.MINIMAL),
+            (21, Status.LOW),
+            (40, Status.LOW),
+            (41, Status.MEDIUM),
+            (60, Status.MEDIUM),
+            (61, Status.HIGH),
+            (80, Status.HIGH),
+            (81, Status.EXTREME),
+        ],
+    )
     def test_status_boundaries(self, value, expected):
         data = Data(loc=100, max_complexity=1, p90_complexity=1, complexity_density=1.0)
         m = Metric(score=value, data=data)
@@ -32,35 +35,41 @@ class TestMetricStatus:
 
 
 class TestPeakScale:
-    @pytest.mark.parametrize("loc, expected", [
-        (0, 0.25),
-        (1, 0.25),
-        (999, 0.25),
-        (1000, 0.5),
-        (5000, 0.5),
-        (9999, 0.5),
-        (10000, 0.75),
-        (50000, 0.75),
-        (99999, 0.75),
-        (100000, 1.0),
-    ])
+    @pytest.mark.parametrize(
+        "loc, expected",
+        [
+            (0, 0.25),
+            (1, 0.25),
+            (999, 0.25),
+            (1000, 0.5),
+            (5000, 0.5),
+            (9999, 0.5),
+            (10000, 0.75),
+            (50000, 0.75),
+            (99999, 0.75),
+            (100000, 1.0),
+        ],
+    )
     def test_peak_scale(self, loc, expected):
         assert _peak_scale(loc) == expected
 
 
 class TestDensityScale:
-    @pytest.mark.parametrize("loc, expected", [
-        (0, 0.5),
-        (1, 0.5),
-        (499, 0.5),
-        (500, 1.0),
-        (1000, 1.0),
-        (4999, 1.0),
-        (5000, 2.0),
-        (10000, 2.0),
-        (19999, 2.0),
-        (20000, 3.0),
-    ])
+    @pytest.mark.parametrize(
+        "loc, expected",
+        [
+            (0, 0.5),
+            (1, 0.5),
+            (499, 0.5),
+            (500, 1.0),
+            (1000, 1.0),
+            (4999, 1.0),
+            (5000, 2.0),
+            (10000, 2.0),
+            (19999, 2.0),
+            (20000, 3.0),
+        ],
+    )
     def test_density_scale(self, loc, expected):
         assert _density_scale(loc) == expected
 

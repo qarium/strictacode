@@ -1,6 +1,6 @@
 import typing as t
 
-CONFIG_NAME = '.strictacode'
+CONFIG_NAME = ".strictacode"
 
 DEFAULT_TOP_PACKAGES: t.Final[int] = 5
 DEFAULT_TOP_MODULES: t.Final[int] = 10

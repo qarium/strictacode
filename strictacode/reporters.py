@@ -6,15 +6,19 @@ from .source import Sources
 
 
 class BaseReporter(metaclass=abc.ABCMeta):
-    def __init__(self, sources: Sources, *,
-                 short: bool = False,
-                 details: bool = False,
-                 top_packages: int = 3,
-                 top_modules: int = 5,
-                 top_classes: int = 10,
-                 top_methods: int = 15,
-                 top_functions: int = 20,
-                 output: str | None = None):
+    def __init__(
+        self,
+        sources: Sources,
+        *,
+        short: bool = False,
+        details: bool = False,
+        top_packages: int = 3,
+        top_modules: int = 5,
+        top_classes: int = 10,
+        top_methods: int = 15,
+        top_functions: int = 20,
+        output: str | None = None,
+    ):
         self._sources = sources
 
         self._short = short
@@ -35,21 +39,11 @@ class BaseReporter(metaclass=abc.ABCMeta):
         self._make_top_functions(top_functions)
 
     def _make_top_packages(self, top: int):
-        packages_by_score = sorted(self._sources.packages,
-                                             key=lambda x: x.status.score.value,
-                                             reverse=True)
-        packages_by_complexity = sorted(self._sources.packages,
-                                             key=lambda x: x.complexity.score,
-                                             reverse=True)
-        packages_by_density = sorted(self._sources.packages,
-                                          key=lambda x: x.complexity.density,
-                                          reverse=True)
-        packages_by_rp = sorted(self._sources.packages,
-                                     key=lambda x: x.refactoring_pressure.score,
-                                     reverse=True)
-        packages_by_op = sorted(self._sources.packages,
-                                     key=lambda x: x.overengineering_pressure.score,
-                                     reverse=True)
+        packages_by_score = sorted(self._sources.packages, key=lambda x: x.status.score.value, reverse=True)
+        packages_by_complexity = sorted(self._sources.packages, key=lambda x: x.complexity.score, reverse=True)
+        packages_by_density = sorted(self._sources.packages, key=lambda x: x.complexity.density, reverse=True)
+        packages_by_rp = sorted(self._sources.packages, key=lambda x: x.refactoring_pressure.score, reverse=True)
+        packages_by_op = sorted(self._sources.packages, key=lambda x: x.overengineering_pressure.score, reverse=True)
 
         self._top_packages = []
 
@@ -68,26 +62,14 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if package not in self._top_packages:
                 self._top_packages.append(package)
 
-        self._top_packages = sorted(self._top_packages,
-                                         key=lambda x: x.status.score.value,
-                                         reverse=True)[:top]
+        self._top_packages = sorted(self._top_packages, key=lambda x: x.status.score.value, reverse=True)[:top]
 
     def _make_top_modules(self, top: int):
-        modules_by_score = sorted(self._sources.modules,
-                                       key=lambda x: x.status.score.value,
-                                       reverse=True)
-        modules_by_complexity = sorted(self._sources.modules,
-                                            key=lambda x: x.complexity.score,
-                                            reverse=True)
-        modules_by_density = sorted(self._sources.modules,
-                                         key=lambda x: x.complexity.density,
-                                         reverse=True)
-        modules_by_rp = sorted(self._sources.modules,
-                                    key=lambda x: x.refactoring_pressure.score,
-                                    reverse=True)
-        modules_by_op = sorted(self._sources.modules,
-                                    key=lambda x: x.overengineering_pressure.score,
-                                    reverse=True)
+        modules_by_score = sorted(self._sources.modules, key=lambda x: x.status.score.value, reverse=True)
+        modules_by_complexity = sorted(self._sources.modules, key=lambda x: x.complexity.score, reverse=True)
+        modules_by_density = sorted(self._sources.modules, key=lambda x: x.complexity.density, reverse=True)
+        modules_by_rp = sorted(self._sources.modules, key=lambda x: x.refactoring_pressure.score, reverse=True)
+        modules_by_op = sorted(self._sources.modules, key=lambda x: x.overengineering_pressure.score, reverse=True)
 
         self._top_modules = []
 
@@ -106,23 +88,13 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if package not in self._top_modules:
                 self._top_modules.append(package)
 
-        self._top_modules = sorted(self._top_modules,
-                                        key=lambda x: x.status.score.value,
-                                        reverse=True)[:top]
+        self._top_modules = sorted(self._top_modules, key=lambda x: x.status.score.value, reverse=True)[:top]
 
     def _make_top_classes(self, top: int):
-        classes_by_score = sorted(self._sources.classes,
-                                       key=lambda x: x.status.score.value,
-                                       reverse=True)
-        classes_by_complexity = sorted(self._sources.classes,
-                                            key=lambda x: x.complexity.score,
-                                            reverse=True)
-        classes_by_density = sorted(self._sources.classes,
-                                         key=lambda x: x.complexity.density,
-                                         reverse=True)
-        classes_by_op = sorted(self._sources.classes,
-                                    key=lambda x: x.overengineering_pressure.score,
-                                    reverse=True)
+        classes_by_score = sorted(self._sources.classes, key=lambda x: x.status.score.value, reverse=True)
+        classes_by_complexity = sorted(self._sources.classes, key=lambda x: x.complexity.score, reverse=True)
+        classes_by_density = sorted(self._sources.classes, key=lambda x: x.complexity.density, reverse=True)
+        classes_by_op = sorted(self._sources.classes, key=lambda x: x.overengineering_pressure.score, reverse=True)
 
         self._top_classes = []
 
@@ -138,46 +110,30 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if cls not in self._top_classes:
                 self._top_classes.append(cls)
 
-        self._top_classes = sorted(self._top_classes,
-                                        key=lambda x: x.status.score.value,
-                                        reverse=True)[:top]
+        self._top_classes = sorted(self._top_classes, key=lambda x: x.status.score.value, reverse=True)[:top]
 
     def _make_top_methods(self, top: int):
-       methods_by_score = sorted(self._sources.methods,
-                                       key=lambda x: x.status.score.value,
-                                      reverse=True)
-       methods_by_complexity = sorted(self._sources.methods,
-                                           key=lambda x: x.complexity.score,
-                                           reverse=True)
-       methods_by_density = sorted(self._sources.methods,
-                                        key=lambda x: x.complexity.density,
-                                        reverse=True)
+        methods_by_score = sorted(self._sources.methods, key=lambda x: x.status.score.value, reverse=True)
+        methods_by_complexity = sorted(self._sources.methods, key=lambda x: x.complexity.score, reverse=True)
+        methods_by_density = sorted(self._sources.methods, key=lambda x: x.complexity.density, reverse=True)
 
-       self._top_methods = []
+        self._top_methods = []
 
-       for method in methods_by_score[:top]:
-           self._top_methods.append(method)
-       for method in methods_by_complexity[:top]:
-           if method not in self._top_methods:
-               self._top_methods.append(method)
-       for method in methods_by_density[:top]:
-           if method not in self._top_methods:
-               self._top_methods.append(method)
+        for method in methods_by_score[:top]:
+            self._top_methods.append(method)
+        for method in methods_by_complexity[:top]:
+            if method not in self._top_methods:
+                self._top_methods.append(method)
+        for method in methods_by_density[:top]:
+            if method not in self._top_methods:
+                self._top_methods.append(method)
 
-       self._top_methods = sorted(self._top_methods,
-                                       key=lambda x: x.status.score.value,
-                                       reverse=True)[:top]
+        self._top_methods = sorted(self._top_methods, key=lambda x: x.status.score.value, reverse=True)[:top]
 
     def _make_top_functions(self, top: int):
-        functions_by_score = sorted(self._sources.functions,
-                                         key=lambda x: x.status.score.value,
-                                         reverse=True)
-        functions_by_complexity = sorted(self._sources.functions,
-                                              key=lambda x: x.complexity.score,
-                                              reverse=True)
-        functions_by_density = sorted(self._sources.functions,
-                                           key=lambda x: x.complexity.density,
-                                           reverse=True)
+        functions_by_score = sorted(self._sources.functions, key=lambda x: x.status.score.value, reverse=True)
+        functions_by_complexity = sorted(self._sources.functions, key=lambda x: x.complexity.score, reverse=True)
+        functions_by_density = sorted(self._sources.functions, key=lambda x: x.complexity.density, reverse=True)
 
         self._top_functions = []
 
@@ -190,9 +146,7 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if function not in self._top_functions:
                 self._top_functions.append(function)
 
-        self._top_functions = sorted(self._top_functions,
-                                          key=lambda x: x.status.score.value,
-                                          reverse=True)[:top]
+        self._top_functions = sorted(self._top_functions, key=lambda x: x.status.score.value, reverse=True)[:top]
 
     @abc.abstractmethod
     def _report(self):
@@ -204,7 +158,6 @@ class BaseReporter(metaclass=abc.ABCMeta):
             stdout = sys.stdout
 
             with open(self._output, "w") as fo:
-
                 sys.stderr = fo
                 sys.stdout = fo
 
@@ -216,7 +169,6 @@ class BaseReporter(metaclass=abc.ABCMeta):
                 return
 
         self._report()
-
 
 
 class TextReporter(BaseReporter):
@@ -479,171 +431,181 @@ class JsonReporter(BaseReporter):
 
         if self._top_packages:
             for package in self._top_packages:
-                data["packages"].append({
-                    "name": package.name,
-                    "dir": package.path,
-                    "loc": package.loc,
-                    "modules": len(package.modules),
-                    "status": {
-                        "name": package.status.name.value,
-                        "score": package.status.score.value,
-                        "reasons": package.status.reasons,
-                        "suggestions": package.status.suggestions,
-                    },
-                    "overengineering_pressure": {
-                        "score": package.overengineering_pressure.score,
-                    },
-                    "refactoring_pressure": {
-                        "score": package.refactoring_pressure.score,
-                        "stat(modules)": {
-                            "avg": package.refactoring_pressure.stat.avg,
-                            "min": package.refactoring_pressure.stat.min,
-                            "max": package.refactoring_pressure.stat.max,
-                            "p50": package.refactoring_pressure.stat.p50,
-                            "p90": package.refactoring_pressure.stat.p90,
+                data["packages"].append(
+                    {
+                        "name": package.name,
+                        "dir": package.path,
+                        "loc": package.loc,
+                        "modules": len(package.modules),
+                        "status": {
+                            "name": package.status.name.value,
+                            "score": package.status.score.value,
+                            "reasons": package.status.reasons,
+                            "suggestions": package.status.suggestions,
                         },
-                    },
-                    "complexity": {
-                        "score": package.complexity.score,
-                        "density": package.complexity.density,
-                        "stat(modules)": {
-                            "avg": package.complexity.stat.avg,
-                            "min": package.complexity.stat.min,
-                            "max": package.complexity.stat.max,
-                            "p50": package.complexity.stat.p50,
-                            "p90": package.complexity.stat.p90,
+                        "overengineering_pressure": {
+                            "score": package.overengineering_pressure.score,
                         },
-                    },
-                })
+                        "refactoring_pressure": {
+                            "score": package.refactoring_pressure.score,
+                            "stat(modules)": {
+                                "avg": package.refactoring_pressure.stat.avg,
+                                "min": package.refactoring_pressure.stat.min,
+                                "max": package.refactoring_pressure.stat.max,
+                                "p50": package.refactoring_pressure.stat.p50,
+                                "p90": package.refactoring_pressure.stat.p90,
+                            },
+                        },
+                        "complexity": {
+                            "score": package.complexity.score,
+                            "density": package.complexity.density,
+                            "stat(modules)": {
+                                "avg": package.complexity.stat.avg,
+                                "min": package.complexity.stat.min,
+                                "max": package.complexity.stat.max,
+                                "p50": package.complexity.stat.p50,
+                                "p90": package.complexity.stat.p90,
+                            },
+                        },
+                    }
+                )
 
     def make_modules_report(self, data: dict):
         data["modules"] = []
 
         if self._top_modules:
             for module in self._top_modules:
-                data["modules"].append({
-                    "name": module.name,
-                    "file": module.path,
-                    "loc": module.loc,
-                    "classes": len(module.classes),
-                    "functions": len(module.functions),
-                    "status": {
-                        "name": module.status.name.value,
-                        "score": module.status.score.value,
-                        "reasons": module.status.reasons,
-                        "suggestions": module.status.suggestions,
-                    },
-                    "overengineering_pressure": {
-                        "score": module.overengineering_pressure.score,
-                    },
-                    "refactoring_pressure": {
-                        "score": module.refactoring_pressure.score,
-                    },
-                    "complexity": {
-                        "score": module.complexity.score,
-                        "density": module.complexity.density,
-                        "stat(classes+functions)": {
-                            "avg": module.complexity.stat.avg,
-                            "min": module.complexity.stat.min,
-                            "max": module.complexity.stat.max,
-                            "p50": module.complexity.stat.p50,
-                            "p90": module.complexity.stat.p90,
+                data["modules"].append(
+                    {
+                        "name": module.name,
+                        "file": module.path,
+                        "loc": module.loc,
+                        "classes": len(module.classes),
+                        "functions": len(module.functions),
+                        "status": {
+                            "name": module.status.name.value,
+                            "score": module.status.score.value,
+                            "reasons": module.status.reasons,
+                            "suggestions": module.status.suggestions,
                         },
-                    },
-                })
+                        "overengineering_pressure": {
+                            "score": module.overengineering_pressure.score,
+                        },
+                        "refactoring_pressure": {
+                            "score": module.refactoring_pressure.score,
+                        },
+                        "complexity": {
+                            "score": module.complexity.score,
+                            "density": module.complexity.density,
+                            "stat(classes+functions)": {
+                                "avg": module.complexity.stat.avg,
+                                "min": module.complexity.stat.min,
+                                "max": module.complexity.stat.max,
+                                "p50": module.complexity.stat.p50,
+                                "p90": module.complexity.stat.p90,
+                            },
+                        },
+                    }
+                )
 
     def make_classes_report(self, data: dict):
         data["classes"] = []
 
         if self._top_classes:
             for cls in self._top_classes:
-                data["classes"].append({
-                    "name": cls.name,
-                    "file": cls.module.path,
-                    "loc": cls.loc,
-                    "methods": len(cls.methods),
-                    "status": {
-                        "name": cls.status.name.value,
-                        "score": cls.status.score.value,
-                        "reasons": cls.status.reasons,
-                        "suggestions": cls.status.suggestions,
-                    },
-                    "overengineering_pressure": {
-                        "score": cls.overengineering_pressure.score,
-                    },
-                    "complexity": {
-                        "score": cls.complexity.score,
-                        "density": cls.complexity.density,
-                        "stat(methods)": {
-                            "avg": cls.complexity.stat.avg,
-                            "min": cls.complexity.stat.min,
-                            "max": cls.complexity.stat.max,
-                            "p50": cls.complexity.stat.p50,
-                            "p90": cls.complexity.stat.p90,
+                data["classes"].append(
+                    {
+                        "name": cls.name,
+                        "file": cls.module.path,
+                        "loc": cls.loc,
+                        "methods": len(cls.methods),
+                        "status": {
+                            "name": cls.status.name.value,
+                            "score": cls.status.score.value,
+                            "reasons": cls.status.reasons,
+                            "suggestions": cls.status.suggestions,
                         },
-                    },
-                })
+                        "overengineering_pressure": {
+                            "score": cls.overengineering_pressure.score,
+                        },
+                        "complexity": {
+                            "score": cls.complexity.score,
+                            "density": cls.complexity.density,
+                            "stat(methods)": {
+                                "avg": cls.complexity.stat.avg,
+                                "min": cls.complexity.stat.min,
+                                "max": cls.complexity.stat.max,
+                                "p50": cls.complexity.stat.p50,
+                                "p90": cls.complexity.stat.p90,
+                            },
+                        },
+                    }
+                )
 
     def make_methods_report(self, data: dict):
         data["methods"] = []
 
         if self._top_methods:
             for method in self._top_methods:
-                data["methods"].append({
-                    "name": method.name,
-                    "file": method.module.path,
-                    "class": method.cls.name,
-                    "loc": method.loc,
-                    "closures": len(method.closures),
-                    "status": {
-                        "name": method.status.name.value,
-                        "score": method.status.score.value,
-                        "reasons": method.status.reasons,
-                        "suggestions": method.status.suggestions,
-                    },
-                    "complexity": {
-                        "value": method.complexity.score,
-                        "total": method.complexity.total,
-                        "density": method.complexity.density,
-                        "stat(closures)": {
-                            "avg": method.complexity.stat.avg,
-                            "min": method.complexity.stat.min,
-                            "max": method.complexity.stat.max,
-                            "p50": method.complexity.stat.p50,
-                            "p90": method.complexity.stat.p90,
+                data["methods"].append(
+                    {
+                        "name": method.name,
+                        "file": method.module.path,
+                        "class": method.cls.name,
+                        "loc": method.loc,
+                        "closures": len(method.closures),
+                        "status": {
+                            "name": method.status.name.value,
+                            "score": method.status.score.value,
+                            "reasons": method.status.reasons,
+                            "suggestions": method.status.suggestions,
                         },
-                    },
-                })
+                        "complexity": {
+                            "value": method.complexity.score,
+                            "total": method.complexity.total,
+                            "density": method.complexity.density,
+                            "stat(closures)": {
+                                "avg": method.complexity.stat.avg,
+                                "min": method.complexity.stat.min,
+                                "max": method.complexity.stat.max,
+                                "p50": method.complexity.stat.p50,
+                                "p90": method.complexity.stat.p90,
+                            },
+                        },
+                    }
+                )
 
     def make_functions_report(self, data: dict):
         data["functions"] = []
 
         if self._top_functions:
             for func in self._top_functions:
-                data["functions"].append({
-                    "name": func.name,
-                    "file": func.module.path,
-                    "loc": func.loc,
-                    "closures": len(func.closures),
-                    "status": {
-                        "name": func.status.name.value,
-                        "score": func.status.score.value,
-                        "reasons": func.status.reasons,
-                        "suggestions": func.status.suggestions,
-                    },
-                    "complexity": {
-                        "score": func.complexity.score,
-                        "total": func.complexity.total,
-                        "density": func.complexity.density,
-                        "stat(closures)": {
-                            "avg": func.complexity.stat.avg,
-                            "min": func.complexity.stat.min,
-                            "max": func.complexity.stat.max,
-                            "p50": func.complexity.stat.p50,
-                            "p90": func.complexity.stat.p90,
+                data["functions"].append(
+                    {
+                        "name": func.name,
+                        "file": func.module.path,
+                        "loc": func.loc,
+                        "closures": len(func.closures),
+                        "status": {
+                            "name": func.status.name.value,
+                            "score": func.status.score.value,
+                            "reasons": func.status.reasons,
+                            "suggestions": func.status.suggestions,
                         },
-                    },
-                })
+                        "complexity": {
+                            "score": func.complexity.score,
+                            "total": func.complexity.total,
+                            "density": func.complexity.density,
+                            "stat(closures)": {
+                                "avg": func.complexity.stat.avg,
+                                "min": func.complexity.stat.min,
+                                "max": func.complexity.stat.max,
+                                "p50": func.complexity.stat.p50,
+                                "p90": func.complexity.stat.p90,
+                            },
+                        },
+                    }
+                )
 
     def _report(self):
         data = {

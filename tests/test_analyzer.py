@@ -29,27 +29,43 @@ def _make_sources(
         imbalance_type=imbalance_type,
     )
 
-    src._status = type('obj', (object,), {
-        'score': metric,
-        'reasons': [],
-        'suggestions': [],
-        'name': metric.status,
-    })()
+    src._status = type(
+        "obj",
+        (object,),
+        {
+            "score": metric,
+            "reasons": [],
+            "suggestions": [],
+            "name": metric.status,
+        },
+    )()
 
-    src.__dict__['complexity'] = type('obj', (object,), {
-        'status': density_status,
-        'density': 5.0,
-    })()
+    src.__dict__["complexity"] = type(
+        "obj",
+        (object,),
+        {
+            "status": density_status,
+            "density": 5.0,
+        },
+    )()
 
-    src.__dict__['refactoring_pressure'] = type('obj', (object,), {
-        'status': rp_status,
-        'score': 10,
-    })()
+    src.__dict__["refactoring_pressure"] = type(
+        "obj",
+        (object,),
+        {
+            "status": rp_status,
+            "score": 10,
+        },
+    )()
 
-    src._overengineering_pressure = type('obj', (object,), {
-        'status': oe_status,
-        'score': 10,
-    })()
+    src._overengineering_pressure = type(
+        "obj",
+        (object,),
+        {
+            "status": oe_status,
+            "score": 10,
+        },
+    )()
 
     return src
 
@@ -115,10 +131,13 @@ class TestAnalyzeSourcesDensityReasons:
         analyzer.analyze_sources()
         assert any("requires attention" in r for r in src.status.reasons)
 
-    @pytest.mark.parametrize("density_status", [
-        complexity.Status.CLEAN,
-        complexity.Status.GOOD,
-    ])
+    @pytest.mark.parametrize(
+        "density_status",
+        [
+            complexity.Status.CLEAN,
+            complexity.Status.GOOD,
+        ],
+    )
     def test_good_or_clean_no_density_reason(self, density_status):
         """CLEAN and GOOD densities don't produce any reason."""
         src = _make_sources(

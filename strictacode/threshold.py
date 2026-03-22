@@ -9,7 +9,7 @@ class Threshold:
     overengineering_pressure: int | None = None
 
     @classmethod
-    def from_string(cls, string) -> 'Threshold':
+    def from_string(cls, string) -> "Threshold":
         try:
             return cls(score=int(string.strip()))
         except ValueError:
@@ -20,36 +20,36 @@ class Threshold:
         refactoring_pressure = None
         overengineering_pressure = None
 
-        thresholds = [i.strip() for i in string.split(',')]
+        thresholds = [i.strip() for i in string.split(",")]
 
         for threshold in thresholds:
-            key, value = threshold.split('=', 1)
+            key, value = threshold.split("=", 1)
 
-            if key.upper() == 'SCORE':
+            if key.upper() == "SCORE":
                 score = int(value)
                 continue
-            if key.upper() == 'DENSITY':
+            if key.upper() == "DENSITY":
                 complexity_density = float(value)
                 continue
-            if key.upper() == 'RP':
+            if key.upper() == "RP":
                 refactoring_pressure = int(value)
                 continue
-            if key.upper() == 'OP':
+            if key.upper() == "OP":
                 overengineering_pressure = int(value)
                 continue
 
             raise KeyError(f"Unrecognized threshold key: {key}")
 
-        return cls(score=score,
-                   refactoring_pressure=refactoring_pressure,
-                   overengineering_pressure=overengineering_pressure,
-                   complexity_density=complexity_density)
+        return cls(
+            score=score,
+            refactoring_pressure=refactoring_pressure,
+            overengineering_pressure=overengineering_pressure,
+            complexity_density=complexity_density,
+        )
 
-    def check(self, *,
-              score: int,
-              complexity_density: float,
-              refactoring_pressure: int,
-              overengineering_pressure: int) -> list[str]:
+    def check(
+        self, *, score: int, complexity_density: float, refactoring_pressure: int, overengineering_pressure: int
+    ) -> list[str]:
         errors = []
 
         if self.score is not None and score > self.score:

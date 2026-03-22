@@ -41,17 +41,25 @@ def _edge_pairs(result):
 
 class TestNodes:
     def test_struct_node(self, tmp_path):
-        r = _write(tmp_path, "types.go", """\
+        r = _write(
+            tmp_path,
+            "types.go",
+            """\
             package main
             type User struct {}
-        """)
+        """,
+        )
         assert "User" in _node_names(r)
 
     def test_interface_node(self, tmp_path):
-        r = _write(tmp_path, "iface.go", """\
+        r = _write(
+            tmp_path,
+            "iface.go",
+            """\
             package main
             type Writer interface {}
-        """)
+        """,
+        )
         assert "Writer" in _node_names(r)
 
 
@@ -62,19 +70,27 @@ class TestNodes:
 
 class TestEmbeddedEdges:
     def test_embedded_type(self, tmp_path):
-        r = _write(tmp_path, "embed.go", """\
+        r = _write(
+            tmp_path,
+            "embed.go",
+            """\
             package main
             type Base struct {}
             type Extended struct { Base }
-        """)
+        """,
+        )
         assert ("Extended", "Base") in _edge_pairs(r)
 
     def test_pointer_embedded(self, tmp_path):
-        r = _write(tmp_path, "ptr_embed.go", """\
+        r = _write(
+            tmp_path,
+            "ptr_embed.go",
+            """\
             package main
             type Base struct {}
             type Derived struct { *Base }
-        """)
+        """,
+        )
         assert ("Derived", "Base") in _edge_pairs(r)
 
 
@@ -85,50 +101,70 @@ class TestEmbeddedEdges:
 
 class TestInterfaceImplementation:
     def test_interface_impl(self, tmp_path):
-        r = _write(tmp_path, "impl.go", """\
+        r = _write(
+            tmp_path,
+            "impl.go",
+            """\
             package main
             type Greeter interface { Greet() }
             type Hello struct{}
             func (h Hello) Greet() {}
-        """)
+        """,
+        )
         assert ("Hello", "Greeter") in _edge_pairs(r)
 
     def test_no_interface_impl(self, tmp_path):
-        r = _write(tmp_path, "no_impl.go", """\
+        r = _write(
+            tmp_path,
+            "no_impl.go",
+            """\
             package main
             type Greeter interface { Greet(name string) }
             type Hello struct{}
             func (h Hello) Greet() {}
-        """)
+        """,
+        )
         assert ("Hello", "Greeter") not in _edge_pairs(r)
 
     def test_multi_impl(self, tmp_path):
-        r = _write(tmp_path, "multi.go", """\
+        r = _write(
+            tmp_path,
+            "multi.go",
+            """\
             package main
             type Reader interface { Read() }
             type Writer interface { Write() }
             type File struct{}
             func (f File) Read() {}
             func (f File) Write() {}
-        """)
+        """,
+        )
         pairs = _edge_pairs(r)
         assert ("File", "Reader") in pairs
         assert ("File", "Writer") in pairs
 
     def test_embedded_interface(self, tmp_path):
-        r = _write(tmp_path, "rw.go", """\
+        r = _write(
+            tmp_path,
+            "rw.go",
+            """\
             package main
             type ReadWriter interface { Read(); Write() }
             type ReadWriteCloser interface { ReadWriter; Close() }
-        """)
+        """,
+        )
         assert ("ReadWriteCloser", "ReadWriter") in _edge_pairs(r)
 
     def test_selector_embedded(self, tmp_path):
-        r = _write(tmp_path, "fmt_embed.go", """\
+        r = _write(
+            tmp_path,
+            "fmt_embed.go",
+            """\
             package main
             import "fmt"
             type MyWriter struct { fmt.Stringer }
-        """)
+        """,
+        )
         assert ("MyWriter", "Stringer") in _edge_pairs(r)
 
 
@@ -139,29 +175,39 @@ class TestInterfaceImplementation:
 
 class TestOther:
     def test_empty_struct(self, tmp_path):
-        r = _write(tmp_path, "empty.go", """\
+        r = _write(
+            tmp_path,
+            "empty.go",
+            """\
             package main
             type NoMethods struct {}
-        """)
+        """,
+        )
         assert "NoMethods" in _node_names(r)
         assert len(r["edges"]) == 0
 
     def test_file_filtering(self, tmp_path):
         """vendor/ and _test.go are excluded."""
-        (tmp_path / "main.go").write_text(textwrap.dedent("""\
+        (tmp_path / "main.go").write_text(
+            textwrap.dedent("""\
             package main
             type Service struct {}
-        """))
-        (tmp_path / "main_test.go").write_text(textwrap.dedent("""\
+        """)
+        )
+        (tmp_path / "main_test.go").write_text(
+            textwrap.dedent("""\
             package main
             func TestService() {}
-        """))
+        """)
+        )
         vendor = tmp_path / "vendor"
         vendor.mkdir()
-        (vendor / "dep.go").write_text(textwrap.dedent("""\
+        (vendor / "dep.go").write_text(
+            textwrap.dedent("""\
             package vendor
             type Dep struct {}
-        """))
+        """)
+        )
         r = analyze(str(tmp_path))
         assert "Service" in _node_names(r)
         # vendor/dep.go and main_test.go should be excluded

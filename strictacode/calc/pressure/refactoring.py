@@ -36,8 +36,7 @@ class Status(str, Enum):
 
 
 class Metric:
-    def __init__(self, score: int, data: Data, *,
-                 children: list['Metric'] | None = None):
+    def __init__(self, score: int, data: Data, *, children: list["Metric"] | None = None):
         self._score = score
         self._data = data
 
@@ -78,11 +77,13 @@ class Metric:
         except ZeroDivisionError:
             avg = 0
 
-        return Stat(avg=avg,
-                    min=min(scores),
-                    max=max(scores),
-                    p90=int(round(percentile(scores, 90), 0)),
-                    p50=int(round(percentile(scores, 50), 0)))
+        return Stat(
+            avg=avg,
+            min=min(scores),
+            max=max(scores),
+            p90=int(round(percentile(scores, 90), 0)),
+            p50=int(round(percentile(scores, 50), 0)),
+        )
 
 
 def _peak_scale(loc: int) -> float:
@@ -155,10 +156,9 @@ def _base_pressure(complexity_density: float, loc: int) -> int:
     return int(100 * (1 - math.exp(-0.02 * adjusted_density)))
 
 
-def calculate(data: Data, *,
-              w_peak: float = W_PEAK,
-              w_base: float = W_BASE,
-              children: list[Metric] | None = None) -> Metric:
+def calculate(
+    data: Data, *, w_peak: float = W_PEAK, w_base: float = W_BASE, children: list[Metric] | None = None
+) -> Metric:
     """
     Refactoring Pressure — давление на рефакторинг.
 

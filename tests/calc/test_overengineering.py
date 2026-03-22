@@ -19,17 +19,20 @@ from strictacode.graph import DiGraph
 
 
 class TestMetricStatus:
-    @pytest.mark.parametrize("value, expected", [
-        (0, Status.SIMPLE),
-        (20, Status.SIMPLE),
-        (21, Status.MODERATE),
-        (40, Status.MODERATE),
-        (41, Status.COMPLEX),
-        (60, Status.COMPLEX),
-        (61, Status.OVERENGINEERED),
-        (80, Status.OVERENGINEERED),
-        (81, Status.BLOATED),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (0, Status.SIMPLE),
+            (20, Status.SIMPLE),
+            (21, Status.MODERATE),
+            (40, Status.MODERATE),
+            (41, Status.COMPLEX),
+            (60, Status.COMPLEX),
+            (61, Status.OVERENGINEERED),
+            (80, Status.OVERENGINEERED),
+            (81, Status.BLOATED),
+        ],
+    )
     def test_status_boundaries(self, value, expected):
         m = Metric(score=value)
         assert m.status == expected
@@ -174,13 +177,16 @@ class TestCentrality:
 
 
 class TestNorm:
-    @pytest.mark.parametrize("v, t, expected", [
-        (0, 10, 0.0),
-        (5, 10, 0.5),
-        (10, 10, 1.0),
-        (15, 10, 1.0),
-        (0, 1, 0.0),
-    ])
+    @pytest.mark.parametrize(
+        "v, t, expected",
+        [
+            (0, 10, 0.0),
+            (5, 10, 0.5),
+            (10, 10, 1.0),
+            (15, 10, 1.0),
+            (0, 1, 0.0),
+        ],
+    )
     def test_norm(self, v, t, expected):
         assert _norm(v, t) == expected
 

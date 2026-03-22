@@ -1,6 +1,7 @@
 """
 Overengineering pressure.
 """
+
 import os
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -47,8 +48,7 @@ class Status(str, Enum):
 
 
 class Metric:
-    def __init__(self, score: int, *,
-                 children: list['Metric'] | None = None):
+    def __init__(self, score: int, *, children: list["Metric"] | None = None):
         self._score = score
         self._children = children or []
 
@@ -153,10 +153,10 @@ def _class_scores(graph: DiGraph) -> list[Score]:
 
     for node in graph.nodes:
         score = (
-            0.35 * _norm(fout[node], 7) +
-            0.25 * _norm(fin[node], 10) +
-            0.25 * _norm(depth[node], 8) +
-            0.15 * _norm(cent[node], 20)
+            0.35 * _norm(fout[node], 7)
+            + 0.25 * _norm(fin[node], 10)
+            + 0.25 * _norm(depth[node], 8)
+            + 0.15 * _norm(cent[node], 20)
         ) * 100
 
         if ":" not in node:
@@ -165,9 +165,7 @@ def _class_scores(graph: DiGraph) -> list[Score]:
         filepath, cls_name = node.split(":", 1)
 
         scores.append(
-            Score(name=cls_name,
-                  path=filepath,
-                  value=round(score, 2)),
+            Score(name=cls_name, path=filepath, value=round(score, 2)),
         )
 
     return scores
@@ -183,11 +181,7 @@ def _module_scores(cls_scores: list[Score]) -> list[Score]:
 
     for path, values in modules.items():
         values = sorted(values, reverse=True)
-        result.append(
-            Score(path=path,
-                  name=os.path.basename(path),
-                  value=sum(values) / len(values))
-        )
+        result.append(Score(path=path, name=os.path.basename(path), value=sum(values) / len(values)))
 
     return result
 
@@ -196,10 +190,7 @@ def _common_score(graph: DiGraph, cls_scores: list[Score]) -> float:
     coupling = graph.number_of_edges() / max(graph.number_of_nodes(), 1)
     avg_class = sum(i.value for i in cls_scores) / max(len(cls_scores), 1)
 
-    score = (
-        0.4 * _norm(coupling, 4) +
-        0.6 * _norm(avg_class, 70)
-    ) * 100
+    score = (0.4 * _norm(coupling, 4) + 0.6 * _norm(avg_class, 70)) * 100
 
     return round(score, 2)
 

@@ -15,20 +15,22 @@ class Analyzer:
         }
         reasons = {
             "density": {
-                (complexity.Status.SPAGHETTI,
-                 complexity.Status.UNREADABLE): "Excessively high concentration of complexity",
-                (complexity.Status.DIRTY,
-                 complexity.Status.VERY_DIRTY): "High concentration of complexity",
+                (
+                    complexity.Status.SPAGHETTI,
+                    complexity.Status.UNREADABLE,
+                ): "Excessively high concentration of complexity",
+                (complexity.Status.DIRTY, complexity.Status.VERY_DIRTY): "High concentration of complexity",
                 (complexity.Status.MODERATE,): "The concentration of complexity requires attention",
             },
             "refactoring": {
-                (refactoring.Status.HIGH,
-                 refactoring.Status.EXTREME): "Excessive refactoring pressure",
+                (refactoring.Status.HIGH, refactoring.Status.EXTREME): "Excessive refactoring pressure",
                 (refactoring.Status.MEDIUM,): "Increased refactoring pressure",
             },
             "overengineering": {
-                (overengineering.Status.BLOATED,
-                 overengineering.Status.OVERENGINEERED): "Excessive abstraction depth (Overengineering)",
+                (
+                    overengineering.Status.BLOATED,
+                    overengineering.Status.OVERENGINEERED,
+                ): "Excessive abstraction depth (Overengineering)",
                 (overengineering.Status.COMPLEX,): "Approaching complexity threshold",
             },
         }

@@ -31,7 +31,8 @@ def class_graph():
 def tmp_py_file(tmp_path):
     """Temporary .py file with known content. Used in test_utils.py and test_source.py."""
     filepath = tmp_path / "sample.py"
-    filepath.write_text(textwrap.dedent("""\
+    filepath.write_text(
+        textwrap.dedent("""\
         # comment
         def foo():
             x = 1
@@ -42,7 +43,8 @@ def tmp_py_file(tmp_path):
             if y > 0:
                 return y
             return 0
-    """))
+    """)
+    )
     return str(filepath)
 
 

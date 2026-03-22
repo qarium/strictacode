@@ -25,10 +25,7 @@ class Status(str, Enum):
 
 
 class Complexity:
-    def __init__(self, score: int, *,
-                 loc: int,
-                 total_sum: bool = False,
-                 children: list['Complexity'] | None = None):
+    def __init__(self, score: int, *, loc: int, total_sum: bool = False, children: list["Complexity"] | None = None):
         self._score = score
         self._loc = loc
 
@@ -86,8 +83,10 @@ class Complexity:
         except ZeroDivisionError:
             avg = 0
 
-        return Stat(avg=avg,
-                    min=min(scores),
-                    max=max(scores),
-                    p90=int(round(percentile(scores, 90), 0)),
-                    p50=int(round(percentile(scores, 50), 0)))
+        return Stat(
+            avg=avg,
+            min=min(scores),
+            max=max(scores),
+            p90=int(round(percentile(scores, 90), 0)),
+            p50=int(round(percentile(scores, 50), 0)),
+        )

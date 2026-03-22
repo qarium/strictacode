@@ -3,11 +3,14 @@ import os
 from pathlib import Path
 
 
-def lines_of_code(file_path: str, *,
-                  lineno: int | None = None,
-                  endline: int | None = None,
-                  ignore_prefixes: list[str] | None = None,
-                  ignore_blocks: list[tuple[str, str]] | None = None) -> int:
+def lines_of_code(
+    file_path: str,
+    *,
+    lineno: int | None = None,
+    endline: int | None = None,
+    ignore_prefixes: list[str] | None = None,
+    ignore_blocks: list[tuple[str, str]] | None = None,
+) -> int:
     line_count = 0
     line_number = 0
     ignore_blocks = ignore_blocks or []
@@ -19,7 +22,7 @@ def lines_of_code(file_path: str, *,
                 return block[1]
         return None
 
-    with open(file_path, encoding='utf-8') as file:
+    with open(file_path, encoding="utf-8") as file:
         stop_pointer = None
 
         for line in file:
@@ -99,7 +102,7 @@ def ignore_dirs(path, *, exclude_patterns: list[str] | None = None):
 
 
 def source_content(filepath: str, lineno: int, endline: int) -> str:
-    with open(filepath, encoding='utf-8') as file:
+    with open(filepath, encoding="utf-8") as file:
         lines = []
         line_number = 0
 
@@ -113,7 +116,7 @@ def source_content(filepath: str, lineno: int, endline: int) -> str:
 
             lines.append(line)
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
 
 def detect_languages(path):

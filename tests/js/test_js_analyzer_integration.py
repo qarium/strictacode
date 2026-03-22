@@ -34,9 +34,7 @@ def _node_env():
     env = os.environ.copy()
     local_root = subprocess.check_output(["npm", "root"], text=True).strip()
     global_root = subprocess.check_output(["npm", "root", "-g"], text=True).strip()
-    env["NODE_PATH"] = (";" if sys.platform == "win32" else ":").join(
-        [local_root, global_root]
-    )
+    env["NODE_PATH"] = (";" if sys.platform == "win32" else ":").join([local_root, global_root])
     return env
 
 
@@ -88,11 +86,15 @@ class TestClassRelations:
         assert "Router" in _node_names(r)
 
     def test_multiple_classes(self, tmp_path):
-        r = _write(tmp_path, "chain.ts", """\
+        r = _write(
+            tmp_path,
+            "chain.ts",
+            """\
             class A {}
             class B extends A {}
             class C extends B {}
-        """)
+        """,
+        )
         names = _node_names(r)
         assert names == {"A", "B", "C"}
         assert len(r["edges"]) == 2

@@ -29,12 +29,14 @@ class TestLinesOfCode:
 
     def test_file_with_only_comments_and_blanks(self, tmp_path):
         path = tmp_path / "comments.py"
-        path.write_text(textwrap.dedent("""\
+        path.write_text(
+            textwrap.dedent("""\
             # first comment
             # second comment
 
             # trailing comment
-        """))
+        """)
+        )
         assert lines_of_code(str(path), ignore_prefixes=["#"]) == 0
 
     def test_with_lineno_endline_range(self, tmp_py_file):
@@ -54,7 +56,8 @@ class TestLinesOfCode:
 
     def test_with_ignore_blocks_triple_quotes(self, tmp_path):
         path = tmp_path / "docstring.py"
-        path.write_text(textwrap.dedent("""\
+        path.write_text(
+            textwrap.dedent("""\
             def func():
                 pass
 
@@ -64,14 +67,16 @@ class TestLinesOfCode:
             \"\"\"
 
             x = 1
-        """))
+        """)
+        )
         # Opening/closing markers and content inside are all skipped.
         # Only: def func() + pass + x = 1 = 3
         assert lines_of_code(str(path), ignore_blocks=[('"""', '"""')]) == 3
 
     def test_ignore_blocks_two_consecutive_blocks(self, tmp_path):
         path = tmp_path / "two_blocks.py"
-        path.write_text(textwrap.dedent("""\
+        path.write_text(
+            textwrap.dedent("""\
             def func():
                 pass
 
@@ -84,13 +89,15 @@ class TestLinesOfCode:
             \"\"\"
 
             x = 1
-        """))
+        """)
+        )
         # Two separate blocks ignored. Only: def func() + pass + x = 1 = 3
         assert lines_of_code(str(path), ignore_blocks=[('"""', '"""')]) == 3
 
     def test_ignore_blocks_nested_opening_inside_block(self, tmp_path):
         path = tmp_path / "edge_case.py"
-        path.write_text(textwrap.dedent("""\
+        path.write_text(
+            textwrap.dedent("""\
             def func():
                 pass
 
@@ -99,7 +106,8 @@ class TestLinesOfCode:
             \"\"\"
 
             x = 1
-        """))
+        """)
+        )
         # Line \"\"\"abc starts with \"\"\" — opens a nested block (no closing).
         # So \"\"\" (the standalone line) closes the outer block.
         # Result: def func() + pass + x = 1 = 3... BUT \"\"\"abc is counted
@@ -115,7 +123,8 @@ class TestLinesOfCode:
 
     def test_combined_ignore_prefixes_and_blocks(self, tmp_path):
         path = tmp_path / "mixed.py"
-        path.write_text(textwrap.dedent("""\
+        path.write_text(
+            textwrap.dedent("""\
             # top comment
             def hello():
                 pass
@@ -127,14 +136,18 @@ class TestLinesOfCode:
 
             # another comment
             y = 2
-        """))
+        """)
+        )
         # Comments filtered by ignore_prefixes. Block fully ignored.
         # Counted: def hello() + pass + y = 2 = 3
-        assert lines_of_code(
-            str(path),
-            ignore_prefixes=["#"],
-            ignore_blocks=[('"""', '"""')],
-        ) == 3
+        assert (
+            lines_of_code(
+                str(path),
+                ignore_prefixes=["#"],
+                ignore_blocks=[('"""', '"""')],
+            )
+            == 3
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -171,12 +184,15 @@ class TestParseGitignore:
 
 
 class TestShouldExclude:
-    @pytest.mark.parametrize("name, patterns, expected", [
-        ("dist", ["dist", "build"], True),
-        ("dist", ["di*", "build"], True),
-        ("src", ["dist", "build"], False),
-        ("dist", ["dist/"], True),
-    ])
+    @pytest.mark.parametrize(
+        "name, patterns, expected",
+        [
+            ("dist", ["dist", "build"], True),
+            ("dist", ["di*", "build"], True),
+            ("src", ["dist", "build"], False),
+            ("dist", ["dist/"], True),
+        ],
+    )
     def test_should_exclude(self, name, patterns, expected):
         assert _should_exclude(name, patterns) is expected
 

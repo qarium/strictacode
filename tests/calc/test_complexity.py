@@ -21,20 +21,23 @@ class TestComplexityDensity:
 
 
 class TestComplexityStatus:
-    @pytest.mark.parametrize("score, loc, expected", [
-        (5, 100, Status.CLEAN),
-        (10, 100, Status.CLEAN),       # boundary: density=10, not > 10
-        (11, 100, Status.GOOD),
-        (20, 100, Status.GOOD),        # boundary: density=20, not > 20
-        (21, 100, Status.MODERATE),
-        (30, 100, Status.MODERATE),    # boundary: density=30, not > 30
-        (31, 100, Status.DIRTY),
-        (50, 100, Status.DIRTY),       # boundary: density=50, not > 50
-        (51, 100, Status.VERY_DIRTY),
-        (75, 100, Status.VERY_DIRTY),  # boundary: density=75, not > 75
-        (76, 100, Status.SPAGHETTI),
-        (101, 100, Status.UNREADABLE),
-    ])
+    @pytest.mark.parametrize(
+        "score, loc, expected",
+        [
+            (5, 100, Status.CLEAN),
+            (10, 100, Status.CLEAN),  # boundary: density=10, not > 10
+            (11, 100, Status.GOOD),
+            (20, 100, Status.GOOD),  # boundary: density=20, not > 20
+            (21, 100, Status.MODERATE),
+            (30, 100, Status.MODERATE),  # boundary: density=30, not > 30
+            (31, 100, Status.DIRTY),
+            (50, 100, Status.DIRTY),  # boundary: density=50, not > 50
+            (51, 100, Status.VERY_DIRTY),
+            (75, 100, Status.VERY_DIRTY),  # boundary: density=75, not > 75
+            (76, 100, Status.SPAGHETTI),
+            (101, 100, Status.UNREADABLE),
+        ],
+    )
     def test_status_boundaries(self, score, loc, expected):
         c = Complexity(score=score, loc=loc)
         assert c.status == expected

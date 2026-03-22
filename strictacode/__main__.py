@@ -42,15 +42,23 @@ def app():
 @click.option("--format", "-f", "fmt", type=click.Choice(["text", "json"]), default="text")
 @click.argument("path", type=os.path.abspath, required=True)
 @app.command()
-def analyze(path: str, fmt: str, short: bool, details: bool,
-            top_packages: int | None, top_modules: int | None,
-            top_classes: int | None, top_methods: int | None,
-            top_functions: int | None, threshold: str | None,
-            output: str | None):
+def analyze(
+    path: str,
+    fmt: str,
+    short: bool,
+    details: bool,
+    top_packages: int | None,
+    top_modules: int | None,
+    top_classes: int | None,
+    top_methods: int | None,
+    top_functions: int | None,
+    threshold: str | None,
+    output: str | None,
+):
     if not os.path.exists(path):
-        raise click.UsageError(f"Path \"{path}\" does not exist")
+        raise click.UsageError(f'Path "{path}" does not exist')
     if not os.path.isdir(path):
-        raise click.UsageError("Path \"{path}\" is not a directory")
+        raise click.UsageError('Path "{path}" is not a directory')
 
     os.chdir(path)
 
@@ -102,23 +110,27 @@ def analyze(path: str, fmt: str, short: bool, details: bool,
     if top_functions is not None:
         config.reporter.top.functions = top_functions
 
-    reporter = reporter_class(sources,
-                              short=short,
-                              details=details,
-                              output=output,
-                              top_packages=config.reporter.top.packages,
-                              top_modules=config.reporter.top.modules,
-                              top_classes=config.reporter.top.classes,
-                              top_methods=config.reporter.top.methods,
-                              top_functions=config.reporter.top.functions,)
+    reporter = reporter_class(
+        sources,
+        short=short,
+        details=details,
+        output=output,
+        top_packages=config.reporter.top.packages,
+        top_modules=config.reporter.top.modules,
+        top_classes=config.reporter.top.classes,
+        top_methods=config.reporter.top.methods,
+        top_functions=config.reporter.top.functions,
+    )
     reporter.report()
 
     if threshold is not None:
         thresholds = Threshold.from_string(threshold)
-        errors = thresholds.check(score=sources.status.score.value,
-                                  complexity_density=sources.complexity.density,
-                                  refactoring_pressure=sources.refactoring_pressure.score,
-                                  overengineering_pressure=sources.overengineering_pressure.score)
+        errors = thresholds.check(
+            score=sources.status.score.value,
+            complexity_density=sources.complexity.density,
+            refactoring_pressure=sources.refactoring_pressure.score,
+            overengineering_pressure=sources.overengineering_pressure.score,
+        )
 
         if errors:
             for error in errors:
@@ -174,10 +186,12 @@ def compare(result_one: str, result_two: str, threshold: str | None):
 
     if threshold is not None:
         thresholds = Threshold.from_string(threshold)
-        errors = thresholds.check(score=score_diff,
-                                  complexity_density=density_diff,
-                                  refactoring_pressure=rp_diff,
-                                  overengineering_pressure=oe_diff)
+        errors = thresholds.check(
+            score=score_diff,
+            complexity_density=density_diff,
+            refactoring_pressure=rp_diff,
+            overengineering_pressure=oe_diff,
+        )
 
         if errors:
             for error in errors:
@@ -191,15 +205,24 @@ def install():
 
 
 @click.option("--name", type=str, default="strictacode")
-@click.option("--agent", required=True, type=click.Choice([
-    "claude", "cursor", "codex",
-    "gemini", "antigravity",
-]))
+@click.option(
+    "--agent",
+    required=True,
+    type=click.Choice(
+        [
+            "claude",
+            "cursor",
+            "codex",
+            "gemini",
+            "antigravity",
+        ]
+    ),
+)
 @install.command()
 def agent_skill(agent: str, name: str):
-    click.secho(f"Installing skill for agent \"{agent}\"...")
+    click.secho(f'Installing skill for agent "{agent}"...')
     installed_path = skill.install(name, agent)
-    click.secho(f"Successfully installed into \"{installed_path}\"")
+    click.secho(f'Successfully installed into "{installed_path}"')
 
 
 if __name__ == "__main__":

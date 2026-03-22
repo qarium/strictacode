@@ -194,10 +194,10 @@ def analyze(path: str) -> dict:
         result = subprocess.run(cmd, env=env, capture_output=True, text=True)
 
     if result.returncode != 0:
-        if '@babel' in result.stderr:
-            result.stderr = result.stderr + '\nTry to install:\n' \
-                                            '  * npm install @babel/parser\n' \
-                                            '  * npm install @babel/traverse'
+        if "@babel" in result.stderr:
+            result.stderr = (
+                result.stderr + "\nTry to install:\n  * npm install @babel/parser\n  * npm install @babel/traverse"
+            )
         raise RuntimeError(result.stderr)
 
     return json.loads(result.stdout)

@@ -29,8 +29,16 @@ class TestCreateItem:
         from strictacode.js.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(type="class", name="UserService", lineno=1, endline=30,
-                            complexity=8, classname=None, methods=[], closures=[])
+        item = _create_item(
+            type="class",
+            name="UserService",
+            lineno=1,
+            endline=30,
+            complexity=8,
+            classname=None,
+            methods=[],
+            closures=[],
+        )
         assert item.type == FileItemTypes.CLASS
         assert item.name == "UserService"
 
@@ -38,17 +46,23 @@ class TestCreateItem:
         from strictacode.js.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(type="function", name="init", lineno=5, endline=10,
-                            complexity=2, methods=[], closures=[])
+        item = _create_item(type="function", name="init", lineno=5, endline=10, complexity=2, methods=[], closures=[])
         assert item.type == FileItemTypes.FUNCTION
 
     def test_creates_method_item(self):
         from strictacode.js.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(type="method", name="getUser", lineno=10, endline=20,
-                            complexity=3, classname="UserService",
-                            methods=[], closures=[])
+        item = _create_item(
+            type="method",
+            name="getUser",
+            lineno=10,
+            endline=20,
+            complexity=3,
+            classname="UserService",
+            methods=[],
+            closures=[],
+        )
         assert item.type == FileItemTypes.METHOD
         assert item.class_name == "UserService"
 
@@ -111,6 +125,7 @@ class TestJSLoderCollect:
         assert len(result[filepath]) == 2
 
         from strictacode.loader import FileItemTypes
+
         assert result[filepath][0].type == FileItemTypes.CLASS
         assert result[filepath][0].name == "Router"
         assert result[filepath][1].type == FileItemTypes.FUNCTION

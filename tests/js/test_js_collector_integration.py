@@ -34,9 +34,7 @@ def _node_env():
     env = os.environ.copy()
     local_root = subprocess.check_output(["npm", "root"], text=True).strip()
     global_root = subprocess.check_output(["npm", "root", "-g"], text=True).strip()
-    env["NODE_PATH"] = (";" if sys.platform == "win32" else ":").join(
-        [local_root, global_root]
-    )
+    env["NODE_PATH"] = (";" if sys.platform == "win32" else ":").join([local_root, global_root])
     return env
 
 
@@ -89,13 +87,16 @@ class TestBasicComplexity:
         _assert_complexity(r, "f", 2)
 
     def test_if_else_if(self, tmp_path):
-        r = _single_func(tmp_path, """\
+        r = _single_func(
+            tmp_path,
+            """\
             function f(x) {
                 if (x > 0) return 1;
                 else if (x < 0) return -1;
                 return 0;
             }
-        """)
+        """,
+        )
         _assert_complexity(r, "f", 3)
 
     def test_for_loop(self, tmp_path):
@@ -139,7 +140,9 @@ class TestBasicComplexity:
         _assert_complexity(r, "f", 4)
 
     def test_switch_cases(self, tmp_path):
-        r = _single_func(tmp_path, """\
+        r = _single_func(
+            tmp_path,
+            """\
             function f(x) {
                 switch(x) {
                     case 1: return "one";
@@ -148,19 +151,23 @@ class TestBasicComplexity:
                     default: return "other";
                 }
             }
-        """)
+        """,
+        )
         # 4 SwitchCase including default (+4), no extra for SwitchStatement
         _assert_complexity(r, "f", 5)
 
 
 class TestClassAndClosures:
     def test_class_complexity(self, tmp_path):
-        r = _single_func(tmp_path, """\
+        r = _single_func(
+            tmp_path,
+            """\
             class Calculator {
                 add(a, b) { return a + b; }
                 divide(a, b) { if (b === 0) throw new Error(); return a / b; }
             }
-        """)
+        """,
+        )
         items = r.get("index.js", [])
         cls = [i for i in items if i["name"] == "Calculator"]
         assert len(cls) == 1
@@ -169,7 +176,9 @@ class TestClassAndClosures:
         assert cls[0]["type"] == "class"
 
     def test_closures(self, tmp_path):
-        r = _single_func(tmp_path, """\
+        r = _single_func(
+            tmp_path,
+            """\
             function outer() {
                 var inner = function() {
                     if (true) return 1;
@@ -177,7 +186,8 @@ class TestClassAndClosures:
                 };
                 inner();
             }
-        """)
+        """,
+        )
         items = r.get("index.js", [])
         outer = [i for i in items if i["name"] == "outer"]
         assert len(outer) == 1
@@ -189,7 +199,9 @@ class TestClassAndClosures:
         assert outer[0]["closures"][0]["complexity"] == 2
 
     def test_method_closures(self, tmp_path):
-        r = _single_func(tmp_path, """\
+        r = _single_func(
+            tmp_path,
+            """\
             class Filter {
                 process(items) {
                     const fn = function(item) {
@@ -199,7 +211,8 @@ class TestClassAndClosures:
                     items.filter(fn);
                 }
             }
-        """)
+        """,
+        )
         items = r.get("index.js", [])
         cls = [i for i in items if i["name"] == "Filter"]
         assert len(cls) == 1

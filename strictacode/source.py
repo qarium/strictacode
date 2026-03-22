@@ -11,7 +11,7 @@ from .graph import DiGraph
 
 @dataclass(kw_only=True)
 class Status:
-    score: 'score.Metric' = score.Metric(value=0)
+    score: "score.Metric" = score.Metric(value=0)
     reasons: list[str] = field(default_factory=list)
     suggestions: list[str] = field(default_factory=list)
 
@@ -36,8 +36,10 @@ class Sources:
         self._overengineering_pressure: overengineering.Metric | None = None
 
     def __repr__(self):
-        return  f"<{self.__class__.__name__}: {self.path} " \
-                f"loc={self.loc} packages={len(self.packages)} modules={len(self.modules)}>"
+        return (
+            f"<{self.__class__.__name__}: {self.path} "
+            f"loc={self.loc} packages={len(self.packages)} modules={len(self.modules)}>"
+        )
 
     @property
     def path(self):
@@ -100,7 +102,7 @@ class Sources:
     @property
     def overengineering_pressure(self) -> overengineering.Metric:
         if self._overengineering_pressure is None:
-            raise ValueError('Overengineering_pressure not set')
+            raise ValueError("Overengineering_pressure not set")
         return self._overengineering_pressure
 
     def _compile_overengineering_pressure(self):
@@ -115,25 +117,21 @@ class Sources:
         for mod_score in op.modules:
             for module in self.modules:
                 if module.name == mod_score.name and module.path == mod_score.path:
-                    module.overengineering_pressure = overengineering.Metric(int(round(mod_score.value, 0)),
-                                                                             children=[
-                                                                                 i.overengineering_pressure
-                                                                                 for i in self.classes
-                                                                             ])
+                    module.overengineering_pressure = overengineering.Metric(
+                        int(round(mod_score.value, 0)), children=[i.overengineering_pressure for i in self.classes]
+                    )
                     break
 
-        self._overengineering_pressure = overengineering.Metric(op.score,
-                                                                children=[
-                                                                    i.overengineering_pressure
-                                                                    for i in self.modules
-                                                                ])
+        self._overengineering_pressure = overengineering.Metric(
+            op.score, children=[i.overengineering_pressure for i in self.modules]
+        )
 
     def compile(self):
         self._compile_overengineering_pressure()
 
-        self._status.score = score.calculate(self.refactoring_pressure.score,
-                                             self.overengineering_pressure.score,
-                                             self.complexity.density)
+        self._status.score = score.calculate(
+            self.refactoring_pressure.score, self.overengineering_pressure.score, self.complexity.density
+        )
 
         for package in self.packages:
             package.compile()
@@ -156,8 +154,7 @@ class PackageSource:
         self._modules: list[ModuleSource] = []
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}: {self.path} " \
-                f"loc={self.loc} modules={len(self.modules)}>"
+        return f"<{self.__class__.__name__}: {self.path} loc={self.loc} modules={len(self.modules)}>"
 
     @property
     def path(self):
@@ -204,20 +201,22 @@ class PackageSource:
         return overengineering.Metric(score, children=module_scores)
 
     def compile(self):
-        self.status.score = score.calculate(self.refactoring_pressure.score,
-                                            self.overengineering_pressure.score,
-                                            self.complexity.density)
+        self.status.score = score.calculate(
+            self.refactoring_pressure.score, self.overengineering_pressure.score, self.complexity.density
+        )
 
 
 class ModuleSource:
-    def __init__(self, path: str, *,
-                 comment_line_prefixes: list[str] | None = None,
-                 comment_code_blocks: list[tuple[str, str]] | None = None):
+    def __init__(
+        self,
+        path: str,
+        *,
+        comment_line_prefixes: list[str] | None = None,
+        comment_code_blocks: list[tuple[str, str]] | None = None,
+    ):
         self._path = path
 
-        self._loc = utils.lines_of_code(path,
-                                        ignore_blocks=comment_code_blocks,
-                                        ignore_prefixes=comment_line_prefixes)
+        self._loc = utils.lines_of_code(path, ignore_blocks=comment_code_blocks, ignore_prefixes=comment_line_prefixes)
 
         self._status: Status = Status()
 
@@ -227,8 +226,10 @@ class ModuleSource:
         self._overengineering_pressure: overengineering.Metric | None = None
 
     def __repr__(self):
-        return  f"<{self.__class__.__name__}: {self.path} " \
-                f"loc={self.loc} classes={len(self.classes)} functions={len(self.functions)}>"
+        return (
+            f"<{self.__class__.__name__}: {self.path} "
+            f"loc={self.loc} classes={len(self.classes)} functions={len(self.functions)}>"
+        )
 
     @property
     def path(self):
@@ -260,15 +261,17 @@ class ModuleSource:
 
     @cached_property
     def content(self):
-        with open(self._path, encoding='utf-8') as f:
+        with open(self._path, encoding="utf-8") as f:
             return f.read()
 
     @cached_property
     def complexity(self) -> Complexity:
-        score = sum([
-            sum(i.complexity.score for i in self.classes),
-            sum(i.complexity.score for i in self.functions),
-        ])
+        score = sum(
+            [
+                sum(i.complexity.score for i in self.classes),
+                sum(i.complexity.score for i in self.functions),
+            ]
+        )
         children = [i.complexity for i in self.classes] + [i.complexity for i in self.functions]
         return Complexity(score, loc=self.loc, children=children)
 
@@ -294,30 +297,37 @@ class ModuleSource:
         self._overengineering_pressure = value
 
     def compile(self):
-        self.status.score = score.calculate(self.refactoring_pressure.score,
-                                            self.overengineering_pressure.score,
-                                            self.complexity.density)
+        self.status.score = score.calculate(
+            self.refactoring_pressure.score, self.overengineering_pressure.score, self.complexity.density
+        )
 
 
 class ClassSource:
-    def __init__(self, module: ModuleSource, name: str, *,
-                 lineno: int = 0,
-                 endline: int = 0,
-                 complexity: int = 0,
-                 loc_from_methods: bool = False,
-                 comment_line_prefixes: list[str] | None = None,
-                 comment_code_blocks: list[tuple[str, str]] | None = None):
+    def __init__(
+        self,
+        module: ModuleSource,
+        name: str,
+        *,
+        lineno: int = 0,
+        endline: int = 0,
+        complexity: int = 0,
+        loc_from_methods: bool = False,
+        comment_line_prefixes: list[str] | None = None,
+        comment_code_blocks: list[tuple[str, str]] | None = None,
+    ):
         self._module = module
         self._name = name
         self._lineno = lineno
         self._endline = endline
         self._complexity = complexity
 
-        self._loc = utils.lines_of_code(module.path,
-                                        lineno=lineno,
-                                        endline=endline,
-                                        ignore_blocks=comment_code_blocks,
-                                        ignore_prefixes=comment_line_prefixes)
+        self._loc = utils.lines_of_code(
+            module.path,
+            lineno=lineno,
+            endline=endline,
+            ignore_blocks=comment_code_blocks,
+            ignore_prefixes=comment_line_prefixes,
+        )
 
         self._loc_from_methods = loc_from_methods
 
@@ -327,7 +337,7 @@ class ClassSource:
         self._overengineering_pressure: overengineering.Metric | None = None
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}: {self.name} methods={len(self.methods)}>'
+        return f"<{self.__class__.__name__}: {self.name} methods={len(self.methods)}>"
 
     @property
     def module(self):
@@ -379,21 +389,29 @@ class ClassSource:
         self._overengineering_pressure = value
 
     def compile(self):
-        self.status.score = score.calculate(self.module.refactoring_pressure.score,
-                                            self.overengineering_pressure.score,
-                                            self.complexity.density,
-                                            rp_weight=0.15,
-                                            oe_weight=0.35,
-                                            density_weight=0.5)
+        self.status.score = score.calculate(
+            self.module.refactoring_pressure.score,
+            self.overengineering_pressure.score,
+            self.complexity.density,
+            rp_weight=0.15,
+            oe_weight=0.35,
+            density_weight=0.5,
+        )
 
 
 class MethodSource:
-    def __init__(self, module: ModuleSource, cls: ClassSource, name: str, *,
-                 lineno: int = 0,
-                 endline: int = 0,
-                 complexity: int = 0,
-                 comment_line_prefixes: list[str] | None = None,
-                 comment_code_blocks: list[tuple[str, str]] | None = None):
+    def __init__(
+        self,
+        module: ModuleSource,
+        cls: ClassSource,
+        name: str,
+        *,
+        lineno: int = 0,
+        endline: int = 0,
+        complexity: int = 0,
+        comment_line_prefixes: list[str] | None = None,
+        comment_code_blocks: list[tuple[str, str]] | None = None,
+    ):
         self._module = module
         self._cls = cls
         self._name = name
@@ -401,18 +419,20 @@ class MethodSource:
         self._endline = endline
         self._complexity = complexity
 
-        self._loc = utils.lines_of_code(module.path,
-                                        lineno=lineno,
-                                        endline=endline,
-                                        ignore_blocks=comment_code_blocks,
-                                        ignore_prefixes=comment_line_prefixes)
+        self._loc = utils.lines_of_code(
+            module.path,
+            lineno=lineno,
+            endline=endline,
+            ignore_blocks=comment_code_blocks,
+            ignore_prefixes=comment_line_prefixes,
+        )
 
         self._status: Status = Status()
 
         self._closures: list[FunctionSource] = []
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}: {self.name} class={self.cls.name} loc={self.loc}>'
+        return f"<{self.__class__.__name__}: {self.name} class={self.cls.name} loc={self.loc}>"
 
     @property
     def module(self):
@@ -456,39 +476,48 @@ class MethodSource:
         return Complexity(self._complexity, loc=self.loc, total_sum=True, children=children)
 
     def compile(self):
-        self.status.score = score.calculate(self.module.refactoring_pressure.score,
-                                            self.cls.overengineering_pressure.score,
-                                            self.complexity.density,
-                                            rp_weight=0.1,
-                                            oe_weight=0.3,
-                                            density_weight=0.6)
+        self.status.score = score.calculate(
+            self.module.refactoring_pressure.score,
+            self.cls.overengineering_pressure.score,
+            self.complexity.density,
+            rp_weight=0.1,
+            oe_weight=0.3,
+            density_weight=0.6,
+        )
 
 
 class FunctionSource:
-    def __init__(self, module: ModuleSource, name, *,
-                 lineno: int = 0,
-                 endline: int = 0,
-                 complexity: int = 0,
-                 comment_line_prefixes: list[str] | None = None,
-                 comment_code_blocks: list[tuple[str, str]] | None = None):
+    def __init__(
+        self,
+        module: ModuleSource,
+        name,
+        *,
+        lineno: int = 0,
+        endline: int = 0,
+        complexity: int = 0,
+        comment_line_prefixes: list[str] | None = None,
+        comment_code_blocks: list[tuple[str, str]] | None = None,
+    ):
         self._module = module
         self._name = name
         self._lineno = lineno
         self._endline = endline
         self._complexity = complexity
 
-        self._loc = utils.lines_of_code(module.path,
-                                        lineno=lineno,
-                                        endline=endline,
-                                        ignore_blocks=comment_code_blocks,
-                                        ignore_prefixes=comment_line_prefixes)
+        self._loc = utils.lines_of_code(
+            module.path,
+            lineno=lineno,
+            endline=endline,
+            ignore_blocks=comment_code_blocks,
+            ignore_prefixes=comment_line_prefixes,
+        )
 
         self._status: Status = Status()
 
         self._closures: list[FunctionSource] = []
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}: {self.name} loc={self.loc}>'
+        return f"<{self.__class__.__name__}: {self.name} loc={self.loc}>"
 
     @property
     def module(self):
@@ -528,9 +557,11 @@ class FunctionSource:
         return Complexity(self._complexity, loc=self.loc, total_sum=True, children=children)
 
     def compile(self):
-        self.status.score = score.calculate(self.module.refactoring_pressure.score,
-                                            self.module.overengineering_pressure.score,
-                                            self.complexity.density,
-                                            rp_weight=0.2,
-                                            oe_weight=0.2,
-                                            density_weight=0.6)
+        self.status.score = score.calculate(
+            self.module.refactoring_pressure.score,
+            self.module.overengineering_pressure.score,
+            self.complexity.density,
+            rp_weight=0.2,
+            oe_weight=0.2,
+            density_weight=0.6,
+        )

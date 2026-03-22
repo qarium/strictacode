@@ -19,13 +19,16 @@ class TestThresholdFromString:
         assert t.refactoring_pressure is None
         assert t.overengineering_pressure is None
 
-    @pytest.mark.parametrize("input_str, field, value", [
-        ("SCORE=50", "score", 50),
-        ("score=50", "score", 50),
-        ("DENSITY=30.5", "complexity_density", 30.5),
-        ("RP=60", "refactoring_pressure", 60),
-        ("OP=70", "overengineering_pressure", 70),
-    ])
+    @pytest.mark.parametrize(
+        "input_str, field, value",
+        [
+            ("SCORE=50", "score", 50),
+            ("score=50", "score", 50),
+            ("DENSITY=30.5", "complexity_density", 30.5),
+            ("RP=60", "refactoring_pressure", 60),
+            ("OP=70", "overengineering_pressure", 70),
+        ],
+    )
     def test_single_key_parses_correctly(self, input_str, field, value):
         t = Threshold.from_string(input_str)
         assert getattr(t, field) == value

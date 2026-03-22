@@ -5,14 +5,16 @@ from . import analyzer, collector
 
 
 def _create_item(**kwargs) -> FileItem:
-    return FileItem(type=kwargs["type"],
-                    name=kwargs["name"],
-                    lineno=kwargs["lineno"],
-                    endline=kwargs["endline"],
-                    complexity=kwargs["complexity"],
-                    class_name=kwargs.get("classname"),
-                    methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
-                    closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
+    return FileItem(
+        type=kwargs["type"],
+        name=kwargs["name"],
+        lineno=kwargs["lineno"],
+        endline=kwargs["endline"],
+        complexity=kwargs["complexity"],
+        class_name=kwargs.get("classname"),
+        methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
+        closures=[_create_item(**i) for i in (kwargs.get("closures") or [])],
+    )
 
 
 class JSLoder(Loader):

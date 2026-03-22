@@ -32,9 +32,7 @@ class Analyzer(ast.NodeVisitor):
     def visit_ClassDef(self, node):
         cname = f"{self.filepath}:{node.name}"
 
-        self.classes[cname] = {
-            "methods": 0
-        }
+        self.classes[cname] = {"methods": 0}
         self.current_class = cname
 
         for base in node.bases:

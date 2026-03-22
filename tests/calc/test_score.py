@@ -12,18 +12,21 @@ from strictacode.calc.score import (
 
 
 class TestMetricStatus:
-    @pytest.mark.parametrize("value, expected", [
-        (0, Status.HEALTHY),
-        (20, Status.HEALTHY),
-        (21, Status.NORMAL),
-        (40, Status.NORMAL),
-        (41, Status.WARNING),
-        (60, Status.WARNING),
-        (61, Status.CRITICAL),
-        (80, Status.CRITICAL),
-        (81, Status.EMERGENCY),
-        (100, Status.EMERGENCY),
-    ])
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (0, Status.HEALTHY),
+            (20, Status.HEALTHY),
+            (21, Status.NORMAL),
+            (40, Status.NORMAL),
+            (41, Status.WARNING),
+            (60, Status.WARNING),
+            (61, Status.CRITICAL),
+            (80, Status.CRITICAL),
+            (81, Status.EMERGENCY),
+            (100, Status.EMERGENCY),
+        ],
+    )
     def test_status_boundaries(self, value, expected):
         m = Metric(value=value)
         assert m.status == expected
@@ -170,8 +173,12 @@ class TestCalculate:
 
     def test_custom_weights(self):
         m = calculate(
-            rp=50, oe=50, complexity_density=50.0,
-            rp_weight=0.5, oe_weight=0.3, density_weight=0.2,
+            rp=50,
+            oe=50,
+            complexity_density=50.0,
+            rp_weight=0.5,
+            oe_weight=0.3,
+            density_weight=0.2,
             use_imbalance=False,
         )
         assert m.value == 50  # 0.5*50 + 0.3*50 + 0.2*50

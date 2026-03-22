@@ -243,11 +243,13 @@ class TestLoaderLoad:
 
     def test_load_with_class_and_method(self, tmp_path):
         mod_file = tmp_path / "test.py"
-        mod_file.write_text(textwrap.dedent("""\
+        mod_file.write_text(
+            textwrap.dedent("""\
             class Foo:
                 def bar(self):
                     pass
-        """))
+        """)
+        )
         collect_data = {
             str(mod_file): [
                 FileItem(
@@ -343,8 +345,7 @@ class TestLoaderLoad:
                 FileItem(type=FileItemTypes.FUNCTION, name="f2", lineno=1, endline=1),
             ],
         }
-        loader = self._make_stub_loader(str(tmp_path), collect_data,
-                                          exclude_patterns=[str(excluded_dir)])
+        loader = self._make_stub_loader(str(tmp_path), collect_data, exclude_patterns=[str(excluded_dir)])
         sources = loader.load()
         assert len(sources.functions) == 1
         assert sources.functions[0].name == "f1"

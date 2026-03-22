@@ -34,8 +34,9 @@ class TestCreateItem:
         from strictacode.loader import FileItemTypes
         from strictacode.py.loader import _create_item
 
-        item = _create_item(type="class", name="Foo", lineno=1, endline=10,
-                            complexity=3, classname=None, methods=[], closures=[])
+        item = _create_item(
+            type="class", name="Foo", lineno=1, endline=10, complexity=3, classname=None, methods=[], closures=[]
+        )
         assert item.type == FileItemTypes.CLASS
         assert item.name == "Foo"
         assert item.lineno == 1
@@ -47,8 +48,9 @@ class TestCreateItem:
         from strictacode.loader import FileItemTypes
         from strictacode.py.loader import _create_item
 
-        item = _create_item(type="method", name="bar", lineno=5, endline=15,
-                            complexity=2, classname="Foo", methods=[], closures=[])
+        item = _create_item(
+            type="method", name="bar", lineno=5, endline=15, complexity=2, classname="Foo", methods=[], closures=[]
+        )
         assert item.type == FileItemTypes.METHOD
         assert item.name == "bar"
         assert item.lineno == 5
@@ -60,8 +62,7 @@ class TestCreateItem:
         from strictacode.loader import FileItemTypes
         from strictacode.py.loader import _create_item
 
-        item = _create_item(type="function", name="baz", lineno=20, endline=25,
-                            complexity=1, methods=[], closures=[])
+        item = _create_item(type="function", name="baz", lineno=20, endline=25, complexity=1, methods=[], closures=[])
         assert item.type == FileItemTypes.FUNCTION
         assert item.lineno == 20
         assert item.endline == 25
@@ -71,10 +72,13 @@ class TestCreateItem:
         from strictacode.py.loader import _create_item
 
         item = _create_item(
-            type="function", name="outer", lineno=1, endline=10, complexity=2,
+            type="function",
+            name="outer",
+            lineno=1,
+            endline=10,
+            complexity=2,
             closures=[
-                dict(type="function", name="inner", lineno=3, endline=8,
-                     complexity=1, methods=[], closures=[]),
+                dict(type="function", name="inner", lineno=3, endline=8, complexity=1, methods=[], closures=[]),
             ],
         )
         assert len(item.closures) == 1
@@ -137,6 +141,7 @@ class TestPyLoaderCollect:
         assert len(result[filepath]) == 2
 
         from strictacode.loader import FileItemTypes
+
         assert result[filepath][0].type == FileItemTypes.CLASS
         assert result[filepath][0].name == "MyClass"
         assert result[filepath][1].type == FileItemTypes.FUNCTION

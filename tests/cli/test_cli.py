@@ -13,8 +13,7 @@ runner = CliRunner()
 
 
 class TestCompareCommand:
-    def _write_json_report(self, tmp_path, name, *,
-                           score=10, density=5.0, rp=8, op=5):
+    def _write_json_report(self, tmp_path, name, *, score=10, density=5.0, rp=8, op=5):
         data = {
             "project": {
                 "status": {"score": score},
@@ -102,11 +101,17 @@ class TestInstallAgentSkill:
 
         monkeypatch.setattr("strictacode.__main__.skill.install", mock_install)
 
-        result = runner.invoke(app, [
-            "install", "agent-skill",
-            "--agent", "claude",
-            "--name", "custom-name",
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "install",
+                "agent-skill",
+                "--agent",
+                "claude",
+                "--name",
+                "custom-name",
+            ],
+        )
         assert result.exit_code == 0
         assert "custom-name" in result.output
 
@@ -139,15 +144,22 @@ class TestAnalyzeCommand:
 
     def test_analyze_json_format(self, tmp_path):
         """Smoke test: analyze a minimal Python project with --format json."""
-        (tmp_path / "main.py").write_text(textwrap.dedent("""\
+        (tmp_path / "main.py").write_text(
+            textwrap.dedent("""\
             def hello():
                 return "world"
-        """))
-        result = runner.invoke(app, [
-            "analyze", str(tmp_path),
-            "--format", "json",
-            "--short",
-        ])
+        """)
+        )
+        result = runner.invoke(
+            app,
+            [
+                "analyze",
+                str(tmp_path),
+                "--format",
+                "json",
+                "--short",
+            ],
+        )
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert "project" in data
@@ -155,14 +167,20 @@ class TestAnalyzeCommand:
 
     def test_analyze_text_format(self, tmp_path):
         """Smoke test: analyze a minimal Python project with text output."""
-        (tmp_path / "main.py").write_text(textwrap.dedent("""\
+        (tmp_path / "main.py").write_text(
+            textwrap.dedent("""\
             def hello():
                 return "world"
-        """))
-        result = runner.invoke(app, [
-            "analyze", str(tmp_path),
-            "--short",
-        ])
+        """)
+        )
+        result = runner.invoke(
+            app,
+            [
+                "analyze",
+                str(tmp_path),
+                "--short",
+            ],
+        )
         assert result.exit_code == 0
         assert "Project:" in result.output
         assert "python" in result.output.lower()

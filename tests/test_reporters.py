@@ -27,8 +27,7 @@ def _make_module(tmp_path, name="mod.py", content=None):
         """)
     filepath = tmp_path / name
     filepath.write_text(content)
-    return ModuleSource(str(filepath), comment_line_prefixes=["#"],
-                        comment_code_blocks=[('"""', '"""')])
+    return ModuleSource(str(filepath), comment_line_prefixes=["#"], comment_code_blocks=[('"""', '"""')])
 
 
 def _make_sources_with_data(tmp_path):
@@ -44,20 +43,33 @@ def _make_sources_with_data(tmp_path):
     src._modules = [mod]
 
     # Create class/method
-    cls = ClassSource(mod, "Foo", lineno=1, endline=4, complexity=2,
-                      loc_from_methods=True,
-                      comment_line_prefixes=["#"],
-                      comment_code_blocks=[('"""', '"""')])
-    method = MethodSource(mod, cls, "bar", lineno=2, endline=3, complexity=1,
-                          comment_line_prefixes=["#"],
-                          comment_code_blocks=[('"""', '"""')])
+    cls = ClassSource(
+        mod,
+        "Foo",
+        lineno=1,
+        endline=4,
+        complexity=2,
+        loc_from_methods=True,
+        comment_line_prefixes=["#"],
+        comment_code_blocks=[('"""', '"""')],
+    )
+    method = MethodSource(
+        mod,
+        cls,
+        "bar",
+        lineno=2,
+        endline=3,
+        complexity=1,
+        comment_line_prefixes=["#"],
+        comment_code_blocks=[('"""', '"""')],
+    )
     cls.methods.append(method)
     mod.classes.append(cls)
 
     # Create function
-    func = FunctionSource(mod, "baz", lineno=5, endline=6, complexity=0,
-                          comment_line_prefixes=["#"],
-                          comment_code_blocks=[('"""', '"""')])
+    func = FunctionSource(
+        mod, "baz", lineno=5, endline=6, complexity=0, comment_line_prefixes=["#"], comment_code_blocks=[('"""', '"""')]
+    )
     mod.functions.append(func)
 
     src._classes = [cls]
@@ -76,13 +88,21 @@ def _make_sources_with_data(tmp_path):
     src._overengineering_pressure = overengineering.Metric(20)
 
     # Cache complexity and refactoring_pressure on Sources
-    src.__dict__['complexity'] = Complexity(score=10, loc=mod.loc, children=[
-        Complexity(score=2, loc=cls.loc, children=[
-            Complexity(score=1, loc=method.loc),
-        ]),
-        Complexity(score=0, loc=func.loc),
-    ])
-    src.__dict__['refactoring_pressure'] = refactoring.Metric(
+    src.__dict__["complexity"] = Complexity(
+        score=10,
+        loc=mod.loc,
+        children=[
+            Complexity(
+                score=2,
+                loc=cls.loc,
+                children=[
+                    Complexity(score=1, loc=method.loc),
+                ],
+            ),
+            Complexity(score=0, loc=func.loc),
+        ],
+    )
+    src.__dict__["refactoring_pressure"] = refactoring.Metric(
         score=15,
         data=refactoring.Data(
             loc=mod.loc,
@@ -93,13 +113,21 @@ def _make_sources_with_data(tmp_path):
     )
 
     # Cache complexity and refactoring_pressure on module
-    mod.__dict__['complexity'] = Complexity(score=2, loc=mod.loc, children=[
-        Complexity(score=2, loc=cls.loc, children=[
-            Complexity(score=1, loc=method.loc),
-        ]),
-        Complexity(score=0, loc=func.loc),
-    ])
-    mod.__dict__['refactoring_pressure'] = refactoring.Metric(
+    mod.__dict__["complexity"] = Complexity(
+        score=2,
+        loc=mod.loc,
+        children=[
+            Complexity(
+                score=2,
+                loc=cls.loc,
+                children=[
+                    Complexity(score=1, loc=method.loc),
+                ],
+            ),
+            Complexity(score=0, loc=func.loc),
+        ],
+    )
+    mod.__dict__["refactoring_pressure"] = refactoring.Metric(
         score=12,
         data=refactoring.Data(
             loc=mod.loc,
@@ -111,17 +139,19 @@ def _make_sources_with_data(tmp_path):
     mod._overengineering_pressure = overengineering.Metric(10)
 
     # Cache complexity on class
-    cls.__dict__['complexity'] = Complexity(score=2, loc=cls.loc, children=[
-        Complexity(score=1, loc=method.loc),
-    ])
+    cls.__dict__["complexity"] = Complexity(
+        score=2,
+        loc=cls.loc,
+        children=[
+            Complexity(score=1, loc=method.loc),
+        ],
+    )
 
     # Cache complexity on method
-    method.__dict__['complexity'] = Complexity(score=1, loc=method.loc,
-                                               total_sum=True)
+    method.__dict__["complexity"] = Complexity(score=1, loc=method.loc, total_sum=True)
 
     # Cache complexity on function
-    func.__dict__['complexity'] = Complexity(score=0, loc=func.loc,
-                                             total_sum=True)
+    func.__dict__["complexity"] = Complexity(score=0, loc=func.loc, total_sum=True)
 
     return src
 

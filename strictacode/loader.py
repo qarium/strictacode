@@ -16,15 +16,11 @@ from .source import (
 )
 
 
-def _load_closures(file: ModuleSource,
-                   source: MethodSource | FunctionSource,
-                   closures: list['FileItem']):
+def _load_closures(file: ModuleSource, source: MethodSource | FunctionSource, closures: list["FileItem"]):
     for closure in closures:
-        func = FunctionSource(file,
-                              closure.name,
-                              lineno=closure.lineno,
-                              endline=closure.endline,
-                              complexity=closure.complexity)
+        func = FunctionSource(
+            file, closure.name, lineno=closure.lineno, endline=closure.endline, complexity=closure.complexity
+        )
 
         source.closures.append(func)
         _load_closures(file, func, closure.closures)
@@ -44,20 +40,24 @@ class FileItem:
     endline: int = 0
     complexity: int = 0
     class_name: str | None = None
-    methods: list['FileItem'] = dataclasses.field(default_factory=list)
-    closures: list['FileItem'] = dataclasses.field(default_factory=list)
+    methods: list["FileItem"] = dataclasses.field(default_factory=list)
+    closures: list["FileItem"] = dataclasses.field(default_factory=list)
 
 
 class Loader(metaclass=abc.ABCMeta):
-    __lang__ = 'Unknown'
+    __lang__ = "Unknown"
     __ignore_dirs__: list[str] = []
     __comment_line_prefixes__: list[str] = []
     __comment_code_blocks__: list[tuple[str, str]] = []
 
-    def __init__(self, root: str = '.', *,
-                 class_loc_from_methods: bool = False,
-                 include_patterns: list[str] | None = None,
-                 exclude_patterns: list[str] | None = None):
+    def __init__(
+        self,
+        root: str = ".",
+        *,
+        class_loc_from_methods: bool = False,
+        include_patterns: list[str] | None = None,
+        exclude_patterns: list[str] | None = None,
+    ):
         self._root = root
 
         self._include_patterns = include_patterns or []
@@ -126,13 +126,15 @@ class Loader(metaclass=abc.ABCMeta):
         for item in items:
             if item.type == FileItemTypes.CLASS:
                 key = f"{filepath}:{item.name}"
-                self.__classes[key] = ClassSource(module,
-                                                  item.name,
-                                                  lineno=item.lineno,
-                                                  endline=item.endline,
-                                                  complexity=item.complexity,
-                                                  loc_from_methods=self._class_loc_from_methods,
-                                                  comment_line_prefixes=self.__comment_line_prefixes__)
+                self.__classes[key] = ClassSource(
+                    module,
+                    item.name,
+                    lineno=item.lineno,
+                    endline=item.endline,
+                    complexity=item.complexity,
+                    loc_from_methods=self._class_loc_from_methods,
+                    comment_line_prefixes=self.__comment_line_prefixes__,
+                )
                 module.classes.append(self.__classes[key])
                 self.__load_items_from_file(filepath, item.methods)
                 continue
@@ -142,13 +144,15 @@ class Loader(metaclass=abc.ABCMeta):
                 class_item = self.__classes[class_key]
 
                 key = f"{filepath}:{class_item.name}.{item.name}"
-                self.__methods[key] = MethodSource(module,
-                                                   class_item,
-                                                   item.name,
-                                                   lineno=item.lineno,
-                                                   endline=item.endline,
-                                                   complexity=item.complexity,
-                                                   comment_line_prefixes=self.__comment_line_prefixes__)
+                self.__methods[key] = MethodSource(
+                    module,
+                    class_item,
+                    item.name,
+                    lineno=item.lineno,
+                    endline=item.endline,
+                    complexity=item.complexity,
+                    comment_line_prefixes=self.__comment_line_prefixes__,
+                )
                 module.methods.append(self.__methods[key])
                 class_item.methods.append(self.__methods[key])
                 _load_closures(module, self.__methods[key], item.closures)
@@ -156,12 +160,14 @@ class Loader(metaclass=abc.ABCMeta):
 
             if item.type == FileItemTypes.FUNCTION:
                 key = f"{filepath}:{item.name}"
-                self.__functions[key] = FunctionSource(module,
-                                                       item.name,
-                                                       lineno=item.lineno,
-                                                       endline=item.endline,
-                                                       complexity=item.complexity,
-                                                       comment_line_prefixes=self.__comment_line_prefixes__)
+                self.__functions[key] = FunctionSource(
+                    module,
+                    item.name,
+                    lineno=item.lineno,
+                    endline=item.endline,
+                    complexity=item.complexity,
+                    comment_line_prefixes=self.__comment_line_prefixes__,
+                )
                 module.functions.append(self.__functions[key])
                 _load_closures(module, self.__functions[key], item.closures)
                 continue

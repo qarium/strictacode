@@ -1,3 +1,3 @@
 from .loader import JSLoder
 
-__all__ = ['JSLoder']
+__all__ = ["JSLoder"]

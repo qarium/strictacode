@@ -7,14 +7,16 @@ from . import analyzer, collector
 def _create_item(**kwargs) -> FileItem:
     item_type = "class" if kwargs["type"] == "structure" else kwargs["type"]
 
-    return FileItem(type=item_type,
-                    name=kwargs["name"],
-                    lineno=kwargs["lineno"],
-                    endline=kwargs["endline"],
-                    complexity=kwargs["complexity"],
-                    class_name=kwargs.get("structure"),
-                    methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
-                    closures=[_create_item(**i) for i in (kwargs.get("closures") or [])])
+    return FileItem(
+        type=item_type,
+        name=kwargs["name"],
+        lineno=kwargs["lineno"],
+        endline=kwargs["endline"],
+        complexity=kwargs["complexity"],
+        class_name=kwargs.get("structure"),
+        methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
+        closures=[_create_item(**i) for i in (kwargs.get("closures") or [])],
+    )
 
 
 class GoLoder(Loader):
