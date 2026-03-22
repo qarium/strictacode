@@ -232,19 +232,27 @@ func computeComplexity(body *ast.BlockStmt) int {
 
     ast.Inspect(body, func(n ast.Node) bool {
         switch n.(type) {
+        case *ast.FuncLit:
+            return false
         case *ast.IfStmt,
             *ast.ForStmt,
             *ast.RangeStmt,
-            *ast.CaseClause,
-            *ast.SwitchStmt,
-            *ast.TypeSwitchStmt,
-            *ast.SelectStmt,
             *ast.GoStmt,
             *ast.DeferStmt:
             complexity++
         case *ast.BinaryExpr:
             be := n.(*ast.BinaryExpr)
             if be.Op.String() == "&&" || be.Op.String() == "||" {
+                complexity++
+            }
+        case *ast.CaseClause:
+            cc := n.(*ast.CaseClause)
+            if cc.List != nil {
+                complexity++
+            }
+        case *ast.CommClause:
+            cc := n.(*ast.CommClause)
+            if cc.Comm != nil {
                 complexity++
             }
         }

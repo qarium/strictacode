@@ -111,8 +111,8 @@ class TestBasicComplexity:
                 }
             }
         """)
-        # 1 (base) + 1 (SwitchStmt) + 3 (CaseClause: 2 cases + default) = 5
-        assert _find_function(r, "sw")["complexity"] == 5
+        # 1 (base) + 2 (CaseClause without default) = 3
+        assert _find_function(r, "sw")["complexity"] == 3
 
     def test_select(self, tmp_path):
         r = _single_go(tmp_path, """\
@@ -123,8 +123,8 @@ class TestBasicComplexity:
                 }
             }
         """)
-        # 1 (base) + 1 (SelectStmt) = 2
-        # CommClause in select is not CaseClause, so no extra +1
+        # 1 (base) + 1 (CommClause with Comm) = 2
+        # No SelectStmt counted, no default CommClause counted
         assert _find_function(r, "sel")["complexity"] == 2
 
     def test_go_and_defer(self, tmp_path):
@@ -185,8 +185,8 @@ class TestStructuresAndClosures:
             }
         """)
         wrap = _find_function(r, "wrap")
-        # ast.Inspect recurses into FuncLit, so wrap complexity = 1 (base) + 1 (if) = 2
-        assert wrap["complexity"] == 2
+        # ast.Inspect skips FuncLit (matches radon), so wrap complexity = 1 (base only)
+        assert wrap["complexity"] == 1
         assert len(wrap["closures"]) == 1
         closure = wrap["closures"][0]
         assert closure["name"] == "closure"

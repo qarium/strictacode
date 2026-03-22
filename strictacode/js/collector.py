@@ -97,7 +97,12 @@ function calculateComplexity(node) {
           if (path.node.operator === "&&" || path.node.operator === "||") complexity++;
           break;
         case "SwitchCase":
-          if (path.node.test) complexity++;
+          complexity++;
+          break;
+        case "FunctionDeclaration":
+        case "FunctionExpression":
+        case "ArrowFunctionExpression":
+          path.skip();
           break;
       }
     }

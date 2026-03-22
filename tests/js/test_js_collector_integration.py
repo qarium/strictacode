@@ -151,8 +151,8 @@ class TestBasicComplexity:
                 }
             }
         """)
-        # 3 SwitchCase with test (+3), no extra for SwitchStatement or default
-        _assert_complexity(r, "f", 4)
+        # 4 SwitchCase including default (+4), no extra for SwitchStatement
+        _assert_complexity(r, "f", 5)
 
 
 class TestClassAndClosures:
@@ -183,9 +183,9 @@ class TestClassAndClosures:
         items = r.get("index.js", [])
         outer = [i for i in items if i["name"] == "outer"]
         assert len(outer) == 1
-        # calculateComplexity traverses the whole node including nested functions,
-        # so outer complexity = 1 (base) + 1 (if inside inner) = 2
-        assert outer[0]["complexity"] == 2
+        # calculateComplexity skips nested functions (matches radon behavior),
+        # so outer complexity = 1 (base only)
+        assert outer[0]["complexity"] == 1
         assert len(outer[0]["closures"]) == 1
         assert outer[0]["closures"][0]["name"] == "inner"
         assert outer[0]["closures"][0]["complexity"] == 2
@@ -209,8 +209,9 @@ class TestClassAndClosures:
         assert len(methods) == 1
         process = methods[0]
         assert process["name"] == "process"
-        # calculateComplexity on method node includes nested closure's if
-        assert process["complexity"] == 2
+        # calculateComplexity skips nested functions (matches radon behavior),
+        # so process complexity = 1 (base only)
+        assert process["complexity"] == 1
         assert len(process["closures"]) == 1
         closure = process["closures"][0]
         assert closure["name"] == "fn"
