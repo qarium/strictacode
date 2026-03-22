@@ -21,6 +21,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Install @babel packages
+        run: npm install -g @babel/parser @babel/traverse
+
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
