@@ -1,8 +1,6 @@
+from .calc import complexity, score
+from .calc.pressure import overengineering, refactoring
 from .source import Sources
-from .calc import score
-from .calc import complexity
-from .calc.pressure import refactoring
-from .calc.pressure import overengineering
 
 
 class Analyzer:

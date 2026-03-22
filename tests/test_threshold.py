@@ -1,5 +1,4 @@
 import pytest
-
 from strictacode.threshold import Threshold
 
 

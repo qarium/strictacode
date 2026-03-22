@@ -1,9 +1,7 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
-
 from strictacode.go.loader import GoLoder
-
 
 # ---------------------------------------------------------------------------
 # GoLoder class attributes

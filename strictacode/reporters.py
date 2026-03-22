@@ -1,7 +1,6 @@
 import abc
-import sys
 import json
-import typing as t
+import sys
 
 from .source import Sources
 
@@ -15,7 +14,7 @@ class BaseReporter(metaclass=abc.ABCMeta):
                  top_classes: int = 10,
                  top_methods: int = 15,
                  top_functions: int = 20,
-                 output: t.Optional[str] = None):
+                 output: str | None = None):
         self._sources = sources
 
         self._short = short
@@ -36,21 +35,21 @@ class BaseReporter(metaclass=abc.ABCMeta):
         self._make_top_functions(top_functions)
 
     def _make_top_packages(self, top: int):
-        packages_by_score = list(sorted(self._sources.packages,
+        packages_by_score = sorted(self._sources.packages,
                                              key=lambda x: x.status.score.value,
-                                             reverse=True))
-        packages_by_complexity = list(sorted(self._sources.packages,
+                                             reverse=True)
+        packages_by_complexity = sorted(self._sources.packages,
                                              key=lambda x: x.complexity.score,
-                                             reverse=True))
-        packages_by_density = list(sorted(self._sources.packages,
+                                             reverse=True)
+        packages_by_density = sorted(self._sources.packages,
                                           key=lambda x: x.complexity.density,
-                                          reverse=True))
-        packages_by_rp = list(sorted(self._sources.packages,
+                                          reverse=True)
+        packages_by_rp = sorted(self._sources.packages,
                                      key=lambda x: x.refactoring_pressure.score,
-                                     reverse=True))
-        packages_by_op = list(sorted(self._sources.packages,
+                                     reverse=True)
+        packages_by_op = sorted(self._sources.packages,
                                      key=lambda x: x.overengineering_pressure.score,
-                                     reverse=True))
+                                     reverse=True)
 
         self._top_packages = []
 
@@ -69,26 +68,26 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if package not in self._top_packages:
                 self._top_packages.append(package)
 
-        self._top_packages = list(sorted(self._top_packages,
+        self._top_packages = sorted(self._top_packages,
                                          key=lambda x: x.status.score.value,
-                                         reverse=True))[:top]
+                                         reverse=True)[:top]
 
     def _make_top_modules(self, top: int):
-        modules_by_score = list(sorted(self._sources.modules,
+        modules_by_score = sorted(self._sources.modules,
                                        key=lambda x: x.status.score.value,
-                                       reverse=True))
-        modules_by_complexity = list(sorted(self._sources.modules,
+                                       reverse=True)
+        modules_by_complexity = sorted(self._sources.modules,
                                             key=lambda x: x.complexity.score,
-                                            reverse=True))
-        modules_by_density = list(sorted(self._sources.modules,
+                                            reverse=True)
+        modules_by_density = sorted(self._sources.modules,
                                          key=lambda x: x.complexity.density,
-                                         reverse=True))
-        modules_by_rp = list(sorted(self._sources.modules,
+                                         reverse=True)
+        modules_by_rp = sorted(self._sources.modules,
                                     key=lambda x: x.refactoring_pressure.score,
-                                    reverse=True))
-        modules_by_op = list(sorted(self._sources.modules,
+                                    reverse=True)
+        modules_by_op = sorted(self._sources.modules,
                                     key=lambda x: x.overengineering_pressure.score,
-                                    reverse=True))
+                                    reverse=True)
 
         self._top_modules = []
 
@@ -107,23 +106,23 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if package not in self._top_modules:
                 self._top_modules.append(package)
 
-        self._top_modules = list(sorted(self._top_modules,
+        self._top_modules = sorted(self._top_modules,
                                         key=lambda x: x.status.score.value,
-                                        reverse=True))[:top]
+                                        reverse=True)[:top]
 
     def _make_top_classes(self, top: int):
-        classes_by_score = list(sorted(self._sources.classes,
+        classes_by_score = sorted(self._sources.classes,
                                        key=lambda x: x.status.score.value,
-                                       reverse=True))
-        classes_by_complexity = list(sorted(self._sources.classes,
+                                       reverse=True)
+        classes_by_complexity = sorted(self._sources.classes,
                                             key=lambda x: x.complexity.score,
-                                            reverse=True))
-        classes_by_density = list(sorted(self._sources.classes,
+                                            reverse=True)
+        classes_by_density = sorted(self._sources.classes,
                                          key=lambda x: x.complexity.density,
-                                         reverse=True))
-        classes_by_op = list(sorted(self._sources.classes,
+                                         reverse=True)
+        classes_by_op = sorted(self._sources.classes,
                                     key=lambda x: x.overengineering_pressure.score,
-                                    reverse=True))
+                                    reverse=True)
 
         self._top_classes = []
 
@@ -139,20 +138,20 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if cls not in self._top_classes:
                 self._top_classes.append(cls)
 
-        self._top_classes = list(sorted(self._top_classes,
+        self._top_classes = sorted(self._top_classes,
                                         key=lambda x: x.status.score.value,
-                                        reverse=True))[:top]
+                                        reverse=True)[:top]
 
     def _make_top_methods(self, top: int):
-       methods_by_score = list(sorted(self._sources.methods,
+       methods_by_score = sorted(self._sources.methods,
                                        key=lambda x: x.status.score.value,
-                                      reverse=True))
-       methods_by_complexity = list(sorted(self._sources.methods,
+                                      reverse=True)
+       methods_by_complexity = sorted(self._sources.methods,
                                            key=lambda x: x.complexity.score,
-                                           reverse=True))
-       methods_by_density = list(sorted(self._sources.methods,
+                                           reverse=True)
+       methods_by_density = sorted(self._sources.methods,
                                         key=lambda x: x.complexity.density,
-                                        reverse=True))
+                                        reverse=True)
 
        self._top_methods = []
 
@@ -165,20 +164,20 @@ class BaseReporter(metaclass=abc.ABCMeta):
            if method not in self._top_methods:
                self._top_methods.append(method)
 
-       self._top_methods = list(sorted(self._top_methods,
+       self._top_methods = sorted(self._top_methods,
                                        key=lambda x: x.status.score.value,
-                                       reverse=True))[:top]
+                                       reverse=True)[:top]
 
     def _make_top_functions(self, top: int):
-        functions_by_score = list(sorted(self._sources.functions,
+        functions_by_score = sorted(self._sources.functions,
                                          key=lambda x: x.status.score.value,
-                                         reverse=True))
-        functions_by_complexity = list(sorted(self._sources.functions,
+                                         reverse=True)
+        functions_by_complexity = sorted(self._sources.functions,
                                               key=lambda x: x.complexity.score,
-                                              reverse=True))
-        functions_by_density = list(sorted(self._sources.functions,
+                                              reverse=True)
+        functions_by_density = sorted(self._sources.functions,
                                            key=lambda x: x.complexity.density,
-                                           reverse=True))
+                                           reverse=True)
 
         self._top_functions = []
 
@@ -191,9 +190,9 @@ class BaseReporter(metaclass=abc.ABCMeta):
             if function not in self._top_functions:
                 self._top_functions.append(function)
 
-        self._top_functions = list(sorted(self._top_functions,
+        self._top_functions = sorted(self._top_functions,
                                           key=lambda x: x.status.score.value,
-                                          reverse=True))[:top]
+                                          reverse=True)[:top]
 
     @abc.abstractmethod
     def _report(self):

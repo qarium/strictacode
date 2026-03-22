@@ -1,13 +1,12 @@
-import typing as t
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(kw_only=True)
 class Threshold:
-    score: t.Optional[int] = None
-    complexity_density: t.Optional[float] = None
-    refactoring_pressure: t.Optional[int] = None
-    overengineering_pressure: t.Optional[int] = None
+    score: int | None = None
+    complexity_density: float | None = None
+    refactoring_pressure: int | None = None
+    overengineering_pressure: int | None = None
 
     @classmethod
     def from_string(cls, string) -> 'Threshold':

@@ -5,9 +5,7 @@ import subprocess
 import textwrap
 
 import pytest
-
 from strictacode.js.analyzer import analyze
-
 
 # ---------------------------------------------------------------------------
 # Skip when node or babel is not available

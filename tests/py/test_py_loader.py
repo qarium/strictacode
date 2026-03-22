@@ -1,9 +1,7 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from strictacode.py.loader import PyLoder
-
 
 # ---------------------------------------------------------------------------
 # PyLoder class attributes
@@ -33,8 +31,8 @@ class TestPyLoaderAttributes:
 
 class TestCreateItem:
     def test_creates_class_item(self):
-        from strictacode.py.loader import _create_item
         from strictacode.loader import FileItemTypes
+        from strictacode.py.loader import _create_item
 
         item = _create_item(type="class", name="Foo", lineno=1, endline=10,
                             complexity=3, classname=None, methods=[], closures=[])
@@ -46,8 +44,8 @@ class TestCreateItem:
         assert item.class_name is None
 
     def test_creates_method_item(self):
-        from strictacode.py.loader import _create_item
         from strictacode.loader import FileItemTypes
+        from strictacode.py.loader import _create_item
 
         item = _create_item(type="method", name="bar", lineno=5, endline=15,
                             complexity=2, classname="Foo", methods=[], closures=[])
@@ -59,8 +57,8 @@ class TestCreateItem:
         assert item.class_name == "Foo"
 
     def test_creates_function_item(self):
-        from strictacode.py.loader import _create_item
         from strictacode.loader import FileItemTypes
+        from strictacode.py.loader import _create_item
 
         item = _create_item(type="function", name="baz", lineno=20, endline=25,
                             complexity=1, methods=[], closures=[])

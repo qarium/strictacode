@@ -1,7 +1,6 @@
 import dataclasses
 
 import pytest
-
 from strictacode.calc.score import (
     ImbalanceType,
     Metric,

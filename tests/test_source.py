@@ -1,15 +1,13 @@
 import pytest
-
 from strictacode.source import (
+    ClassSource,
+    FunctionSource,
+    MethodSource,
+    ModuleSource,
+    PackageSource,
     Sources,
     Status,
-    PackageSource,
-    ModuleSource,
-    ClassSource,
-    MethodSource,
-    FunctionSource,
 )
-
 
 # ---------------------------------------------------------------------------
 # Status
@@ -131,7 +129,6 @@ class TestModuleSource:
 
     def test_overengineering_pressure_default_zero(self, tmp_py_file):
         mod = ModuleSource(tmp_py_file)
-        from strictacode.calc.pressure import overengineering
         assert mod.overengineering_pressure.score == 0
 
     def test_overengineering_pressure_setter(self, tmp_py_file):

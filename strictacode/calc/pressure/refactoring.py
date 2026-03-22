@@ -1,9 +1,10 @@
 import math
 import typing as t
-from enum import Enum
-from numpy import percentile
 from dataclasses import dataclass
+from enum import Enum
 from functools import cached_property
+
+from numpy import percentile
 
 W_PEAK: t.Final[float] = 0.6
 W_BASE: t.Final[float] = 0.4
@@ -36,7 +37,7 @@ class Status(str, Enum):
 
 class Metric:
     def __init__(self, score: int, data: Data, *,
-                 children: t.Optional[list['Metric']] = None):
+                 children: list['Metric'] | None = None):
         self._score = score
         self._data = data
 
@@ -157,7 +158,7 @@ def _base_pressure(complexity_density: float, loc: int) -> int:
 def calculate(data: Data, *,
               w_peak: float = W_PEAK,
               w_base: float = W_BASE,
-              children: t.Optional[list[Metric]] = None) -> Metric:
+              children: list[Metric] | None = None) -> Metric:
     """
     Refactoring Pressure — давление на рефакторинг.
 

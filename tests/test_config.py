@@ -2,9 +2,8 @@ import json
 
 import pytest
 import yaml
-
-from strictacode.config import Config, Language, Loader, Reporter, ReporterTop
 from strictacode import constants
+from strictacode.config import Config, Language, Loader, Reporter, ReporterTop
 
 
 # ---------------------------------------------------------------------------

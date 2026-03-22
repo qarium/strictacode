@@ -398,10 +398,10 @@ func main() {
 }
 """
 
-import os
 import json
-import tempfile
+import os
 import subprocess
+import tempfile
 
 
 def collect(path: str) -> dict:

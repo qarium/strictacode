@@ -1,26 +1,25 @@
-import os
 import fnmatch
-import typing as t
+import os
 from pathlib import Path
 
 
 def lines_of_code(file_path: str, *,
-                  lineno: t.Optional[int] = None,
-                  endline: t.Optional[int] = None,
-                  ignore_prefixes: t.Optional[list[str]] = None,
-                  ignore_blocks: t.Optional[list[tuple[str, str]]] = None) -> int:
+                  lineno: int | None = None,
+                  endline: int | None = None,
+                  ignore_prefixes: list[str] | None = None,
+                  ignore_blocks: list[tuple[str, str]] | None = None) -> int:
     line_count = 0
     line_number = 0
     ignore_blocks = ignore_blocks or []
     ignore_prefixes = ignore_prefixes or []
 
-    def get_stop_pointer(l):
+    def get_stop_pointer(line):
         for block in ignore_blocks:
-            if l.startswith(block[0]):
+            if line.startswith(block[0]):
                 return block[1]
         return None
 
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, encoding='utf-8') as file:
         stop_pointer = None
 
         for line in file:
@@ -61,7 +60,7 @@ def _parse_gitignore(project_path):
         return []
 
     patterns = []
-    with open(gitignore_path, "r", encoding="utf-8") as f:
+    with open(gitignore_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             # Skip empty lines and comments
@@ -82,7 +81,7 @@ def _should_exclude(name, patterns):
     return False
 
 
-def ignore_dirs(path, *, exclude_patterns: t.Optional[list[str]] = None):
+def ignore_dirs(path, *, exclude_patterns: list[str] | None = None):
     exclude_patterns = _parse_gitignore(path) if exclude_patterns is None else exclude_patterns
 
     exclude_dirs = []
@@ -100,7 +99,7 @@ def ignore_dirs(path, *, exclude_patterns: t.Optional[list[str]] = None):
 
 
 def source_content(filepath: str, lineno: int, endline: int) -> str:
-    with open(filepath, 'r', encoding='utf-8') as file:
+    with open(filepath, encoding='utf-8') as file:
         lines = []
         line_number = 0
 

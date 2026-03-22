@@ -1,7 +1,6 @@
 import textwrap
 
 import pytest
-
 from strictacode.graph import DiGraph
 
 

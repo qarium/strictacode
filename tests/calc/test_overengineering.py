@@ -1,5 +1,4 @@
 import pytest
-
 from strictacode.calc.pressure.overengineering import (
     CalcResult,
     Metric,

@@ -1,21 +1,18 @@
 import json
 import textwrap
 
-import pytest
-
-from strictacode.reporters import TextReporter, JsonReporter
+from strictacode.calc import Complexity, score
+from strictacode.calc.pressure import overengineering, refactoring
+from strictacode.reporters import JsonReporter, TextReporter
 from strictacode.source import (
+    ClassSource,
+    FunctionSource,
+    MethodSource,
+    ModuleSource,
+    PackageSource,
     Sources,
     Status,
-    PackageSource,
-    ModuleSource,
-    ClassSource,
-    MethodSource,
-    FunctionSource,
 )
-from strictacode.calc import score, Complexity
-from strictacode.calc.pressure import refactoring
-from strictacode.calc.pressure import overengineering
 
 
 def _make_module(tmp_path, name="mod.py", content=None):

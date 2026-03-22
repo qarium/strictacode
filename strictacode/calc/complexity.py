@@ -1,6 +1,5 @@
-import typing as t
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 from functools import cached_property
 
 from numpy import percentile
@@ -29,7 +28,7 @@ class Complexity:
     def __init__(self, score: int, *,
                  loc: int,
                  total_sum: bool = False,
-                 children: t.Optional[list['Complexity']] = None):
+                 children: list['Complexity'] | None = None):
         self._score = score
         self._loc = loc
 
@@ -66,7 +65,7 @@ class Complexity:
     @property
     def total(self) -> int:
         if self._total_sum:
-            return self._score + sum((i.score for i in self._children))
+            return self._score + sum(i.score for i in self._children)
         return self._score
 
     @cached_property

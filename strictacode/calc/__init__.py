@@ -1,5 +1,4 @@
-from . import score
-from . import pressure
+from . import pressure, score
 from .complexity import Complexity
 
 __all__ = [

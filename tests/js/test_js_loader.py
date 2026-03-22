@@ -1,9 +1,7 @@
 from unittest.mock import patch
 
 import pytest
-
 from strictacode.js.loader import JSLoder
-
 
 # ---------------------------------------------------------------------------
 # JSLoder class attributes

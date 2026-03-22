@@ -1,6 +1,6 @@
-import sys
 import json
 import subprocess
+import sys
 
 
 def collect(path: str) -> dict:

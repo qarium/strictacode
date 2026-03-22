@@ -1,14 +1,12 @@
 import textwrap
 
 import pytest
-
 from strictacode.loader import (
-    Loader,
     FileItem,
     FileItemTypes,
+    Loader,
     _load_closures,
 )
-
 
 # ---------------------------------------------------------------------------
 # FileItem
@@ -68,7 +66,7 @@ class TestLoadClosures:
         filepath = str(tmp_path / "mod.py")
         tmp_path.joinpath("mod.py").write_text("pass")
 
-        from strictacode.source import ModuleSource, FunctionSource
+        from strictacode.source import FunctionSource, ModuleSource
 
         module = ModuleSource(filepath)
         func = FunctionSource(module, "outer", lineno=1, endline=1, complexity=2)
@@ -109,7 +107,7 @@ class TestLoadClosures:
         filepath = str(tmp_path / "mod.py")
         tmp_path.joinpath("mod.py").write_text("pass")
 
-        from strictacode.source import ModuleSource, FunctionSource
+        from strictacode.source import FunctionSource, ModuleSource
 
         module = ModuleSource(filepath)
         func = FunctionSource(module, "simple", lineno=1, endline=1, complexity=1)

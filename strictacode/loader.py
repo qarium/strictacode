@@ -1,24 +1,23 @@
-import os
 import abc
 import dataclasses
-import typing as t
+import os
 from enum import Enum
-from pathlib import Path
 from functools import cached_property
+from pathlib import Path
 
 from . import utils
 from .source import (
-    Sources,
-    PackageSource,
-    ModuleSource,
     ClassSource,
-    MethodSource,
     FunctionSource,
+    MethodSource,
+    ModuleSource,
+    PackageSource,
+    Sources,
 )
 
 
 def _load_closures(file: ModuleSource,
-                   source: t.Union[MethodSource, FunctionSource],
+                   source: MethodSource | FunctionSource,
                    closures: list['FileItem']):
     for closure in closures:
         func = FunctionSource(file,
@@ -44,7 +43,7 @@ class FileItem:
     lineno: int = 0
     endline: int = 0
     complexity: int = 0
-    class_name: t.Optional[str] = None
+    class_name: str | None = None
     methods: list['FileItem'] = dataclasses.field(default_factory=list)
     closures: list['FileItem'] = dataclasses.field(default_factory=list)
 
@@ -57,8 +56,8 @@ class Loader(metaclass=abc.ABCMeta):
 
     def __init__(self, root: str = '.', *,
                  class_loc_from_methods: bool = False,
-                 include_patterns: t.Optional[list[str]] = None,
-                 exclude_patterns: t.Optional[list[str]] = None):
+                 include_patterns: list[str] | None = None,
+                 exclude_patterns: list[str] | None = None):
         self._root = root
 
         self._include_patterns = include_patterns or []

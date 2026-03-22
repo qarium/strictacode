@@ -169,11 +169,11 @@ const output = {
 console.log(JSON.stringify(output, null, 2));
 """
 
-import os
-import sys
 import json
-import tempfile
+import os
 import subprocess
+import sys
+import tempfile
 
 
 def analyze(path: str) -> dict:

@@ -2,11 +2,10 @@
 Overengineering pressure.
 """
 import os
-import typing as t
-from enum import Enum
-from dataclasses import dataclass
-from functools import cached_property
 from collections import defaultdict, deque
+from dataclasses import dataclass
+from enum import Enum
+from functools import cached_property
 
 from numpy import percentile
 
@@ -31,7 +30,7 @@ class Stat:
 
 @dataclass(kw_only=True)
 class CalcResult:
-    score: t.Union[float, int]
+    score: float | int
     classes: list[Score]
     modules: list[Score]
 
@@ -49,7 +48,7 @@ class Status(str, Enum):
 
 class Metric:
     def __init__(self, score: int, *,
-                 children: t.Optional[list['Metric']] = None):
+                 children: list['Metric'] | None = None):
         self._score = score
         self._children = children or []
 

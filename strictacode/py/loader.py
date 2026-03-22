@@ -1,7 +1,6 @@
 from collections import defaultdict
 
-from ..loader import Loader, FileItem, FileItemTypes
-
+from ..loader import FileItem, FileItemTypes, Loader
 from . import collector
 from .analyzer import Analyzer
 
@@ -38,7 +37,7 @@ class PyLoder(Loader):
             if filepath not in file_to_items:
                 file_to_items[filepath] = []
 
-            file_to_items[filepath].extend((_create_item(**i) for i in items))
+            file_to_items[filepath].extend(_create_item(**i) for i in items)
             file_to_items[filepath].sort(key=lambda i: 0 if i.type == FileItemTypes.CLASS else 1)
 
         return file_to_items

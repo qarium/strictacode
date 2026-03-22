@@ -281,11 +281,11 @@ for (const file of files) {
 console.log(JSON.stringify(output, null, 2));
 """
 
-import os
-import sys
 import json
-import tempfile
+import os
 import subprocess
+import sys
+import tempfile
 
 
 def collect(path: str) -> dict:

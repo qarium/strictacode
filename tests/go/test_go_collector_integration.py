@@ -4,9 +4,7 @@ import shutil
 import textwrap
 
 import pytest
-
 from strictacode.go.collector import collect
-
 
 # ---------------------------------------------------------------------------
 # Skip when Go is not available

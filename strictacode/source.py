@@ -1,14 +1,12 @@
 import os
-import typing as t
+from dataclasses import dataclass, field
 from enum import Enum
 from functools import cached_property
-from dataclasses import dataclass, field
 
 from . import utils
+from .calc import Complexity, score
+from .calc.pressure import overengineering, refactoring
 from .graph import DiGraph
-from .calc import score, Complexity
-from .calc.pressure import refactoring
-from .calc.pressure import overengineering
 
 
 @dataclass(kw_only=True)
@@ -35,7 +33,7 @@ class Sources:
         self._classes: list[ClassSource] = []
         self._methods: list[MethodSource] = []
         self._functions: list[FunctionSource] = []
-        self._overengineering_pressure: t.Optional[overengineering.Metric] = None
+        self._overengineering_pressure: overengineering.Metric | None = None
 
     def __repr__(self):
         return  f"<{self.__class__.__name__}: {self.path} " \
@@ -79,11 +77,11 @@ class Sources:
 
     @property
     def loc(self):
-        return sum((i.loc for i in self.modules))
+        return sum(i.loc for i in self.modules)
 
     @cached_property
     def complexity(self) -> Complexity:
-        score = sum((i.complexity.score for i in self.modules))
+        score = sum(i.complexity.score for i in self.modules)
         children = [i.complexity for i in self.modules]
         return Complexity(score, loc=self.loc, children=children)
 
@@ -179,11 +177,11 @@ class PackageSource:
 
     @property
     def loc(self):
-        return sum((i.loc for i in self.modules))
+        return sum(i.loc for i in self.modules)
 
     @cached_property
     def complexity(self) -> Complexity:
-        score = sum((i.complexity.score for i in self.modules))
+        score = sum(i.complexity.score for i in self.modules)
         children = [i.complexity for i in self.modules]
         return Complexity(score, loc=self.loc, children=children)
 
@@ -213,8 +211,8 @@ class PackageSource:
 
 class ModuleSource:
     def __init__(self, path: str, *,
-                 comment_line_prefixes: t.Optional[list[str]] = None,
-                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
+                 comment_line_prefixes: list[str] | None = None,
+                 comment_code_blocks: list[tuple[str, str]] | None = None):
         self._path = path
 
         self._loc = utils.lines_of_code(path,
@@ -226,7 +224,7 @@ class ModuleSource:
         self._classes: list[ClassSource] = []
         self._methods: list[MethodSource] = []
         self._functions: list[FunctionSource] = []
-        self._overengineering_pressure: t.Optional[overengineering.Metric] = None
+        self._overengineering_pressure: overengineering.Metric | None = None
 
     def __repr__(self):
         return  f"<{self.__class__.__name__}: {self.path} " \
@@ -262,14 +260,14 @@ class ModuleSource:
 
     @cached_property
     def content(self):
-        with open(self._path, 'r', encoding='utf-8') as f:
+        with open(self._path, encoding='utf-8') as f:
             return f.read()
 
     @cached_property
     def complexity(self) -> Complexity:
         score = sum([
-            sum((i.complexity.score for i in self.classes)),
-            sum((i.complexity.score for i in self.functions)),
+            sum(i.complexity.score for i in self.classes),
+            sum(i.complexity.score for i in self.functions),
         ])
         children = [i.complexity for i in self.classes] + [i.complexity for i in self.functions]
         return Complexity(score, loc=self.loc, children=children)
@@ -307,8 +305,8 @@ class ClassSource:
                  endline: int = 0,
                  complexity: int = 0,
                  loc_from_methods: bool = False,
-                 comment_line_prefixes: t.Optional[list[str]] = None,
-                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
+                 comment_line_prefixes: list[str] | None = None,
+                 comment_code_blocks: list[tuple[str, str]] | None = None):
         self._module = module
         self._name = name
         self._lineno = lineno
@@ -326,7 +324,7 @@ class ClassSource:
         self._status: Status = Status()
 
         self._methods: list[MethodSource] = []
-        self._overengineering_pressure: t.Optional[overengineering.Metric] = None
+        self._overengineering_pressure: overengineering.Metric | None = None
 
     def __repr__(self):
         return f'<{self.__class__.__name__}: {self.name} methods={len(self.methods)}>'
@@ -350,7 +348,7 @@ class ClassSource:
     @property
     def loc(self):
         if self._loc_from_methods:
-            return sum((i.loc for i in self.methods))
+            return sum(i.loc for i in self.methods)
         return self._loc
 
     @property
@@ -394,8 +392,8 @@ class MethodSource:
                  lineno: int = 0,
                  endline: int = 0,
                  complexity: int = 0,
-                 comment_line_prefixes: t.Optional[list[str]] = None,
-                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
+                 comment_line_prefixes: list[str] | None = None,
+                 comment_code_blocks: list[tuple[str, str]] | None = None):
         self._module = module
         self._cls = cls
         self._name = name
@@ -471,8 +469,8 @@ class FunctionSource:
                  lineno: int = 0,
                  endline: int = 0,
                  complexity: int = 0,
-                 comment_line_prefixes: t.Optional[list[str]] = None,
-                 comment_code_blocks: t.Optional[list[tuple[str, str]]] = None):
+                 comment_line_prefixes: list[str] | None = None,
+                 comment_code_blocks: list[tuple[str, str]] | None = None):
         self._module = module
         self._name = name
         self._lineno = lineno

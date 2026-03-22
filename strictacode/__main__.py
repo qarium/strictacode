@@ -1,27 +1,23 @@
-import os
 import json
-import typing as t
+import os
 
 import click
 
-from strictacode import skill
-from strictacode import constants
-from strictacode.py import PyLoder
+from strictacode import constants, skill
+from strictacode.analyzer import Analyzer
+from strictacode.config import Config, Language
 from strictacode.go import GoLoder
 from strictacode.js import JSLoder
-from strictacode.analyzer import Analyzer
+from strictacode.py import PyLoder
+from strictacode.reporters import JsonReporter, TextReporter
 from strictacode.threshold import Threshold
 from strictacode.utils import detect_language
-from strictacode.config import Config, Language
-from strictacode.reporters import TextReporter, JsonReporter
 
 
 def create_config() -> Config:
     config = Config()
 
-    if os.path.exists(f"{constants.CONFIG_NAME}.yml"):
-        config = Config.from_yaml_file(f"{constants.CONFIG_NAME}.yml")
-    elif os.path.exists(f"{constants.CONFIG_NAME}.yaml"):
+    if os.path.exists(f"{constants.CONFIG_NAME}.yml") or os.path.exists(f"{constants.CONFIG_NAME}.yaml"):
         config = Config.from_yaml_file(f"{constants.CONFIG_NAME}.yml")
     elif os.path.exists(f"{constants.CONFIG_NAME}.json"):
         config = Config.from_json_file(f"{constants.CONFIG_NAME}.json")
@@ -47,10 +43,10 @@ def app():
 @click.argument("path", type=os.path.abspath, required=True)
 @app.command()
 def analyze(path: str, fmt: str, short: bool, details: bool,
-            top_packages: t.Optional[int], top_modules: t.Optional[int],
-            top_classes: t.Optional[int], top_methods: t.Optional[int],
-            top_functions: t.Optional[int], threshold: t.Optional[str],
-            output: t.Optional[str]):
+            top_packages: int | None, top_modules: int | None,
+            top_classes: int | None, top_methods: int | None,
+            top_functions: int | None, threshold: str | None,
+            output: str | None):
     if not os.path.exists(path):
         raise click.UsageError(f"Path \"{path}\" does not exist")
     if not os.path.isdir(path):
@@ -134,7 +130,7 @@ def analyze(path: str, fmt: str, short: bool, details: bool,
 @click.argument("result_two", type=os.path.abspath, required=True)
 @click.argument("result_one", type=os.path.abspath, required=True)
 @app.command()
-def compare(result_one: str, result_two: str, threshold: t.Optional[str]):
+def compare(result_one: str, result_two: str, threshold: str | None):
     with open(result_one) as f:
         data_1 = json.load(f)
     with open(result_two) as f:
@@ -159,17 +155,17 @@ def compare(result_one: str, result_two: str, threshold: t.Optional[str]):
     click.echo(f"  * Complexity: {density_1}")
     click.echo(f"  * Refactoring: {rp_1}")
     click.echo(f"  * Overengineering pressure: {op_1}")
-    click.echo(f"")
-    click.echo(f"---")
-    click.echo(f"")
+    click.echo("")
+    click.echo("---")
+    click.echo("")
     click.echo(f"Result({os.path.basename(result_two)}):")
     click.echo(f"  * Score: {score_2}")
     click.echo(f"  * Complexity: {density_2}")
     click.echo(f"  * Refactoring: {rp_2}")
     click.echo(f"  * Overengineering pressure: {op_2}")
-    click.echo(f"")
-    click.echo(f"---")
-    click.echo(f"")
+    click.echo("")
+    click.echo("---")
+    click.echo("")
     click.secho("Diff:")
     click.echo(f"  * Score: {score_diff}")
     click.echo(f"  * Complexity density: {density_diff}")

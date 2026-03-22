@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from strictacode.calc.pressure.refactoring import (
     Data,
     Metric,

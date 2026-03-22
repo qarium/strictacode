@@ -1,7 +1,6 @@
 import json
-import typing as t
-from enum import Enum
 from dataclasses import dataclass, field
+from enum import Enum
 
 import yaml
 
@@ -40,7 +39,7 @@ class Reporter:
 
 @dataclass(kw_only=True)
 class Config:
-    lang: t.Optional[Language] = field(default=None)
+    lang: Language | None = field(default=None)
     loader: Loader = field(default_factory=Loader)
     reporter: Reporter = field(default_factory=Reporter)
 

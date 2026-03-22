@@ -1,12 +1,8 @@
 import json
-import os
 import textwrap
 
-import pytest
 from click.testing import CliRunner
-
 from strictacode.__main__ import app
-
 
 runner = CliRunner()
 

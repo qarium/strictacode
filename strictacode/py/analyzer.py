@@ -1,6 +1,6 @@
 import ast
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 
 class Analyzer(ast.NodeVisitor):
@@ -21,7 +21,7 @@ class Analyzer(ast.NodeVisitor):
 
         try:
             tree = ast.parse(path.read_text())
-        except:
+        except SyntaxError:
             return None
 
         analyzer = cls(filepath, module)

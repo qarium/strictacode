@@ -1,7 +1,6 @@
 import textwrap
 
 import pytest
-
 from strictacode.utils import (
     _parse_gitignore,
     _should_exclude,
@@ -11,7 +10,6 @@ from strictacode.utils import (
     lines_of_code,
     source_content,
 )
-
 
 # ---------------------------------------------------------------------------
 # lines_of_code

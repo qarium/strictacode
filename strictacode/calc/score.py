@@ -1,7 +1,7 @@
-import typing as t
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 from functools import cached_property
+
 
 class ImbalanceType(str, Enum):
     SPAGHETTI = "spaghetti"
@@ -19,9 +19,9 @@ class Status(str, Enum):
 @dataclass(kw_only=True, frozen=True)
 class Metric:
     value: int
-    penalty: t.Optional[int] = None
-    multiplier: t.Optional[float] = None
-    imbalance_type: t.Optional[ImbalanceType] = None
+    penalty: int | None = None
+    multiplier: float | None = None
+    imbalance_type: ImbalanceType | None = None
 
     @cached_property
     def status(self) -> Status:
@@ -37,7 +37,7 @@ class Metric:
         return Status.HEALTHY
 
 
-def _calculate_imbalance_penalty(rp: int, oe: int) -> tuple[int, t.Optional[ImbalanceType]]:
+def _calculate_imbalance_penalty(rp: int, oe: int) -> tuple[int, ImbalanceType | None]:
     """
     Рассчитывает штраф за перекос между RP и OE.
     Возвращает (penalty, imbalance_type) или (0, None) если перекоса нет.
@@ -67,7 +67,7 @@ def _calculate_imbalance_penalty(rp: int, oe: int) -> tuple[int, t.Optional[Imba
     return 3, None
 
 
-def _calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, t.Optional[ImbalanceType]]:
+def _calculate_imbalance_multiplier(rp: int, oe: int) -> tuple[float, ImbalanceType | None]:
     """
     Рассчитывает множитель за перекос между RP и OE (для низкого экстремума).
     Возвращает (multiplier, imbalance_type) или (1.0, None) если перекоса нет.

@@ -1,4 +1,4 @@
-from strictacode.calc.score import calculate, Metric
+from strictacode.calc.score import Metric, calculate
 
 
 class TestCalculateNegativeInputs:

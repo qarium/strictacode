@@ -1,5 +1,4 @@
 import pytest
-
 from strictacode.calc.complexity import Complexity, Status
 
 

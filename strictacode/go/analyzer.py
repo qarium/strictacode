@@ -353,10 +353,10 @@ func main() {
 }
 """
 
-import os
 import json
-import tempfile
+import os
 import subprocess
+import tempfile
 
 
 def analyze(path: str) -> dict:

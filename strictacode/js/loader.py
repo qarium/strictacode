@@ -1,9 +1,7 @@
 import os
 
-from ..loader import Loader, FileItem, FileItemTypes
-
-from . import collector
-from . import analyzer
+from ..loader import FileItem, FileItemTypes, Loader
+from . import analyzer, collector
 
 
 def _create_item(**kwargs) -> FileItem:
@@ -34,7 +32,7 @@ class JSLoder(Loader):
             if filepath not in metrics:
                 metrics[filepath] = []
 
-            metrics[filepath].extend((_create_item(**i) for i in items))
+            metrics[filepath].extend(_create_item(**i) for i in items)
             metrics[filepath].sort(key=lambda i: 0 if i.type == FileItemTypes.CLASS else 1)
 
         return metrics

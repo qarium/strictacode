@@ -1,9 +1,7 @@
 import pytest
-
 from strictacode.analyzer import Analyzer
-from strictacode.calc import score, complexity
-from strictacode.calc.pressure import refactoring
-from strictacode.calc.pressure import overengineering
+from strictacode.calc import complexity, score
+from strictacode.calc.pressure import overengineering, refactoring
 from strictacode.source import Sources
 
 
