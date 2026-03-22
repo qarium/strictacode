@@ -185,7 +185,7 @@ class TestParseGitignore:
 
 class TestShouldExclude:
     @pytest.mark.parametrize(
-        "name, patterns, expected",
+        ("name", "patterns", "expected"),
         [
             ("dist", ["dist", "build"], True),
             ("dist", ["di*", "build"], True),

@@ -13,7 +13,7 @@ from strictacode.calc.score import (
 
 class TestMetricStatus:
     @pytest.mark.parametrize(
-        "value, expected",
+        ("value", "expected"),
         [
             (0, Status.HEALTHY),
             (20, Status.HEALTHY),

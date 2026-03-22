@@ -78,7 +78,15 @@ class TestCreateItem:
             endline=10,
             complexity=2,
             closures=[
-                dict(type="function", name="inner", lineno=3, endline=8, complexity=1, methods=[], closures=[]),
+                {
+                    "type": "function",
+                    "name": "inner",
+                    "lineno": 3,
+                    "endline": 8,
+                    "complexity": 1,
+                    "methods": [],
+                    "closures": [],
+                },
             ],
         )
         assert len(item.closures) == 1

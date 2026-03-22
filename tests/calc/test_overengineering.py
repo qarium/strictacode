@@ -20,7 +20,7 @@ from strictacode.graph import DiGraph
 
 class TestMetricStatus:
     @pytest.mark.parametrize(
-        "value, expected",
+        ("value", "expected"),
         [
             (0, Status.SIMPLE),
             (20, Status.SIMPLE),
@@ -178,7 +178,7 @@ class TestCentrality:
 
 class TestNorm:
     @pytest.mark.parametrize(
-        "v, t, expected",
+        ("v", "t", "expected"),
         [
             (0, 10, 0.0),
             (5, 10, 0.5),

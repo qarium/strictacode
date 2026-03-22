@@ -20,7 +20,7 @@ class TestThresholdFromString:
         assert t.overengineering_pressure is None
 
     @pytest.mark.parametrize(
-        "input_str, field, value",
+        ("input_str", "field", "value"),
         [
             ("SCORE=50", "score", 50),
             ("score=50", "score", 50),
@@ -49,15 +49,15 @@ class TestThresholdFromString:
     def test_empty_string_raises_value_error(self):
         # Empty string fails: int("") raises ValueError, then "".split(',') gives [""],
         # and "".split('=', 1) produces [""] which fails to unpack.
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="not enough values to unpack"):
             Threshold.from_string("")
 
     def test_non_numeric_value_raises_value_error(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid literal for int"):
             Threshold.from_string("SCORE=abc")
 
     def test_empty_value_after_equals_raises_value_error(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid literal for int"):
             Threshold.from_string("SCORE=")
 
     def test_from_string_with_zero_threshold(self):
@@ -68,7 +68,7 @@ class TestThresholdFromString:
         assert t.overengineering_pressure is None
 
     def test_from_string_trailing_comma(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="not enough values to unpack"):
             Threshold.from_string("SCORE=50,")
 
 

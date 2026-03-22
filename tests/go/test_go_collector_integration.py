@@ -71,7 +71,7 @@ class TestBasicComplexity:
             func f() int { return 42 }
         """,
         )
-        _find_function(r, "f")["complexity"] == 1
+        assert _find_function(r, "f")["complexity"] == 1
 
     def test_single_if(self, tmp_path):
         r = _single_go(

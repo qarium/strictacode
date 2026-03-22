@@ -113,7 +113,7 @@ class TestConfigLangConversion:
         assert cfg.lang is None
 
     def test_invalid_string_lang_raises_value_error(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'rust' is not a valid Language"):
             Config(lang="rust")
 
 

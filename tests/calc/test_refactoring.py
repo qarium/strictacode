@@ -15,7 +15,7 @@ from strictacode.calc.pressure.refactoring import (
 
 class TestMetricStatus:
     @pytest.mark.parametrize(
-        "value, expected",
+        ("value", "expected"),
         [
             (0, Status.MINIMAL),
             (20, Status.MINIMAL),
@@ -36,7 +36,7 @@ class TestMetricStatus:
 
 class TestPeakScale:
     @pytest.mark.parametrize(
-        "loc, expected",
+        ("loc", "expected"),
         [
             (0, 0.25),
             (1, 0.25),
@@ -56,7 +56,7 @@ class TestPeakScale:
 
 class TestDensityScale:
     @pytest.mark.parametrize(
-        "loc, expected",
+        ("loc", "expected"),
         [
             (0, 0.5),
             (1, 0.5),

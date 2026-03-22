@@ -123,7 +123,7 @@ def detect_languages(path):
     languages = set()
     exclude_patterns = _parse_gitignore(path)
 
-    for root, dirs, files in os.walk(path):
+    for _root, dirs, files in os.walk(path):
         # Filter out excluded directories
         dirs[:] = [d for d in dirs if not _should_exclude(d, exclude_patterns)]
 
@@ -144,7 +144,7 @@ def detect_language(path):
 
     lang_counts = {}
 
-    for root, dirs, files in os.walk(path):
+    for _root, dirs, files in os.walk(path):
         # Filter out excluded directories
         dirs[:] = [d for d in dirs if not _should_exclude(d, exclude_patterns)]
 

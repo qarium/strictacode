@@ -22,7 +22,7 @@ class TestComplexityDensity:
 
 class TestComplexityStatus:
     @pytest.mark.parametrize(
-        "score, loc, expected",
+        ("score", "loc", "expected"),
         [
             (5, 100, Status.CLEAN),
             (10, 100, Status.CLEAN),  # boundary: density=10, not > 10

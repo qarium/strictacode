@@ -47,7 +47,8 @@ pip install strictacode
 
 ### Step 1: Read Configuration
 
-Check for configuration file in project root: `.strictacode.yml`, `.strictacode.yaml`, or `.strictacode.json`. If present, read it to understand project settings.
+Check for configuration file in project root: `.strictacode.yml`, `.strictacode.yaml`, \
+or `.strictacode.json`. If present, read it to understand project settings.
 
 **Configuration options:**
 - `lang` — project language (`python`, `golang`, `javascript`)
@@ -55,19 +56,22 @@ Check for configuration file in project root: `.strictacode.yml`, `.strictacode.
 
 **Rules:**
 - DO read and account for configuration when analyzing the report
-- DO suggest excluding directories via `loader.exclude` if they distort metrics (vendor, generated code, mocks, migrations, proto)
+- DO suggest excluding directories via `loader.exclude` if they distort metrics \
+  (vendor, generated code, mocks, migrations, proto)
 - DO NOT create or modify configuration files — only suggest changes to the user
 
 ### Step 2: Run Analysis
 
 Execute strictacode command ALWAYS with these exact `--top-*` flags:
 ```bash
-strictacode analyze <path> --details --format json --top-packages 5 --top-modules 5 --top-classes 10 --top-methods 15 --top-functions 15
+strictacode analyze <path> --details --format json --top-packages 5 \
+--top-modules 5 --top-classes 10 --top-methods 15 --top-functions 15
 ```
 
 These limits keep the report size manageable. DO NOT increase them.
 
-strictacode automatically picks up config from project root. If `loader.exclude` is configured and relevant to analysis, note it in the report.
+strictacode automatically picks up config from project root. If `loader.exclude` is configured \
+and relevant to analysis, note it in the report.
 
 Flags:
 - `--details` — get metrics at module, class, function level
@@ -89,13 +93,13 @@ Flags:
 
 Calculate: `diff = |RP - OP|`
 
-| Diff    | RP    | OP    | Type            | What it means                       | What to do                                     |
-|---------|-------|-------|-----------------|-------------------------------------|------------------------------------------------|
-| ≤ 30    | 0-40  | 0-40  | Healthy         | Code is in good condition           | Monitor regularly, set thresholds               |
-| ≤ 30    | 40-60 | 40-60 | Moderate        | Both metrics elevated               | Focus on reducing one metric at a time          |
-| ≤ 30    | 60+   | 60+   | Crisis          | Both high and balanced              | Isolate critical modules, rewrite from scratch  |
-| > 30    | 60+   | 0-40  | Spaghetti       | Dirty code, high complexity         | Refactor top complex functions, extract methods |
-| > 30    | 0-40  | 60+   | Overengineering | Excessive abstractions              | Remove unused layers, reduce coupling           |
+| Diff    | RP    | OP    | Type            | What it means              | What to do                                |
+|---------|-------|-------|-----------------|----------------------------|-------------------------------------------|
+| ≤ 30    | 0-40  | 0-40  | Healthy         | Code is in good condition  | Monitor regularly, set thresholds         |
+| ≤ 30    | 40-60 | 40-60 | Moderate        | Both metrics elevated      | Focus on reducing one metric at a time    |
+| ≤ 30    | 60+   | 60+   | Crisis          | Both high and balanced     | Isolate critical, rewrite from scratch  |
+| > 30    | 60+   | 0-40  | Spaghetti       | Dirty code, high complexity| Refactor complex functions, extract methods |
+| > 30    | 0-40  | 60+   | Overengineering | Excessive abstractions     | Remove unused layers, reduce coupling      |
 
 **Key diff indicator:**
 - `diff ≤ 30` — balanced project
@@ -161,8 +165,8 @@ Use `stat(modules)` and `stat(classes+functions)`:
 
 **Red flags:**
 
-| Indicator        | Threshold | Meaning                                    |
-|------------------|-----------|--------------------------------------------|
+| Indicator        | Threshold | Meaning                                   |
+|------------------|-----------|-------------------------------------------|
 | `max_complexity` | > 40      | Function almost impossible to change safely|
 | `p90_complexity`  | > 25      | Problem is systemic, not local            |
 | `density`        | > 75      | Spaghetti code, rework required           |
@@ -179,7 +183,7 @@ JSON report provides `file` path but NOT line numbers. You MUST find exact locat
 1. **Use Grep tool** to find function/class definition:
    - Python: `grep "def function_name"`
    - Go: `grep "func FunctionName"` or `grep "func (.*FunctionName"`
-   - JavaScript: `grep "function functionName"\\|grep "const functionName"\\|grep "=>"`
+   - JavaScript: `grep "function functionName"\\|grep "const fName"\\|grep "=>"`
 2. **Use Read tool** to read the file and identify line range
 3. **Report format:** `file:start-end — description`
 
@@ -215,7 +219,7 @@ Every recommendation MUST include concrete details. Use report data + file analy
 **For package refactoring, provide:**
 | Field | Source |
 |-------|--------|
-| Files to move | Read package directory, identify patterns |
+| Files to move | Read package dir, identify patterns |
 | Destination | Logical grouping (e.g., `db/drivers/`) |
 | File count | From directory listing |
 | LOC estimate | `package.loc` / `package.modules` * files_to_move |
@@ -247,7 +251,7 @@ Effort: large (rename imports + run tests)
 | Current LOC | Read function code |
 | Extract candidates | Identify logical blocks in code |
 | Line ranges | From code analysis |
-| Effort | `small` (single function) / `medium` (multiple functions) / `large` (package, breaking imports) |
+| Effort | `small` (single) / `medium` (multiple) / `large` (package, breaking imports) |
 
 **Example:**
 ```
@@ -559,7 +563,8 @@ If report contains little data (LOC < 100, modules < 3):
 
 If project.status.name = "healthy" and no elements with status.name = "critical" or "warning":
 - Confirm healthy project state
-- Point out best practices for maintaining quality (code review with complexity checks, linters with thresholds)
+- Point out best practices for maintaining quality \
+  (code review with complexity checks, linters with thresholds)
 - Recommend regular monitoring
 - Don't suggest excessive improvements
 

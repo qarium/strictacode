@@ -95,7 +95,7 @@ class Loader(metaclass=abc.ABCMeta):
     def _should_exclude_file(self, filepath: str) -> bool:
         path = Path(filepath).resolve()
 
-        included = False if self._include_patterns else True
+        included = not self._include_patterns
 
         for include in self._include_patterns:
             inc_dir = Path(include).resolve()
