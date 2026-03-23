@@ -27,6 +27,18 @@ strictacode analyze . --format json --output current.json
 strictacode compare baseline.json current.json --threshold "score=10,rp=5,op=5,density=5"
 ```
 
+Use `--format json` and `--output` to save the diff for external systems:
+
+```bash
+strictacode compare baseline.json current.json --format json --output diff.json
+```
+
+Use `--details` to include full metrics for both results in the output:
+
+```bash
+strictacode compare baseline.json current.json --details --format json --output diff.json
+```
+
 **Workflow:**
 
 1. Establish a baseline: run the analysis on the current main and save `baseline.json` in the repository
@@ -151,14 +163,22 @@ strictacode analyze . --details --format json --output report.json
 
 **Sending to an API:**
 
+Combine the analysis report and diff into a single JSON payload using `jq`:
+
 ```bash
+jq -n \
+  --slurpfile data report.json \
+  --slurpfile compare diff.json \
+  '{data: $data[0], compare: $compare[0]}' \
+  > payload.json
+
 curl -X POST https://your-dashboard-api.example.com/api/metrics \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $DASHBOARD_TOKEN" \
-  --data @report.json
+  --data @payload.json
 ```
 
-The server receives the full JSON report and can store metrics per project, branch, and timestamp.
+The server receives the full analysis report and the diff against the baseline in a single JSON request, allowing it to store both current metrics and changes per project, branch, and timestamp.
 
 **CI integration (GitHub Actions):**
 
@@ -181,6 +201,18 @@ jobs:
       - name: Analyze
         run: strictacode analyze . --details --format json --output report.json
 
+      - name: Compare with baseline
+        run: strictacode compare baseline.json report.json --format json --details --output diff.json
+        continue-on-error: true
+
+      - name: Build payload
+        run: |
+          jq -n \
+            --slurpfile data report.json \
+            --slurpfile compare diff.json \
+            '{data: $data[0], compare: $compare[0]}' \
+            > payload.json
+
       - name: Send to dashboard
         env:
           DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
@@ -188,7 +220,7 @@ jobs:
           curl -X POST https://your-dashboard-api.example.com/api/metrics \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $DASHBOARD_TOKEN" \
-            --data @report.json
+            --data @payload.json
 ```
 
 For the JSON structure, see [Report Fields](report-fields.md).

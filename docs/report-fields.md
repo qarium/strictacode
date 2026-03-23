@@ -271,6 +271,93 @@ Returns a structure with fields matching those described above.
 
 ---
 
+## Compare Report Fields
+
+The `compare` command produces a diff report containing the absolute difference between two analysis results. Use `--details` to include the full metrics for both baseline and current.
+
+### Diff Structure
+
+| Field                       | Type   | Description                              |
+|-----------------------------|--------|------------------------------------------|
+| `diff.score`                | int    | Absolute difference in project score     |
+| `diff.complexity_density`   | float  | Absolute difference in complexity density |
+| `diff.refactoring_pressure` | int    | Absolute difference in refactoring pressure |
+| `diff.overengineering_pressure` | int | Absolute difference in overengineering pressure |
+
+### Details Structure (with `--details`)
+
+When `--details` is specified, the report includes the full metrics for both results:
+
+| Field                       | Type   | Description                                |
+|-----------------------------|--------|--------------------------------------------|
+| `<name>.score`              | int    | Project score from the result              |
+| `<name>.complexity_density` | float  | Complexity density from the result         |
+| `<name>.refactoring_pressure` | int  | Refactoring pressure from the result       |
+| `<name>.overengineering_pressure` | int | Overengineering pressure from the result  |
+
+where `<name>` is `baseline` for the first result and `current` for the second.
+
+### JSON Example
+
+```bash
+strictacode compare baseline.json current.json --format json --details --output diff.json
+```
+
+```json
+{
+  "diff": {
+    "score": 7,
+    "complexity_density": 1.7,
+    "refactoring_pressure": 7,
+    "overengineering_pressure": 2
+  },
+  "baseline": {
+    "score": 35,
+    "complexity_density": 12.4,
+    "refactoring_pressure": 55,
+    "overengineering_pressure": 20
+  },
+  "current": {
+    "score": 42,
+    "complexity_density": 14.1,
+    "refactoring_pressure": 62,
+    "overengineering_pressure": 22
+  }
+}
+```
+
+### Text Example
+
+```bash
+strictacode compare baseline.json current.json --details
+```
+
+```
+Diff:
+  * score: 7
+  * complexity_density: 1.7
+  * refactoring_pressure: 7
+  * overengineering_pressure: 2
+
+---
+
+Baseline:
+  * score: 35
+  * complexity_density: 12.4
+  * refactoring_pressure: 55
+  * overengineering_pressure: 20
+
+---
+
+Current:
+  * score: 42
+  * complexity_density: 14.1
+  * refactoring_pressure: 62
+  * overengineering_pressure: 22
+```
+
+---
+
 ## Report Example
 
 ```

@@ -132,21 +132,24 @@ strictacode install agent-skill --agent claude
 Compares two analysis results (JSON files) and shows the diff between their metrics.
 
 ```bash
-strictacode compare RESULT_ONE RESULT_TWO [--threshold THRESHOLD]
+strictacode compare BASELINE CURRENT [OPTIONS]
 ```
 
 ### Arguments
 
-| Argument      | Description                              |
-|---------------|------------------------------------------|
-| `RESULT_ONE`  | Path to the first JSON analysis result   |
-| `RESULT_TWO`  | Path to the second JSON analysis result  |
+| Argument   | Description                              |
+|------------|------------------------------------------|
+| `BASELINE` | Path to the baseline JSON analysis result |
+| `CURRENT`  | Path to the current JSON analysis result  |
 
 ### Options
 
-| Option         | Default | Description                                      |
-|----------------|---------|--------------------------------------------------|
-| `--threshold`  | —       | Fail if the diff exceeds the given threshold     |
+| Option         | Default | Description                                           |
+|----------------|---------|-------------------------------------------------------|
+| `-f, --format` | `text`  | Output format: `text` or `json`                       |
+| `--details`    | off     | Include full results for both baseline and current     |
+| `-o, --output` | —       | Write output to file instead of stdout                |
+| `--threshold`  | —       | Fail if the diff exceeds the given threshold          |
 
 ### Thresholds in Compare
 
@@ -173,27 +176,36 @@ strictacode compare baseline.json current.json
 
 Output:
 ```
-Result(baseline.json):
-  * Score: 35
-  * Complexity: 12.4
-  * Refactoring: 55
-  * Overengineering pressure: 20
-
----
-
-Result(current.json):
-  * Score: 42
-  * Complexity: 14.1
-  * Refactoring: 62
-  * Overengineering pressure: 22
-
----
-
 Diff:
-  * Score: 7
-  * Complexity density: 1.7
-  * Refactoring pressure: 7
-  * Overengineering pressure: 2
+  * score: 7
+  * complexity_density: 1.7
+  * refactoring_pressure: 7
+  * overengineering_pressure: 2
+```
+
+With `--details`:
+```
+Diff:
+  * score: 7
+  * complexity_density: 1.7
+  * refactoring_pressure: 7
+  * overengineering_pressure: 2
+
+---
+
+Baseline:
+  * score: 35
+  * complexity_density: 12.4
+  * refactoring_pressure: 55
+  * overengineering_pressure: 20
+
+---
+
+Current:
+  * score: 42
+  * complexity_density: 14.1
+  * refactoring_pressure: 62
+  * overengineering_pressure: 22
 ```
 
 ## Configuration File Loading
