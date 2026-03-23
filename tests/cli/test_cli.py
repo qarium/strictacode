@@ -54,11 +54,11 @@ class TestCompareCommand:
         report1 = self._write_json_report(tmp_path, "r1.json", score=15)
         report2 = self._write_json_report(tmp_path, "r2.json", score=25)
 
-        result = runner.invoke(app, ["compare", report1, report2])
-        assert "r1.json" in result.output
-        assert "r2.json" in result.output
-        assert "Score: 15" in result.output
-        assert "Score: 25" in result.output
+        result = runner.invoke(app, ["compare", report1, report2, "--details"])
+        assert "Baseline" in result.output
+        assert "Current" in result.output
+        assert "score: 15" in result.output
+        assert "score: 25" in result.output
 
     def test_compare_nonexistent_file(self, tmp_path):
         report1 = self._write_json_report(tmp_path, "r1.json")
@@ -67,6 +67,39 @@ class TestCompareCommand:
         result = runner.invoke(app, ["compare", report1, report2])
         assert result.exit_code != 0
         assert result.exception is not None
+
+    def test_compare_json_format(self, tmp_path):
+        report1 = self._write_json_report(tmp_path, "r1.json", score=10, density=5.0)
+        report2 = self._write_json_report(tmp_path, "r2.json", score=20, density=10.0)
+
+        result = runner.invoke(app, ["compare", report1, report2, "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "diff" in data
+        assert data["diff"]["score"] == 10
+
+    def test_compare_json_format_with_details(self, tmp_path):
+        report1 = self._write_json_report(tmp_path, "r1.json", score=15)
+        report2 = self._write_json_report(tmp_path, "r2.json", score=25)
+
+        result = runner.invoke(app, ["compare", report1, report2, "--format", "json", "--details"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "baseline" in data
+        assert "current" in data
+        assert data["baseline"]["score"] == 15
+        assert data["current"]["score"] == 25
+
+    def test_compare_output_to_file(self, tmp_path):
+        report1 = self._write_json_report(tmp_path, "r1.json", score=10)
+        report2 = self._write_json_report(tmp_path, "r2.json", score=20)
+        output_path = tmp_path / "diff.txt"
+
+        result = runner.invoke(app, ["compare", report1, report2, "--output", str(output_path)])
+        assert result.exit_code == 0
+        assert output_path.exists()
+        content = output_path.read_text()
+        assert "Diff:" in content
 
 
 # ---------------------------------------------------------------------------

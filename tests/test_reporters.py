@@ -3,7 +3,7 @@ import textwrap
 
 from strictacode.calc import Complexity, score
 from strictacode.calc.pressure import overengineering, refactoring
-from strictacode.reporters import JsonReporter, TextReporter
+from strictacode.reporters import JsonResultReporter, TextResultReporter
 from strictacode.source import (
     ClassSource,
     FunctionSource,
@@ -166,7 +166,7 @@ class TestBaseReporterOutput:
         src = _make_sources_with_data(tmp_path)
         output_path = tmp_path / "report.txt"
 
-        reporter = TextReporter(src, output=str(output_path))
+        reporter = TextResultReporter(src, output=str(output_path))
         reporter.report()
 
         assert output_path.exists()
@@ -177,7 +177,7 @@ class TestBaseReporterOutput:
     def test_output_to_stdout(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = TextReporter(src, output=None)
+        reporter = TextResultReporter(src, output=None)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -185,15 +185,15 @@ class TestBaseReporterOutput:
 
 
 # ---------------------------------------------------------------------------
-# TextReporter
+# TextResultReporter
 # ---------------------------------------------------------------------------
 
 
-class TestTextReporter:
+class TestTextResultReporter:
     def test_project_report(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = TextReporter(src, short=True)
+        reporter = TextResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -205,7 +205,7 @@ class TestTextReporter:
     def test_short_mode_no_packages(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = TextReporter(src, short=True)
+        reporter = TextResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -215,7 +215,7 @@ class TestTextReporter:
     def test_full_mode_includes_packages(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = TextReporter(src, short=False)
+        reporter = TextResultReporter(src, short=False)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -225,7 +225,7 @@ class TestTextReporter:
     def test_details_mode_includes_classes(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = TextReporter(src, short=False, details=True)
+        reporter = TextResultReporter(src, short=False, details=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -237,7 +237,7 @@ class TestTextReporter:
         src = _make_sources_with_data(tmp_path)
         src._status.reasons.append("Test reason")
 
-        reporter = TextReporter(src, short=True)
+        reporter = TextResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -247,7 +247,7 @@ class TestTextReporter:
         src = _make_sources_with_data(tmp_path)
         src._status.suggestions.append("Test suggestion")
 
-        reporter = TextReporter(src, short=True)
+        reporter = TextResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -255,15 +255,15 @@ class TestTextReporter:
 
 
 # ---------------------------------------------------------------------------
-# JsonReporter
+# JsonResultReporter
 # ---------------------------------------------------------------------------
 
 
-class TestJsonReporter:
+class TestJsonResultReporter:
     def test_output_valid_json(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = JsonReporter(src, short=True)
+        reporter = JsonResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -273,7 +273,7 @@ class TestJsonReporter:
     def test_project_keys(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = JsonReporter(src, short=True)
+        reporter = JsonResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -300,7 +300,7 @@ class TestJsonReporter:
     def test_short_mode_no_packages(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = JsonReporter(src, short=True)
+        reporter = JsonResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -310,7 +310,7 @@ class TestJsonReporter:
     def test_full_mode_includes_packages(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = JsonReporter(src, short=False)
+        reporter = JsonResultReporter(src, short=False)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -321,7 +321,7 @@ class TestJsonReporter:
     def test_details_mode_includes_classes(self, tmp_path, capsys):
         src = _make_sources_with_data(tmp_path)
 
-        reporter = JsonReporter(src, short=False, details=True)
+        reporter = JsonResultReporter(src, short=False, details=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -334,7 +334,7 @@ class TestJsonReporter:
         src = _make_sources_with_data(tmp_path)
         src._status.reasons.append("Test reason")
 
-        reporter = JsonReporter(src, short=True)
+        reporter = JsonResultReporter(src, short=True)
         reporter.report()
 
         captured = capsys.readouterr()
@@ -345,7 +345,7 @@ class TestJsonReporter:
         src = _make_sources_with_data(tmp_path)
         output_path = tmp_path / "report.json"
 
-        reporter = JsonReporter(src, short=True, output=str(output_path))
+        reporter = JsonResultReporter(src, short=True, output=str(output_path))
         reporter.report()
 
         data = json.loads(output_path.read_text())

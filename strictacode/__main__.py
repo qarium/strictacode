@@ -9,7 +9,13 @@ from strictacode.config import Config, Language
 from strictacode.go import GoLoder
 from strictacode.js import JSLoder
 from strictacode.py import PyLoder
-from strictacode.reporters import JsonReporter, TextReporter
+from strictacode.reporters import (
+    JsonDiffReporter,
+    JsonResultReporter,
+    TextDiffReporter,
+    TextResultReporter,
+)
+from strictacode.statistics import ProjectDiff, ProjectStat
 from strictacode.threshold import Threshold
 from strictacode.utils import detect_language
 
@@ -94,8 +100,8 @@ def analyze(
     analyzer.analyze()
 
     format_to_reporter = {
-        "text": TextReporter,
-        "json": JsonReporter,
+        "text": TextResultReporter,
+        "json": JsonResultReporter,
     }
     reporter_class = format_to_reporter[fmt]
 
@@ -139,58 +145,54 @@ def analyze(
 
 
 @click.option("--threshold", type=str, default=None)
-@click.argument("result_two", type=os.path.abspath, required=True)
-@click.argument("result_one", type=os.path.abspath, required=True)
+@click.option("--output", "-o", type=str, default=None)
+@click.option("--details/--no-details", is_flag=True, default=False)
+@click.option("--format", "-f", "fmt", type=click.Choice(["text", "json"]), default="text")
+@click.argument("current", type=os.path.abspath, required=True)
+@click.argument("baseline", type=os.path.abspath, required=True)
 @app.command()
-def compare(result_one: str, result_two: str, threshold: str | None):
-    with open(result_one) as f:
-        data_1 = json.load(f)
-    with open(result_two) as f:
-        data_2 = json.load(f)
+def compare(baseline: str, current: str, threshold: str | None, details: bool, output: str, fmt: str):
+    with open(baseline) as f:
+        baseline_data = json.load(f)
+    with open(current) as f:
+        current_data = json.load(f)
 
-    score_1 = data_1["project"]["status"]["score"]
-    score_2 = data_2["project"]["status"]["score"]
-    density_1 = data_1["project"]["complexity"]["density"]
-    density_2 = data_2["project"]["complexity"]["density"]
-    rp_1 = data_1["project"]["refactoring_pressure"]["score"]
-    rp_2 = data_2["project"]["refactoring_pressure"]["score"]
-    op_1 = data_1["project"]["overengineering_pressure"]["score"]
-    op_2 = data_2["project"]["overengineering_pressure"]["score"]
+    baseline_stat = ProjectStat(
+        name="baseline",
+        score=baseline_data["project"]["status"]["score"],
+        complexity_density=baseline_data["project"]["complexity"]["density"],
+        refactoring_pressure=baseline_data["project"]["refactoring_pressure"]["score"],
+        overengineering_pressure=baseline_data["project"]["overengineering_pressure"]["score"],
+    )
+    current_stat = ProjectStat(
+        name="current",
+        score=current_data["project"]["status"]["score"],
+        complexity_density=current_data["project"]["complexity"]["density"],
+        refactoring_pressure=current_data["project"]["refactoring_pressure"]["score"],
+        overengineering_pressure=current_data["project"]["overengineering_pressure"]["score"],
+    )
+    project_diff = ProjectDiff(baseline_stat, current_stat)
 
-    score_diff = abs(score_1 - score_2)
-    density_diff = abs(density_1 - density_2)
-    rp_diff = abs(rp_1 - rp_2)
-    oe_diff = abs(op_1 - op_2)
+    format_to_reporter = {
+        "text": TextDiffReporter,
+        "json": JsonDiffReporter,
+    }
+    reporter_class = format_to_reporter[fmt]
 
-    click.echo(f"Result({os.path.basename(result_one)}):")
-    click.echo(f"  * Score: {score_1}")
-    click.echo(f"  * Complexity: {density_1}")
-    click.echo(f"  * Refactoring: {rp_1}")
-    click.echo(f"  * Overengineering pressure: {op_1}")
-    click.echo("")
-    click.echo("---")
-    click.echo("")
-    click.echo(f"Result({os.path.basename(result_two)}):")
-    click.echo(f"  * Score: {score_2}")
-    click.echo(f"  * Complexity: {density_2}")
-    click.echo(f"  * Refactoring: {rp_2}")
-    click.echo(f"  * Overengineering pressure: {op_2}")
-    click.echo("")
-    click.echo("---")
-    click.echo("")
-    click.secho("Diff:")
-    click.echo(f"  * Score: {score_diff}")
-    click.echo(f"  * Complexity density: {density_diff}")
-    click.echo(f"  * Refactoring pressure: {rp_diff}")
-    click.echo(f"  * Overengineering pressure: {oe_diff}")
+    reporter = reporter_class(
+        project_diff,
+        output=output,
+        details=details,
+    )
+    reporter.report()
 
     if threshold is not None:
         thresholds = Threshold.from_string(threshold)
         errors = thresholds.check(
-            score=score_diff,
-            complexity_density=density_diff,
-            refactoring_pressure=rp_diff,
-            overengineering_pressure=oe_diff,
+            score=project_diff.score,
+            complexity_density=project_diff.complexity_density,
+            refactoring_pressure=project_diff.refactoring_pressure,
+            overengineering_pressure=project_diff.overengineering_pressure,
         )
 
         if errors:

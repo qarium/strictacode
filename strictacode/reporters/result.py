@@ -1,11 +1,11 @@
 import abc
 import json
-import sys
 
-from .source import Sources
+from .. import utils
+from ..source import Sources
 
 
-class BaseReporter(metaclass=abc.ABCMeta):
+class BaseResultReporter(metaclass=abc.ABCMeta):
     def __init__(
         self,
         sources: Sources,
@@ -149,29 +149,17 @@ class BaseReporter(metaclass=abc.ABCMeta):
         self._top_functions = sorted(self._top_functions, key=lambda x: x.status.score.value, reverse=True)[:top]
 
     @abc.abstractmethod
-    def _report(self):
+    def _report(self) -> None:
         pass
 
-    def report(self):
+    def report(self) -> None:
         if self._output is not None:
-            stderr = sys.stderr
-            stdout = sys.stdout
-
-            with open(self._output, "w") as fo:
-                sys.stderr = fo
-                sys.stdout = fo
-
-                self._report()
-
-                sys.stderr = stderr
-                sys.stdout = stdout
-
-                return
-
-        self._report()
+            with utils.redirect_output(self._output):
+                return self._report()
+        return self._report()
 
 
-class TextReporter(BaseReporter):
+class TextResultReporter(BaseResultReporter):
     def project_report(self):
         print("Project:")
         print("  * lang:", self._sources.lang)
@@ -410,7 +398,7 @@ class TextReporter(BaseReporter):
                 print("        - p50:", func.complexity.stat.p50)
                 print("        - p90:", func.complexity.stat.p90)
 
-    def _report(self):
+    def _report(self) -> None:
         self.project_report()
 
         if self._short:
@@ -425,7 +413,7 @@ class TextReporter(BaseReporter):
             self.functions_report()
 
 
-class JsonReporter(BaseReporter):
+class JsonResultReporter(BaseResultReporter):
     def make_packages_report(self, data: dict):
         data["packages"] = []
 
@@ -607,7 +595,7 @@ class JsonReporter(BaseReporter):
                     }
                 )
 
-    def _report(self):
+    def _report(self) -> None:
         data = {
             "project": {
                 "lang": self._sources.lang,

@@ -1,5 +1,7 @@
 import fnmatch
 import os
+import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -161,3 +163,19 @@ def detect_language(path):
         return None
 
     return max(lang_counts.items(), key=lambda x: x[1])[0]
+
+
+@contextmanager
+def redirect_output(output: str):
+    stderr = sys.stderr
+    stdout = sys.stdout
+
+    with open(output, "w") as fo:
+        sys.stderr = fo
+        sys.stdout = fo
+
+        try:
+            yield
+        finally:
+            sys.stderr = stderr
+            sys.stdout = stdout

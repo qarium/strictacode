@@ -8,6 +8,7 @@ from strictacode.utils import (
     detect_languages,
     ignore_dirs,
     lines_of_code,
+    redirect_output,
     source_content,
 )
 
@@ -303,3 +304,46 @@ class TestDetectLanguage:
 
     def test_empty_directory(self, tmp_path):
         assert detect_language(str(tmp_path)) is None
+
+
+# ---------------------------------------------------------------------------
+# redirect_output
+# ---------------------------------------------------------------------------
+
+
+class TestRedirectOutput:
+    def test_stdout_redirected_to_file(self, tmp_path):
+        output_path = tmp_path / "out.txt"
+        with redirect_output(str(output_path)):
+            print("hello")
+        assert "hello" in output_path.read_text()
+
+    def test_stderr_redirected_to_file(self, tmp_path):
+        output_path = tmp_path / "err.txt"
+        with redirect_output(str(output_path)):
+            import sys
+
+            sys.stderr.write("error msg\n")
+        assert "error msg" in output_path.read_text()
+
+    def test_restore_after_context(self, tmp_path, capsys):
+        output_path = tmp_path / "out.txt"
+        with redirect_output(str(output_path)):
+            print("redirected")
+        print("restored")
+        captured = capsys.readouterr()
+        assert "redirected" not in captured.out
+        assert "restored" in captured.out
+
+    def test_restore_after_exception(self, tmp_path, capsys):
+        output_path = tmp_path / "out.txt"
+        try:
+            with redirect_output(str(output_path)):
+                print("before error")
+                raise RuntimeError("boom")
+        except RuntimeError:
+            pass
+        print("after error")
+        captured = capsys.readouterr()
+        assert "before error" not in captured.out
+        assert "after error" in captured.out
