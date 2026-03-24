@@ -32,6 +32,7 @@ Homepage = "https://github.com/qarium/strictacode"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.15.0"]
+docs = ["mkdocs-material"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

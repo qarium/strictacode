@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mkdocs-material
+          pip install -e ".[docs]"
 
       - name: Build and Deploy
         # gh-deploy creates the gh-pages branch and pushes static content there
