@@ -8,19 +8,23 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  custom_dir: docs/overrides
+  logo: https://avatars.githubusercontent.com/u/262344922?s=200&v=4
   palette:
     - scheme: default
-      primary: indigo
+      primary: custom
       accent: indigo
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
+        media: "(prefers-color-scheme: light)"
     - scheme: slate
-      primary: indigo
+      primary: custom
       accent: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+        media: "(prefers-color-scheme: dark)"
   features:
     - navigation.tabs
     - navigation.indexes
