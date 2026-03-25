@@ -15,6 +15,18 @@ Strictacode analyzes code written in:
 pip install strictacode
 ```
 
+or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv pip install strictacode
+```
+
+or as a project dependency:
+
+```bash
+uv add strictacode
+```
+
 ## Verify Installation
 
 ```bash
