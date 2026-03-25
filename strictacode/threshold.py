@@ -1,12 +1,14 @@
+import typing as t
 from dataclasses import dataclass
 
 
 @dataclass(kw_only=True)
 class Threshold:
-    score: int | None = None
-    complexity_density: float | None = None
-    refactoring_pressure: int | None = None
-    overengineering_pressure: int | None = None
+    score: t.Optional[int] = None
+    imbalance: t.Optional[int] = None
+    complexity_density: t.Optional[float] = None
+    refactoring_pressure: t.Optional[int] = None
+    overengineering_pressure: t.Optional[int] = None
 
     @classmethod
     def from_string(cls, string) -> "Threshold":
@@ -16,6 +18,7 @@ class Threshold:
             pass
 
         score = None
+        imbalance = None
         complexity_density = None
         refactoring_pressure = None
         overengineering_pressure = None
@@ -31,6 +34,9 @@ class Threshold:
             if key.upper() == "DENSITY":
                 complexity_density = float(value)
                 continue
+            if key.upper() == "IMB":
+                imbalance = int(value)
+                continue
             if key.upper() == "RP":
                 refactoring_pressure = int(value)
                 continue
@@ -42,6 +48,7 @@ class Threshold:
 
         return cls(
             score=score,
+            imbalance=imbalance,
             refactoring_pressure=refactoring_pressure,
             overengineering_pressure=overengineering_pressure,
             complexity_density=complexity_density,
@@ -56,6 +63,13 @@ class Threshold:
             errors.append(
                 f"score exceeds threshold {score} > {self.score}",
             )
+        if self.imbalance is not None:
+            imbalance = abs(refactoring_pressure - overengineering_pressure)
+
+            if imbalance > self.imbalance:
+                errors.append(
+                    f"imbalance exceeds threshold {imbalance} > {self.imbalance}",
+                )
         if self.complexity_density is not None and complexity_density > self.complexity_density:
             errors.append(
                 f"complexity density exceeds threshold {complexity_density} > {self.complexity_density}",

@@ -50,6 +50,7 @@ strictacode analyze . --threshold score=60,rp=70,op=50,density=40
 | Key         | Metric                     | Type   |
 |-------------|----------------------------|--------|
 | `score`     | Project Score              | int    |
+| `imb`       | RP/OP Imbalance            | int    |
 | `rp`        | Refactoring Pressure       | int    |
 | `op`        | Overengineering Pressure    | int    |
 | `density`   | Complexity Density         | float  |

@@ -6,6 +6,7 @@ class TestThresholdDefaults:
     def test_all_defaults_are_none(self):
         t = Threshold()
         assert t.score is None
+        assert t.imbalance is None
         assert t.complexity_density is None
         assert t.refactoring_pressure is None
         assert t.overengineering_pressure is None
@@ -15,6 +16,7 @@ class TestThresholdFromString:
     def test_plain_int_sets_score(self):
         t = Threshold.from_string("50")
         assert t.score == 50
+        assert t.imbalance is None
         assert t.complexity_density is None
         assert t.refactoring_pressure is None
         assert t.overengineering_pressure is None
@@ -27,6 +29,7 @@ class TestThresholdFromString:
             ("DENSITY=30.5", "complexity_density", 30.5),
             ("RP=60", "refactoring_pressure", 60),
             ("OP=70", "overengineering_pressure", 70),
+            ("IMB=40", "imbalance", 40),
         ],
     )
     def test_single_key_parses_correctly(self, input_str, field, value):
@@ -63,6 +66,7 @@ class TestThresholdFromString:
     def test_from_string_with_zero_threshold(self):
         t = Threshold.from_string("SCORE=0")
         assert t.score == 0
+        assert t.imbalance is None
         assert t.complexity_density is None
         assert t.refactoring_pressure is None
         assert t.overengineering_pressure is None
@@ -159,3 +163,58 @@ class TestThresholdCheck:
         assert any("score exceeds threshold" in e for e in errors)
         assert any("complexity density exceeds threshold" in e for e in errors)
         assert any("refactoring pressure exceeds threshold" in e for e in errors)
+
+
+class TestThresholdImbalance:
+    def test_imbalance_not_set_returns_no_error(self):
+        t = Threshold()
+        errors = t.check(
+            score=0,
+            complexity_density=0.0,
+            refactoring_pressure=80,
+            overengineering_pressure=10,
+        )
+        assert not any("imbalance" in e for e in errors)
+
+    def test_imbalance_exceeds_threshold(self):
+        t = Threshold(imbalance=20)
+        errors = t.check(
+            score=0,
+            complexity_density=0.0,
+            refactoring_pressure=80,
+            overengineering_pressure=50,
+        )
+        assert len(errors) == 1
+        assert "imbalance exceeds threshold 30 > 20" in errors[0]
+
+    def test_imbalance_within_threshold(self):
+        t = Threshold(imbalance=50)
+        errors = t.check(
+            score=0,
+            complexity_density=0.0,
+            refactoring_pressure=40,
+            overengineering_pressure=30,
+        )
+        assert not any("imbalance" in e for e in errors)
+
+    def test_imbalance_equal_to_threshold_no_error(self):
+        t = Threshold(imbalance=10)
+        errors = t.check(
+            score=0,
+            complexity_density=0.0,
+            refactoring_pressure=40,
+            overengineering_pressure=30,
+        )
+        assert not any("imbalance" in e for e in errors)
+
+    def test_imbalance_with_rp_gt_op(self):
+        t = Threshold(imbalance=5)
+        errors = t.check(
+            score=0,
+            complexity_density=0.0,
+            refactoring_pressure=50,
+            overengineering_pressure=10,
+        )
+        assert len(errors) == 1
+        assert "imbalance exceeds threshold 40 > 5" in errors[0]
+        assert any("imbalance exceeds threshold" in e for e in errors)

@@ -13,7 +13,7 @@ This documentation contains real-world strictacode usage scenarios with step-by-
 Block PRs that push the codebase above a quality limit:
 
 ```bash
-strictacode analyze . --threshold "score=60,rp=70,op=50,density=30"
+strictacode analyze . --threshold "score=60,imb=40,rp=70,op=50,density=30"
 ```
 
 Exits with code 1 if any metric exceeds the threshold. Add this as a CI step after tests — no scripts needed.

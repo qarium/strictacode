@@ -12,7 +12,7 @@
 
 ## Rules
 
-Project-specific testing configuration. Used by the `qarium:employees:qa:feature` skill.
+Project-specific testing configuration. Used by the `employees-qa-feature` skill.
 
 ### Mapping
 
@@ -26,6 +26,7 @@ Project-specific testing configuration. Used by the `qarium:employees:qa:feature
 | `strictacode/reporters/**/*.py` | `tests/reporters/` | `test_result.py`, `test_diff.py` |
 | `strictacode/statistics.py`     | `tests/` (root)    | `test_statistics.py`             |
 | `strictacode/utils.py`          | `tests/` (root)    | `test_utils.py`                  |
+| `strictacode/threshold.py`      | `tests/` (root)    | `test_threshold.py`              |
 
 ### CLI Testing
 

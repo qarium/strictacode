@@ -7,6 +7,7 @@
 - **Click for CLI, radon for Python complexity** — radon is the standard Python cyclomatic complexity tool
 - **reporters split into reporters/result.py + reporters/diff.py** — result reporters output analysis results, diff reporters compare two reports; shared via __init__.py re-exports
 - **ProjectStat + ProjectDiff in statistics.py** — dataclass for project metrics snapshot + calculator for absolute diffs (score, density, rp, op) used by diff reporters and compare CLI
+- **Threshold supports imbalance checking via `abs(RP - OP)`** — `imbalance` threshold field validates balance between refactoring and overengineering pressure; uses key `IMB=` in CLI string format
 
 ## Project Structure
 - **Language support in py/, go/, js/ — each with loader.py, collector.py, analyzer.py** — loader subclasses base Loader, collector gathers raw metrics, analyzer builds inheritance graph
@@ -22,7 +23,8 @@
 - **redirect_output() context manager in utils.py** — redirects stdout+stderr to file with auto-restore after block exit or exception, used by BaseResultReporter.report() and BaseDiffReporter.report()
 
 ## TODO
-<!-- empty -->
+- **Migrate existing `X | None` to `typing.Optional[X]`** — 30+ places in source.py, __main__.py, loader.py, config.py, calc/, reporters/ use PEP 604 syntax which fails at runtime on Python 3.10
 
 ## LLM Directives
 - **NEVER add `fetch-depth: 0` to CI without explicit reason** — MkDocs Material fetches repo metadata (version, stars) from GitHub API in the browser, git tags are not needed at build time
+- **NEVER use PEP 604 `X | None` syntax in new files** — minimum supported Python is 3.10 where `X | None` in runtime annotations (dataclass fields) fails; always use `typing.Optional[X]` instead
