@@ -40,4 +40,4 @@ jobs:
           STRICTACODE_RP_DIFF: "5"
           STRICTACODE_OP_DIFF: "5"
 #          STRICTACODE_IMB_DIFF: "5"
-          STRICTACODE_DENSITY_DIFF: "5"
+          STRICTACODE_DENSITY_DIFF: "3"
