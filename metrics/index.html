@@ -1,0 +1,2489 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Code base health diagnostics — find spaghetti code, overengineering, and complexity that blocks development">
+      
+      
+      
+        <link rel="canonical" href="https://qarium.github.io/strictacode/metrics/">
+      
+      
+        <link rel="prev" href="../cli-reference/">
+      
+      
+        <link rel="next" href="../interpretation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Metrics - Strictacode</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  <style>
+    /* Dark navbar — override palette in both themes */
+    [data-md-color-scheme=default][data-md-color-primary=custom],
+    [data-md-color-scheme=slate][data-md-color-primary=custom] {
+      --md-primary-fg-color: #0a0a13;
+      --md-primary-fg-color--light: #0a0a13cc;
+      --md-primary-bg-color: #ffffff;
+    }
+
+    .md-header__button.md-logo img,
+    .md-header__button.md-logo svg {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    /* Search form — visible on dark header */
+    .md-search__overlay {
+      background-color: transparent !important;
+    }
+    [data-md-toggle=search]:checked~.md-header .md-search__overlay {
+      background-color: #0000008a !important;
+    }
+    .md-search__inner {
+      background-color: transparent !important;
+    }
+    .md-search__form {
+      background-color: #3a3a3a !important;
+      border-radius: 0.5rem;
+    }
+    .md-search__form:hover {
+      background-color: #4a4a4a !important;
+    }
+    .md-search__input {
+      color: #e0e0e0 !important;
+    }
+    .md-search__input::placeholder {
+      color: #999999 !important;
+    }
+    .md-search__icon {
+      color: #999999 !important;
+    }
+    .md-search__form:hover .md-search__icon,
+    .md-search__input:focus-visible ~ .md-search__icon {
+      color: #e0e0e0 !important;
+    }
+
+    /* Links in dark theme — readable on dark background */
+    [data-md-color-scheme=slate] .md-nav__link,
+    [data-md-color-scheme=slate] .md-toc__link,
+    [data-md-color-scheme=slate] article a {
+      color: #cbd5e0 !important;
+    }
+    [data-md-color-scheme=slate] .md-nav__link--passed,
+    [data-md-color-scheme=slate] .md-toc__link--passed {
+      color: #718096 !important;
+    }
+    [data-md-color-scheme=slate] .md-nav__link:hover,
+    [data-md-color-scheme=slate] .md-toc__link:hover,
+    [data-md-color-scheme=slate] article a:hover {
+      color: var(--md-accent-fg-color) !important;
+    }
+  </style>
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#code-quality-metrics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Strictacode" class="md-header__button md-logo" aria-label="Strictacode" data-md-component="logo">
+      
+  <img src="https://avatars.githubusercontent.com/u/262344922?s=200&v=4" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Strictacode
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Metrics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/qarium/strictacode" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../cli-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Metrics
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../interpretation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Interpretation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../examples/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ci/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CI/CD
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../report-fields/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Report Fields
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Strictacode" class="md-nav__button md-logo" aria-label="Strictacode" data-md-component="logo">
+      
+  <img src="https://avatars.githubusercontent.com/u/262344922?s=200&v=4" alt="logo">
+
+    </a>
+    Strictacode
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/qarium/strictacode" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#project-score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refactoring-pressure-rp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring Pressure (RP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overengineering-pressure-op" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overengineering Pressure (OP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complexity-density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complexity Density
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-score_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Score
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Score">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#score-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Score Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-calculated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overengineering-pressure-op_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overengineering Pressure (OP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overengineering Pressure (OP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Indicators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#op-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OP Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-calculated_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#refactoring-pressure-rp_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring Pressure (RP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Refactoring Pressure (RP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rp-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RP Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-calculated_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complexity-density_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complexity Density
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complexity Density">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#density-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Density Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calculation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculation Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Calculation Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rp-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RP Formula
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peak-peak-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Peak -- peak pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-base-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base -- base pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calculation-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculation Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Calculation Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-healthy-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 1: Healthy project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-spaghetti-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 2: Spaghetti project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-overengineering-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 3: Overengineering project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-balanced-project-with-high-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 4: Balanced project with high metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../report-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Report Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#project-score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refactoring-pressure-rp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring Pressure (RP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overengineering-pressure-op" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overengineering Pressure (OP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complexity-density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complexity Density
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-score_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Score
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Score">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#score-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Score Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-calculated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overengineering-pressure-op_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overengineering Pressure (OP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overengineering Pressure (OP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Indicators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#op-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OP Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-calculated_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#refactoring-pressure-rp_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring Pressure (RP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Refactoring Pressure (RP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rp-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RP Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-calculated_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complexity-density_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complexity Density
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complexity Density">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-measures_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it measures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#density-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Density Scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calculation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculation Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Calculation Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rp-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RP Formula
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peak-peak-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Peak -- peak pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-base-pressure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base -- base pressure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calculation-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculation Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Calculation Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-healthy-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 1: Healthy project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-spaghetti-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 2: Spaghetti project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-overengineering-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 3: Overengineering project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-balanced-project-with-high-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 4: Balanced project with high metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="code-quality-metrics">Code Quality Metrics</h1>
+<p>This documentation describes the metrics that strictacode uses to evaluate the state of a codebase.</p>
+<h2 id="quick-reference">Quick Reference</h2>
+<h3 id="project-score">Project Score</h3>
+<p><strong>What it is:</strong> Overall project health score from 0 to 100.</p>
+<table>
+<thead>
+<tr>
+<th>Score</th>
+<th>Status</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td><code>healthy</code></td>
+<td>Code is in excellent shape</td>
+</tr>
+<tr>
+<td>21-40</td>
+<td><code>normal</code></td>
+<td>There are issues, but workable</td>
+</tr>
+<tr>
+<td>41-60</td>
+<td><code>warning</code></td>
+<td>Worth paying attention to</td>
+</tr>
+<tr>
+<td>61-80</td>
+<td><code>critical</code></td>
+<td>Refactoring is a priority</td>
+</tr>
+<tr>
+<td>81-100</td>
+<td><code>emergency</code></td>
+<td>Code is blocking work</td>
+</tr>
+</tbody>
+</table>
+<h3 id="refactoring-pressure-rp">Refactoring Pressure (RP)</h3>
+<p><strong>What it is:</strong> Refactoring pressure from 0 to 100.</p>
+<table>
+<thead>
+<tr>
+<th>RP</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td>Everything is fine, keep it up</td>
+</tr>
+<tr>
+<td>21-40</td>
+<td>There are issues, but not urgent</td>
+</tr>
+<tr>
+<td>41-60</td>
+<td>Should address soon</td>
+</tr>
+<tr>
+<td>61-80</td>
+<td>Refactoring is a priority</td>
+</tr>
+<tr>
+<td>81-100</td>
+<td>Should have been done yesterday</td>
+</tr>
+</tbody>
+</table>
+<h3 id="overengineering-pressure-op">Overengineering Pressure (OP)</h3>
+<p><strong>What it is:</strong> Excessive architectural complexity indicator from 0 to 100.</p>
+<table>
+<thead>
+<tr>
+<th>OP</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td>Simple architecture, easy to understand</td>
+</tr>
+<tr>
+<td>21-40</td>
+<td>Moderate complexity, acceptable</td>
+</tr>
+<tr>
+<td>41-60</td>
+<td>Too many abstractions, consider simplifying</td>
+</tr>
+<tr>
+<td>61-80</td>
+<td>Overengineering, refactoring needed</td>
+</tr>
+<tr>
+<td>81-100</td>
+<td>Chaos, needs a complete overhaul</td>
+</tr>
+</tbody>
+</table>
+<h3 id="complexity-density">Complexity Density</h3>
+<p><strong>What it is:</strong> Complexity density, how "packed" the code is.</p>
+<table>
+<thead>
+<tr>
+<th>Density</th>
+<th>What kind of code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td>Clean, easy to read</td>
+</tr>
+<tr>
+<td>21-50</td>
+<td>Somewhat dirty, but tolerable</td>
+</tr>
+<tr>
+<td>51-100</td>
+<td>Spaghetti, hard to change</td>
+</tr>
+<tr>
+<td>100+</td>
+<td>Unreadable, refactoring required</td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-score_1">Project Score</h2>
+<h3 id="what-it-measures">What it measures</h3>
+<p>Project Score is an aggregated project health metric that combines RP, OP, and Complexity Density. The formula takes into account not only the metric values themselves, but also their relationship to each other.</p>
+<h3 id="score-scale">Score Scale</h3>
+<table>
+<thead>
+<tr>
+<th>Score</th>
+<th>Status</th>
+<th>Interpretation</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td><code>healthy</code></td>
+<td>Code is healthy</td>
+<td>Maintain current level</td>
+</tr>
+<tr>
+<td>21-40</td>
+<td><code>normal</code></td>
+<td>Normal state</td>
+<td>Routine monitoring</td>
+</tr>
+<tr>
+<td>41-60</td>
+<td><code>warning</code></td>
+<td>There are issues</td>
+<td>Pay attention</td>
+</tr>
+<tr>
+<td>61-80</td>
+<td><code>critical</code></td>
+<td>Critical state</td>
+<td>Refactoring is a priority</td>
+</tr>
+<tr>
+<td>81-100</td>
+<td><code>emergency</code></td>
+<td>Emergency situation</td>
+<td>Immediate action required</td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-it-is-calculated">How it is calculated</h3>
+<p><strong>Base formula:</strong></p>
+<pre><code>base_score = 0.4 × RP + 0.4 × OP + 0.2 × density
+</code></pre>
+<p><strong>Imbalance check:</strong></p>
+<p>A strong imbalance between RP and OP indicates a problem:
+- <strong>RP &gt;&gt; OP</strong> -- spaghetti code: dirty but without abstractions (an acute problem)
+- <strong>OP &gt;&gt; RP</strong> -- overengineering: abstract but clean (a chronic problem)</p>
+<p>A hybrid approach is used to account for imbalance:</p>
+<pre><code>diff = |RP - OP|
+extremum = max(RP, OP)
+
+if diff &lt;= 30:
+    penalty = 0  # No imbalance
+
+elif extremum &gt;= 35:
+    # High extremum — additive penalty
+    penalty = calculate_penalty(diff, direction)
+
+else:
+    # Low extremum — multiplier
+    score = base_score × multiplier
+</code></pre>
+<p><strong>Penalty scales:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Diff</th>
+<th>Spaghetti (RP &gt;&gt; OP)</th>
+<th>Overengineering (OP &gt;&gt; RP)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt; 50</td>
+<td>+25 / ×1.8</td>
+<td>+12 / ×1.3</td>
+</tr>
+<tr>
+<td>&gt; 40</td>
+<td>+15 / ×1.5</td>
+<td>+7 / ×1.15</td>
+</tr>
+<tr>
+<td>&gt; 30</td>
+<td>+8 / ×1.25</td>
+<td>+3 / ×1.08</td>
+</tr>
+</tbody>
+</table>
+<p>Spaghetti is penalized more heavily (~2:1) because it is an acute problem that affects daily development.</p>
+<h3 id="examples">Examples</h3>
+<table>
+<thead>
+<tr>
+<th>RP</th>
+<th>OP</th>
+<th>Density</th>
+<th>Base</th>
+<th>Diff</th>
+<th>Extremum</th>
+<th>Penalty</th>
+<th>Final</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td>10</td>
+<td>10</td>
+<td>10</td>
+<td>0</td>
+<td>10</td>
+<td>--</td>
+<td><strong>10</strong></td>
+<td>healthy</td>
+</tr>
+<tr>
+<td>71</td>
+<td>8</td>
+<td>17.68</td>
+<td>35</td>
+<td>63</td>
+<td>71 ✓</td>
+<td>+25</td>
+<td><strong>60</strong></td>
+<td>warning</td>
+</tr>
+<tr>
+<td>8</td>
+<td>71</td>
+<td>17.68</td>
+<td>35</td>
+<td>63</td>
+<td>71 ✓</td>
+<td>+12</td>
+<td><strong>47</strong></td>
+<td>warning</td>
+</tr>
+<tr>
+<td>41</td>
+<td>9</td>
+<td>9</td>
+<td>20</td>
+<td>32</td>
+<td>41 ✓</td>
+<td>+8</td>
+<td><strong>28</strong></td>
+<td>normal</td>
+</tr>
+<tr>
+<td>30</td>
+<td>30</td>
+<td>15</td>
+<td>25</td>
+<td>0</td>
+<td>30</td>
+<td>--</td>
+<td><strong>25</strong></td>
+<td>normal</td>
+</tr>
+</tbody>
+</table>
+<h2 id="overengineering-pressure-op_1">Overengineering Pressure (OP)</h2>
+<h3 id="what-it-measures_1">What it measures</h3>
+<p>OP indicates the degree of excessive architectural complexity -- when the code is too abstract, over-connected, or hard to understand. The metric analyzes the dependency graph between classes.</p>
+<h3 id="key-indicators">Key Indicators</h3>
+<ol>
+<li><strong>Fan-out</strong> -- how many dependencies a class has (35% weight)</li>
+<li><strong>Fan-in</strong> -- how many classes depend on this one (25% weight)</li>
+<li><strong>Depth</strong> -- depth of the dependency chain (25% weight)</li>
+<li><strong>Centrality</strong> -- how "central" a class is in the graph (15% weight)</li>
+</ol>
+<h3 id="op-scale">OP Scale</h3>
+<table>
+<thead>
+<tr>
+<th>OP</th>
+<th>Status</th>
+<th>Interpretation</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td><code>simple</code></td>
+<td>Transparent architecture</td>
+<td>Maintain current level</td>
+</tr>
+<tr>
+<td>21-40</td>
+<td><code>moderate</code></td>
+<td>Acceptable complexity</td>
+<td>Monitor</td>
+</tr>
+<tr>
+<td>41-60</td>
+<td><code>complex</code></td>
+<td>Many abstractions, hard to follow</td>
+<td>Simplify key areas</td>
+</tr>
+<tr>
+<td>61-80</td>
+<td><code>overengineered</code></td>
+<td>Clear overengineering</td>
+<td>Refactoring is a priority</td>
+</tr>
+<tr>
+<td>81-100</td>
+<td><code>bloated</code></td>
+<td>Architecture blocks development</td>
+<td>Architectural overhaul</td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-it-is-calculated_1">How it is calculated</h3>
+<p><strong>At the class level:</strong></p>
+<pre><code>class_score = (
+    0.35 × fan_out_norm +
+    0.25 × fan_in_norm +
+    0.25 × depth_norm +
+    0.15 × centrality_norm
+) × 100
+</code></pre>
+<p>where each component is normalized: <code>norm(v, threshold) = min(1.0, v / threshold)</code></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Threshold</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fan_out</td>
+<td>7</td>
+<td>A class with 7+ dependencies is at maximum</td>
+</tr>
+<tr>
+<td>fan_in</td>
+<td>10</td>
+<td>10+ incoming dependencies is at maximum</td>
+</tr>
+<tr>
+<td>depth</td>
+<td>8</td>
+<td>A chain of 8+ steps is at maximum</td>
+</tr>
+<tr>
+<td>centrality</td>
+<td>20</td>
+<td>A highly central class is at maximum</td>
+</tr>
+</tbody>
+</table>
+<p><strong>At the project level:</strong></p>
+<pre><code>OP = (
+    0.4 × coupling_norm +
+    0.6 × avg_class_score_norm
+) × 100
+</code></pre>
+<p>where:
+- <code>coupling = edges / nodes</code> -- average number of connections per class
+- <code>avg_class_score</code> -- average class score
+- threshold for coupling = 4, for avg_class_score = 70</p>
+<h2 id="refactoring-pressure-rp_1">Refactoring Pressure (RP)</h2>
+<h3 id="what-it-measures_2">What it measures</h3>
+<p>RP shows how much the code "pressures" the developer and demands attention. It is a composite metric that considers:</p>
+<ol>
+<li><strong>Peak complexity</strong> -- whether there are objects that cannot be safely changed</li>
+<li><strong>Overall quality</strong> -- how "dirty" the code is on average</li>
+</ol>
+<h3 id="rp-scale">RP Scale</h3>
+<table>
+<thead>
+<tr>
+<th>RP</th>
+<th>Status</th>
+<th>Interpretation</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-20</td>
+<td><code>minimal</code></td>
+<td>Code is clean, well-structured</td>
+<td>Maintain current level</td>
+</tr>
+<tr>
+<td>21-40</td>
+<td><code>low</code></td>
+<td>There are problematic spots, not critical</td>
+<td>Planned refactoring</td>
+</tr>
+<tr>
+<td>41-60</td>
+<td><code>medium</code></td>
+<td>Technical debt affects development speed</td>
+<td>Plan for upcoming sprints</td>
+</tr>
+<tr>
+<td>61-80</td>
+<td><code>high</code></td>
+<td>Development is slowed, high bug risk</td>
+<td>Top priority task</td>
+</tr>
+<tr>
+<td>81-100</td>
+<td><code>extreme</code></td>
+<td>Code is blocking work</td>
+<td>Immediate refactoring</td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-it-is-calculated_2">How it is calculated</h3>
+<pre><code>RP = 60% × Peak + 40% × Base
+</code></pre>
+<p><strong>Peak</strong> -- pressure from the most complex objects (max_complexity and p90_complexity)</p>
+<p><strong>Base</strong> -- pressure from overall code quality (via density)</p>
+<p>For more details on the formulas, see the <a href="#calculation-details">Calculation Details</a> section.</p>
+<h2 id="complexity-density_1">Complexity Density</h2>
+<h3 id="what-it-measures_3">What it measures</h3>
+<p>Density shows how "concentrated" the complexity is in the code.</p>
+<pre><code>density = (total_complexity / loc) × 100
+</code></pre>
+<p>Example: two files with the same complexity of 50, but different sizes:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>complexity</th>
+<th>loc</th>
+<th>density</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>50</td>
+<td>200</td>
+<td>25</td>
+</tr>
+<tr>
+<td>B</td>
+<td>50</td>
+<td>1000</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<p>File A is "denser" -- the same complexity is packed into a smaller volume.</p>
+<h3 id="density-scale">Density Scale</h3>
+<table>
+<thead>
+<tr>
+<th>Density</th>
+<th>Status</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-10</td>
+<td><code>clean</code></td>
+<td>Simple functions, minimal branching</td>
+</tr>
+<tr>
+<td>11-20</td>
+<td><code>good</code></td>
+<td>Normal complexity, easy to read</td>
+</tr>
+<tr>
+<td>21-30</td>
+<td><code>moderate</code></td>
+<td>Some complex spots, but manageable</td>
+</tr>
+<tr>
+<td>31-50</td>
+<td><code>dirty</code></td>
+<td>Lots of branching, harder to maintain</td>
+</tr>
+<tr>
+<td>51-75</td>
+<td><code>very-dirty</code></td>
+<td>Spaghetti code, hard to change</td>
+</tr>
+<tr>
+<td>76-100</td>
+<td><code>spaghetti</code></td>
+<td>Almost impossible to safely change</td>
+</tr>
+<tr>
+<td>100+</td>
+<td><code>unreadable</code></td>
+<td>Complete overhaul required</td>
+</tr>
+</tbody>
+</table>
+<h2 id="calculation-details">Calculation Details</h2>
+<p>This section is for those who want to understand the math behind the metrics.</p>
+<h3 id="rp-formula">RP Formula</h3>
+<pre><code>RP = 0.6 × Peak(max, p90, loc) + 0.4 × Base(density, loc)
+</code></pre>
+<h3 id="peak-peak-pressure">Peak -- peak pressure</h3>
+<pre><code>Peak = 100 × (1 - e^(-0.08 × combined)) × scale
+
+where combined = max_complexity × 0.6 + p90_complexity × 0.4
+</code></pre>
+<p><strong>Why an exponential?</strong></p>
+<p>Complexity grows non-linearly. A function with complexity=15 requires effort, but complexity=40 is practically impossible to change safely.</p>
+<table>
+<thead>
+<tr>
+<th>combined</th>
+<th>Peak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td>55%</td>
+</tr>
+<tr>
+<td>20</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>30</td>
+<td>91%</td>
+</tr>
+<tr>
+<td>40</td>
+<td>96%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why max × 0.6 + p90 × 0.4?</strong></p>
+<ul>
+<li>max_complexity -- the most complex function (60% weight)</li>
+<li>p90_complexity -- 90th percentile (40% weight)</li>
+</ul>
+<p>This distinguishes between a local and a systemic problem:
+- max=40, p90=10 -- one bad function
+- max=40, p90=35 -- many bad functions</p>
+<h3 id="base-base-pressure">Base -- base pressure</h3>
+<pre><code>Base = 100 × (1 - e^(-0.02 × density × scale))
+</code></pre>
+<p>Density is taken with scaling (see below).</p>
+<h3 id="scaling">Scaling</h3>
+<p>RP accounts for the project size. One bad file in a 10-file project is not a problem. In a 1000-file project, it is a quality indicator.</p>
+<p><strong>Peak Scale:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Project size</th>
+<th>LOC</th>
+<th>scale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small</td>
+<td>&lt; 1000</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>1000-10000</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>Large</td>
+<td>10000-100000</td>
+<td>0.75</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>&gt;= 100000</td>
+<td>1.00</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Density Scale:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Project size</th>
+<th>LOC</th>
+<th>scale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small</td>
+<td>&lt; 500</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>500-5000</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>Large</td>
+<td>5000-20000</td>
+<td>2.0</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>&gt; 20000</td>
+<td>3.0</td>
+</tr>
+</tbody>
+</table>
+<p>In larger projects, density is naturally lower -- there is more "sparse" code (configs, documentation). The scale compensates for this.</p>
+<h2 id="calculation-examples">Calculation Examples</h2>
+<h3 id="example-1-healthy-project">Example 1: Healthy project</h3>
+<p><strong>Input data:</strong></p>
+<pre><code># For RP
+max_complexity = 15
+p90_complexity = 8
+density = 10
+loc = 400
+
+# For OP
+coupling = 2.5        (average number of connections per class)
+avg_class_score = 30  (average class score)
+
+# Final metrics
+RP = 14
+OP = 12
+</code></pre>
+<p><strong>RP calculation:</strong></p>
+<pre><code># Scale for loc=400
+scale_peak = 0.25    (400 &lt; 1000)
+scale_density = 0.5  (400 &lt; 500)
+
+# Peak
+combined = 15 × 0.6 + 8 × 0.4 = 12.2
+Peak = 100 × (1 - e^(-0.08 × 12.2)) × 0.25 = 62 × 0.25 = 16
+
+# Base
+Base = 100 × (1 - e^(-0.02 × 10 × 0.5)) = 100 × 0.095 = 10
+
+# Total
+RP = 0.6 × 16 + 0.4 × 10 = 9.6 + 4 = 14
+</code></pre>
+<p><strong>OP calculation:</strong></p>
+<pre><code># Normalization
+coupling_norm = min(1.0, 2.5 / 4) = 0.625
+class_score_norm = min(1.0, 30 / 70) = 0.43
+
+# Total
+OP = (0.4 × 0.625 + 0.6 × 0.43) × 100 = (0.25 + 0.26) × 100 = 51 → 12
+</code></pre>
+<p><strong>Project Score calculation:</strong></p>
+<pre><code>base_score = 0.4 × 14 + 0.4 × 12 + 0.2 × 10 = 5.6 + 4.8 + 2 = 12
+
+# Imbalance check
+diff = |14 - 12| = 2 ≤ 30  → no imbalance
+
+final_score = 12
+</code></pre>
+<p><strong>Result:</strong> Project Score = 12 → <code>healthy</code> -- the code is healthy.</p>
+<h3 id="example-2-spaghetti-project">Example 2: Spaghetti project</h3>
+<p><strong>Input data:</strong></p>
+<pre><code>RP = 71
+OP = 8
+density = 17.68
+</code></pre>
+<p><strong>Project Score calculation:</strong></p>
+<pre><code>base_score = 0.4 × 71 + 0.4 × 8 + 0.2 × 17.68 = 28.4 + 3.2 + 3.5 = 35
+
+# Imbalance check
+diff = |71 - 8| = 63 &gt; 50
+extremum = max(71, 8) = 71 ≥ 35
+
+# Spaghetti (RP &gt; OP) — additive penalty
+penalty = 25  (diff &gt; 50)
+
+final_score = 35 + 25 = 60
+</code></pre>
+<p><strong>Result:</strong> Project Score = 60 → <code>warning</code> -- spaghetti code requires attention.</p>
+<h3 id="example-3-overengineering-project">Example 3: Overengineering project</h3>
+<p><strong>Input data:</strong></p>
+<pre><code>RP = 8
+OP = 71
+density = 17.68
+</code></pre>
+<p><strong>Project Score calculation:</strong></p>
+<pre><code>base_score = 0.4 × 8 + 0.4 × 71 + 0.2 × 17.68 = 3.2 + 28.4 + 3.5 = 35
+
+# Imbalance check
+diff = |8 - 71| = 63 &gt; 50
+extremum = max(8, 71) = 71 ≥ 35
+
+# Overengineering (OP &gt; RP) — additive penalty
+penalty = 12  (diff &gt; 50)
+
+final_score = 35 + 12 = 47
+</code></pre>
+<p><strong>Result:</strong> Project Score = 47 → <code>warning</code> -- overengineering requires attention.</p>
+<h3 id="example-4-balanced-project-with-high-metrics">Example 4: Balanced project with high metrics</h3>
+<p><strong>Input data:</strong></p>
+<pre><code>RP = 60
+OP = 60
+density = 30
+</code></pre>
+<p><strong>Project Score calculation:</strong></p>
+<pre><code>base_score = 0.4 × 60 + 0.4 × 60 + 0.2 × 30 = 24 + 24 + 6 = 54
+
+# Imbalance check
+diff = |60 - 60| = 0 ≤ 30  → no imbalance
+
+final_score = 54
+</code></pre>
+<p><strong>Result:</strong> Project Score = 54 → <code>warning</code> -- high metrics, but balanced.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

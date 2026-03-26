@@ -1,0 +1,1699 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Code base health diagnostics — find spaghetti code, overengineering, and complexity that blocks development">
+      
+      
+      
+        <link rel="canonical" href="https://qarium.github.io/strictacode/examples/">
+      
+      
+        <link rel="prev" href="../configuration/">
+      
+      
+        <link rel="next" href="../ci/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Examples - Strictacode</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  <style>
+    /* Dark navbar — override palette in both themes */
+    [data-md-color-scheme=default][data-md-color-primary=custom],
+    [data-md-color-scheme=slate][data-md-color-primary=custom] {
+      --md-primary-fg-color: #0a0a13;
+      --md-primary-fg-color--light: #0a0a13cc;
+      --md-primary-bg-color: #ffffff;
+    }
+
+    .md-header__button.md-logo img,
+    .md-header__button.md-logo svg {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    /* Search form — visible on dark header */
+    .md-search__overlay {
+      background-color: transparent !important;
+    }
+    [data-md-toggle=search]:checked~.md-header .md-search__overlay {
+      background-color: #0000008a !important;
+    }
+    .md-search__inner {
+      background-color: transparent !important;
+    }
+    .md-search__form {
+      background-color: #3a3a3a !important;
+      border-radius: 0.5rem;
+    }
+    .md-search__form:hover {
+      background-color: #4a4a4a !important;
+    }
+    .md-search__input {
+      color: #e0e0e0 !important;
+    }
+    .md-search__input::placeholder {
+      color: #999999 !important;
+    }
+    .md-search__icon {
+      color: #999999 !important;
+    }
+    .md-search__form:hover .md-search__icon,
+    .md-search__input:focus-visible ~ .md-search__icon {
+      color: #e0e0e0 !important;
+    }
+
+    /* Links in dark theme — readable on dark background */
+    [data-md-color-scheme=slate] .md-nav__link,
+    [data-md-color-scheme=slate] .md-toc__link,
+    [data-md-color-scheme=slate] article a {
+      color: #cbd5e0 !important;
+    }
+    [data-md-color-scheme=slate] .md-nav__link--passed,
+    [data-md-color-scheme=slate] .md-toc__link--passed {
+      color: #718096 !important;
+    }
+    [data-md-color-scheme=slate] .md-nav__link:hover,
+    [data-md-color-scheme=slate] .md-toc__link:hover,
+    [data-md-color-scheme=slate] article a:hover {
+      color: var(--md-accent-fg-color) !important;
+    }
+  </style>
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#usage-examples" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Strictacode" class="md-header__button md-logo" aria-label="Strictacode" data-md-component="logo">
+      
+  <img src="https://avatars.githubusercontent.com/u/262344922?s=200&v=4" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Strictacode
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Examples
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/qarium/strictacode" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../cli-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../metrics/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Metrics
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../interpretation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Interpretation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Examples
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ci/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CI/CD
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../report-fields/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Report Fields
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Strictacode" class="md-nav__button md-logo" aria-label="Strictacode" data-md-component="logo">
+      
+  <img src="https://avatars.githubusercontent.com/u/262344922?s=200&v=4" alt="logo">
+
+    </a>
+    Strictacode
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/qarium/strictacode" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#team-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Team Processes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Team Processes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cicd-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD Gates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sprint-retrospective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint Retrospective
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-assisted-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI-Assisted Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AI-Assisted Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analyzing-code-quality-with-an-ai-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyzing Code Quality with an AI Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tracking-code-quality-over-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracking Code Quality Over Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-to-know-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting to Know a Project
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting to Know a Project">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#onboarding-a-new-developer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Onboarding a New Developer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluating-a-legacy-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluating a Legacy Project
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#day-to-day-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day-to-Day Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Day-to-Day Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#planning-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planning Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#planning-integration-tests-for-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planning Integration Tests for Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prioritizing-api-endpoints-for-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prioritizing API Endpoints for Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-making" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Making
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision Making">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-whether-to-rewrite-or-refactor-a-packageservice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing Whether to Rewrite or Refactor a Package/Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#justifying-refactoring-to-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Justifying Refactoring to Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../report-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Report Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#team-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Team Processes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Team Processes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cicd-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD Gates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sprint-retrospective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint Retrospective
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-assisted-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI-Assisted Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AI-Assisted Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#analyzing-code-quality-with-an-ai-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyzing Code Quality with an AI Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tracking-code-quality-over-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracking Code Quality Over Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-to-know-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting to Know a Project
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting to Know a Project">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#onboarding-a-new-developer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Onboarding a New Developer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluating-a-legacy-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluating a Legacy Project
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#day-to-day-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day-to-Day Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Day-to-Day Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#planning-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planning Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#planning-integration-tests-for-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Planning Integration Tests for Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prioritizing-api-endpoints-for-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prioritizing API Endpoints for Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-making" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Making
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision Making">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-whether-to-rewrite-or-refactor-a-packageservice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing Whether to Rewrite or Refactor a Package/Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#justifying-refactoring-to-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Justifying Refactoring to Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="usage-examples">Usage Examples</h1>
+<p>This documentation contains real-world strictacode usage scenarios with step-by-step workflows.</p>
+<h2 id="team-processes">Team Processes</h2>
+<h3 id="cicd-gates">CI/CD Gates</h3>
+<p><strong>Context:</strong> Code quality degradation needs to be blocked in the pipeline. A pull request with bad code should not land in main.</p>
+<p><strong>Approach 1: Absolute thresholds</strong></p>
+<p>Block PRs that push the codebase above a quality limit:</p>
+<pre><code class="language-bash">strictacode analyze . --threshold &quot;score=60,imb=40,rp=70,op=50,density=30&quot;
+</code></pre>
+<p>Exits with code 1 if any metric exceeds the threshold. Add this as a CI step after tests — no scripts needed.</p>
+<p><strong>Approach 2: Relative thresholds (delta against baseline)</strong></p>
+<p>Track quality degradation over time by comparing against a saved baseline using the <code>compare</code> command:</p>
+<pre><code class="language-bash">strictacode analyze . --format json --output current.json
+strictacode compare baseline.json current.json --threshold &quot;score=10,rp=5,op=5,density=5&quot;
+</code></pre>
+<p>Use <code>--format json</code> and <code>--output</code> to save the diff for external systems:</p>
+<pre><code class="language-bash">strictacode compare baseline.json current.json --format json --output diff.json
+</code></pre>
+<p>Use <code>--details</code> to include full metrics for both results in the output:</p>
+<pre><code class="language-bash">strictacode compare baseline.json current.json --details --format json --output diff.json
+</code></pre>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Establish a baseline: run the analysis on the current main and save <code>baseline.json</code> in the repository</li>
+<li>Add a CI step after tests that:</li>
+<li>Runs <code>strictacode analyze . --format json --output current.json</code></li>
+<li>Runs <code>strictacode compare baseline.json current.json --threshold score=10,rp=5</code></li>
+<li>The PR is blocked if the diff exceeds the threshold (exit code 1)</li>
+<li>After merging into main — update <code>baseline.json</code></li>
+</ol>
+<p>The <code>compare</code> command calculates the difference between two results for all four metrics (Score, Complexity Density, Refactoring Pressure, Overengineering Pressure) and checks each against the threshold.</p>
+<hr />
+<h3 id="sprint-retrospective">Sprint Retrospective</h3>
+<p><strong>Context:</strong> The team is running a retro. Code quality is being discussed. Opinions diverge: "the code is fine" vs. "everything is falling apart." Objective data is needed.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash"># Before the sprint
+strictacode analyze . --format json &gt; sprint-start.json
+
+# After the sprint
+strictacode analyze . --format json &gt; sprint-end.json
+</code></pre>
+<p><strong>Result:</strong> Two snapshots of the codebase state.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis at the start of the sprint and save the baseline</li>
+<li>During the sprint — do not touch the metrics, just work</li>
+<li>At the end of the sprint — run the analysis again</li>
+<li>Compare metrics:</li>
+<li>RP increased → technical debt accumulated, the next sprint needs time allocated for cleanup</li>
+<li>OP increased → abstractions were added; verify whether they are needed or premature</li>
+<li>Density increased → code is getting "dirtier," stricter code reviews are needed</li>
+<li>Discuss at the retro:</li>
+<li>Which modules deteriorated and why?</li>
+<li>Is this normal growth or a problem?</li>
+<li>What should be done in the next sprint?</li>
+<li>Save sprint-end.json as the baseline for the next sprint</li>
+</ol>
+<h2 id="ai-assisted-development">AI-Assisted Development</h2>
+<h3 id="analyzing-code-quality-with-an-ai-agent">Analyzing Code Quality with an AI Agent</h3>
+<p><strong>Context:</strong> A developer wants an objective code quality assessment with concrete improvement suggestions. Instead of reading metrics manually and figuring out what to do, the AI agent does the interpretation and produces a prioritized plan.</p>
+<p><strong>Setup:</strong></p>
+<p>Install strictacode as a skill for the AI agent:</p>
+<pre><code class="language-bash"># Claude Code
+strictacode install agent-skill --agent claude
+
+# Cursor
+strictacode install agent-skill --agent cursor
+
+# OpenAI Codex
+strictacode install agent-skill --agent codex
+</code></pre>
+<p>Supported agents: <code>claude</code>, <code>cursor</code>, <code>codex</code>, <code>gemini</code>, <code>antigravity</code>.</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-text">Analyze code quality with strictacode
+</code></pre>
+<p>The agent automatically runs the analysis, interprets all metrics, identifies hotspots by reading the actual source code, and produces a prioritized improvement plan with concrete actions, file locations, and expected effects.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Install the skill once: <code>strictacode install agent-skill --agent &lt;agent&gt;</code></li>
+<li>Open the AI agent in the project directory</li>
+<li>Send the prompt</li>
+<li>The agent runs <code>strictacode analyze . --details --format json</code></li>
+<li>Review the output: project summary, metric breakdown, red flags, pain points, improvement plan (P0/P1/P2)</li>
+<li>Use the plan to guide refactoring work</li>
+</ol>
+<p><strong>Result:</strong> A structured analysis with:</p>
+<ul>
+<li>Project type diagnosis (Healthy / Spaghetti / Overengineering / Crisis)</li>
+<li>Top problematic functions and classes with line numbers</li>
+<li>Concrete refactoring steps ordered by priority</li>
+<li>Expected metric improvements</li>
+</ul>
+<p>For details on what the agent analyzes and how it interprets each metric, see <a href="../cli-reference/#strictacode-install-agent-skill">CLI Reference — agent-skill</a>.</p>
+<h2 id="dashboard-integration">Dashboard Integration</h2>
+<h3 id="tracking-code-quality-over-time">Tracking Code Quality Over Time</h3>
+<p><strong>Context:</strong> The team wants to track code quality metrics on a dashboard (Grafana, Metabase, custom frontend). The workflow: strictacode generates a JSON report, CI sends it to an API, the dashboard visualizes trends.</p>
+<p><strong>Configuration:</strong></p>
+<p>Create <code>.strictacode.yml</code> in the project root to control the volume of data sent to the dashboard:</p>
+<pre><code class="language-yaml">reporter:
+  top:
+    packages: 10
+    modules: 20
+    classes: 30
+    methods: 50
+    functions: 50
+</code></pre>
+<p>Adjust the <code>top</code> values based on project size. Larger values produce more data — useful for dashboards but heavier on the API.</p>
+<p><strong>Generating the report:</strong></p>
+<p>Use <code>--details</code> to include analytics for functions, methods, and classes, and <code>--format json</code> for structured output:</p>
+<pre><code class="language-bash">strictacode analyze . --details --format json --output report.json
+</code></pre>
+<p><strong>Sending to an API:</strong></p>
+<p>Combine the analysis report and diff into a single JSON payload using <code>jq</code>:</p>
+<pre><code class="language-bash">jq -n \
+  --slurpfile data report.json \
+  --slurpfile compare diff.json \
+  '{data: $data[0], compare: $compare[0]}' \
+  &gt; payload.json
+
+curl -X POST https://your-dashboard-api.example.com/api/metrics \
+  -H &quot;Content-Type: application/json&quot; \
+  -H &quot;Authorization: Bearer $DASHBOARD_TOKEN&quot; \
+  --data @payload.json
+</code></pre>
+<p>The server receives the full analysis report and the diff against the baseline in a single JSON request, allowing it to store both current metrics and changes per project, branch, and timestamp.</p>
+<p><strong>CI integration (GitHub Actions):</strong></p>
+<pre><code class="language-yaml">name: Code Quality Dashboard
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install strictacode
+        run: pip install strictacode
+
+      - name: Analyze
+        run: strictacode analyze . --details --format json --output report.json
+
+      - name: Compare with baseline
+        run: strictacode compare baseline.json report.json --format json --details --output diff.json
+        continue-on-error: true
+
+      - name: Build payload
+        run: |
+          jq -n \
+            --slurpfile data report.json \
+            --slurpfile compare diff.json \
+            '{data: $data[0], compare: $compare[0]}' \
+            &gt; payload.json
+
+      - name: Send to dashboard
+        env:
+          DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
+        run: |
+          curl -X POST https://your-dashboard-api.example.com/api/metrics \
+            -H &quot;Content-Type: application/json&quot; \
+            -H &quot;Authorization: Bearer $DASHBOARD_TOKEN&quot; \
+            --data @payload.json
+</code></pre>
+<p>For the JSON structure, see <a href="../report-fields/">Report Fields</a>.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Create <code>.strictacode.yml</code> with desired <code>reporter.top</code> values</li>
+<li>Set up an API endpoint that accepts the JSON report</li>
+<li>Add the CI workflow (or run manually during development)</li>
+<li>Build dashboard visualizations using the stored metrics:</li>
+<li>Project Score trend over time</li>
+<li>RP and OP per branch</li>
+<li>Complexity density by package</li>
+<li>Comparison across projects/services</li>
+</ol>
+<h2 id="getting-to-know-a-project">Getting to Know a Project</h2>
+<h3 id="onboarding-a-new-developer">Onboarding a New Developer</h3>
+<p><strong>Context:</strong> A new developer joins the project. The first task is to figure out where the complex code is and where it is safe to work. Without strictacode, this takes weeks of reading code and accidental discoveries.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">strictacode analyze . --details
+</code></pre>
+<p><strong>Result:</strong> Metrics by modules/packages — where RP is high (messy code), where OP is high (complex dependencies), and where density is off the charts.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis with <code>--details</code></li>
+<li>Find modules with <code>status: healthy</code> — these are the best places to start working</li>
+<li>Look at modules with <code>RP &gt; 60</code> — these are the hardest to change</li>
+<li>Examine <code>density</code> — high density means "spaghetti in a single file"</li>
+<li>Build a mental map: "green zones" vs. "red zones"</li>
+</ol>
+<hr />
+<h3 id="evaluating-a-legacy-project">Evaluating a Legacy Project</h3>
+<p><strong>Context:</strong> A tech lead steps into a legacy project. The goal is to quickly understand the state of the codebase and answer the question: "where do I start?"</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">strictacode analyze . --short
+</code></pre>
+<p><strong>Result:</strong> Project Score, RP, OP, density — an overall picture of health.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run a short analysis to get the Project Score</li>
+<li>Interpret the score using the scale (healthy/normal/warning/critical/emergency)</li>
+<li>Compare RP and OP:</li>
+<li>RP &gt;&gt; OP → spaghetti code, clean up the functions</li>
+<li>OP &gt;&gt; RP → overengineering, simplify the architecture</li>
+<li>Both high → crisis, isolate and rewrite</li>
+<li>Prepare a report for stakeholders with concrete metrics</li>
+</ol>
+<h2 id="day-to-day-development">Day-to-Day Development</h2>
+<h3 id="planning-unit-tests">Planning Unit Tests</h3>
+<p><strong>Context:</strong> A developer is deciding which functions to cover with unit tests first. Time is limited — the goal is to maximize impact.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">strictacode analyze . --details
+</code></pre>
+<p><strong>Result:</strong> Breakdown by modules/classes/functions with complexity metrics.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis with <code>--details</code></li>
+<li>Sort functions by <code>complexity</code> — functions with complexity &gt; 15 are harder to test and break more often</li>
+<li>Look at <code>density</code> in the module — high density means tangled code, tests will be difficult</li>
+<li>Prioritization: start with high-complexity functions in modules with low OP (fewer mocks needed)</li>
+<li>Defer functions in modules with high OP — those need integration tests</li>
+</ol>
+<hr />
+<h3 id="planning-integration-tests-for-services">Planning Integration Tests for Services</h3>
+<p><strong>Context:</strong> QA is planning testing for a microservice architecture. The goal is to understand which services carry higher risk when changed and which carry less.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash"># For each service
+strictacode analyze ./service-a --short
+strictacode analyze ./service-b --short
+strictacode analyze ./service-c --short
+</code></pre>
+<p><strong>Result:</strong> Project Score, RP, OP, density for each service.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis for each service separately</li>
+<li>Compare metrics across services:</li>
+<li>High RP — service with "messy" code, changes are risky</li>
+<li>High OP — complex architecture, higher chance of breaking integrations</li>
+<li>High density — a lot of logic in one place, harder to cover with tests</li>
+<li>Testing priority:</li>
+<li><code>status: critical/emergency</code> — maximum attention, regression tests are mandatory</li>
+<li><code>status: warning</code> — standard coverage + integration smoke tests</li>
+<li><code>status: healthy/normal</code> — minimal set of smoke tests</li>
+<li>Allocate a time buffer for bugs in services with high RP</li>
+</ol>
+<hr />
+<h3 id="prioritizing-api-endpoints-for-testing">Prioritizing API Endpoints for Testing</h3>
+<p><strong>Context:</strong> A service has many API endpoints, and testing all of them is impossible. The goal is to figure out which endpoints to cover with tests first.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">strictacode analyze . --details
+</code></pre>
+<p><strong>Result:</strong> Breakdown by packages/modules with metrics.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis with <code>--details</code></li>
+<li>Find packages with <code>status: warning</code> and above — these are problem areas</li>
+<li>Map packages to API endpoints:</li>
+<li>Which package handles which endpoint</li>
+<li>Which endpoints depend on modules with high RP</li>
+<li>Endpoint testing priority:</li>
+<li>Endpoints backed by packages with <code>status: critical</code> — test first, maximum coverage</li>
+<li>Endpoints backed by packages with <code>status: warning</code> — standard coverage</li>
+<li>Endpoints backed by packages with <code>status: healthy</code> — minimal smoke tests</li>
+<li>Endpoints that touch multiple problem modules — candidates for end-to-end tests</li>
+</ol>
+<h2 id="decision-making">Decision Making</h2>
+<h3 id="choosing-whether-to-rewrite-or-refactor-a-packageservice">Choosing Whether to Rewrite or Refactor a Package/Service</h3>
+<p><strong>Context:</strong> An entire package or service is problematic. A decision needs to be made at the architectural unit level.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">strictacode analyze .
+</code></pre>
+<p><strong>Result:</strong> Project metrics broken down by packages/modules.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis of the entire project</li>
+<li>Find the relevant package/service in the results</li>
+<li>Assess the overall state using its Project Score:</li>
+<li>Score &lt; 40 — can be refactored incrementally</li>
+<li>Score 40-60 — serious issues, a plan is needed</li>
+<li>Score &gt; 60 — critical state</li>
+<li>Look at the distribution of problems within:</li>
+<li>Problems in 1-2 submodules → isolate and refactor/rewrite only those</li>
+<li>Problems evenly distributed → systemic architectural issue</li>
+<li>Evaluate coupling (OP): high OP means the module is heavily tied to others. Rewriting will break integrations.</li>
+<li>Decision:</li>
+<li>Local problems → targeted refactoring/rewriting</li>
+<li>Systemic problems + low OP → candidate for rewriting</li>
+<li>Systemic problems + high OP → gradual refactoring while preserving interfaces</li>
+</ol>
+<hr />
+<h3 id="justifying-refactoring-to-management">Justifying Refactoring to Management</h3>
+<p><strong>Context:</strong> Time needs to be allocated for refactoring within a sprint. Management wants to know: "why?" and "how much?" A subjective "the code is bad" does not work.</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">strictacode analyze . --short
+strictacode analyze . --format json &gt; quality-baseline.json
+</code></pre>
+<p><strong>Result:</strong> Metrics in a human-readable format + JSON for tracking progress.</p>
+<p><strong>Workflow:</strong></p>
+<ol>
+<li>Run the analysis and save the baseline</li>
+<li>Frame the problem using metrics:</li>
+<li>"RP = 72 — this means every code change carries a high risk of bugs"</li>
+<li>"Density = 58 — the code is spaghetti-like, task completion time doubles"</li>
+<li>Show the trend: run the analysis on code from 3 months ago (via git checkout), compare the results</li>
+<li>Translate into business language:</li>
+<li>High RP → slower feature delivery, more bugs in production</li>
+<li>High OP → harder to onboard new developers, longer code reviews</li>
+<li>Propose a plan: "We will reduce RP from 72 to 40 in 2 sprints, which will speed up development by X%"</li>
+<li>After refactoring: run the analysis again and show the improvement</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
