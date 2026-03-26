@@ -2,9 +2,11 @@ name: Strictacode
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   pull_request:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
   analyze:
@@ -28,3 +30,14 @@ jobs:
       - uses: ./.github/actions/analyze
         with:
           install-cmd: pip install strictacode
+        env:
+          STRICTACODE_SCORE: "40"
+          STRICTACODE_RP: "40"
+          STRICTACODE_OP: "40"
+          STRICTACODE_IMB: "35"
+          STRICTACODE_DENSITY: "30"
+          STRICTACODE_SCORE_DIFF: "3"
+          STRICTACODE_RP_DIFF: "5"
+          STRICTACODE_OP_DIFF: "5"
+#          STRICTACODE_IMB_DIFF: "5"
+          STRICTACODE_DENSITY_DIFF: "5"
