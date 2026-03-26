@@ -60,3 +60,8 @@ Coverage: exit codes, stdout/stderr output, flag combinations, error messages on
 - `# boundary: ...` comments at threshold transition edges in parametrize tables
 - Never mock `builtins.open` — use `tmp_path` fixture instead
 - Integration tests use `pytest.mark.skipif` when Go/Node.js is unavailable
+
+## Lessons
+
+| Problem | Why | How to prevent |
+|---------|-----|----------------|

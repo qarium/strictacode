@@ -37,3 +37,8 @@
 | `.gitlab/templates/**`          | `docs/ci.md`                                                                          |
 
 ### Conventions
+
+## Lessons
+
+| Problem | Why | How to prevent |
+|---------|-----|----------------|

@@ -28,3 +28,8 @@
 ## LLM Directives
 - **NEVER add `fetch-depth: 0` to CI without explicit reason** — MkDocs Material fetches repo metadata (version, stars) from GitHub API in the browser, git tags are not needed at build time
 - **NEVER use PEP 604 `X | None` syntax in new files** — minimum supported Python is 3.10 where `X | None` in runtime annotations (dataclass fields) fails; always use `typing.Optional[X]` instead
+
+## Lessons
+
+| Problem | Why | How to prevent |
+|---------|-----|----------------|

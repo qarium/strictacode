@@ -21,3 +21,9 @@
 | Strictacode | `.github/workflows/strictacode.yml` | push/PR to master | strictacode analyze + compare |
 
 ### Conventions
+
+## Lessons
+
+| Problem | Why | How to prevent |
+|---------|-----|----------------|
+| Fixed threshold quote bug in GitHub Actions but not in GitLab template | Project has CI templates for multiple providers (`.github/`, `.gitlab/`). Bug fix was scoped to the reported file only | When fixing a bug in one CI template, always search for the same pattern across all CI templates in the project before declaring the fix complete |
