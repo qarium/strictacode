@@ -1,0 +1,80 @@
+.strictacode-setup: &strictacode-setup
+  stage: test
+  image: ${STRICTACODE_IMAGE:-python:3.13}
+  variables:
+    GIT_DEPTH: 0
+  before_script:
+    - cd ${STRICTACODE_WORK_DIR:-.}
+    - ${STRICTACODE_INSTALL_CMD:-pip install strictacode}
+
+.strictacode-build-threshold: &strictacode-build-threshold
+  - |
+    build_threshold() {
+      local prefix="${1}"
+      local parts=""
+      if [ -n "${prefix}" ]; then
+        [ -n "$STRICTACODE_SCORE_DIFF" ] && parts="${parts}score=$STRICTACODE_SCORE_DIFF,"
+        [ -n "$STRICTACODE_RP_DIFF" ] && parts="${parts}rp=$STRICTACODE_RP_DIFF,"
+        [ -n "$STRICTACODE_OP_DIFF" ] && parts="${parts}op=$STRICTACODE_OP_DIFF,"
+        [ -n "$STRICTACODE_IMB_DIFF" ] && parts="${parts}imb=$STRICTACODE_IMB_DIFF,"
+        [ -n "$STRICTACODE_DENSITY_DIFF" ] && parts="${parts}density=$STRICTACODE_DENSITY_DIFF,"
+      else
+        [ -n "$STRICTACODE_SCORE" ] && parts="${parts}score=$STRICTACODE_SCORE,"
+        [ -n "$STRICTACODE_RP" ] && parts="${parts}rp=$STRICTACODE_RP,"
+        [ -n "$STRICTACODE_OP" ] && parts="${parts}op=$STRICTACODE_OP,"
+        [ -n "$STRICTACODE_IMB" ] && parts="${parts}imb=$STRICTACODE_IMB,"
+        [ -n "$STRICTACODE_DENSITY" ] && parts="${parts}density=$STRICTACODE_DENSITY,"
+      fi
+      echo "${parts%,}"
+    }
+
+strictacode-analyze:
+  <<: *strictacode-setup
+  script:
+    - *strictacode-build-threshold
+    - |
+      ARGS="analyze . --details --format json --output /tmp/analyze.json"
+      ABSOLUTE_THRESHOLD=$(build_threshold)
+      [ -n "$ABSOLUTE_THRESHOLD" ] && ARGS="${ARGS} --threshold '${ABSOLUTE_THRESHOLD}'"
+      set +e
+      strictacode ${ARGS}
+      EXIT_CODE=$?
+      set -e
+      cat /tmp/analyze.json
+      exit ${EXIT_CODE}
+  artifacts:
+    paths:
+      - /tmp/analyze.json
+    when: always
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+strictacode-compare:
+  <<: *strictacode-setup
+  script:
+    - *strictacode-build-threshold
+    - |
+      DEFAULT_BRANCH="${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-${CI_DEFAULT_BRANCH}}"
+      DIFF_THRESHOLD=$(build_threshold "diff")
+
+      git fetch origin "${DEFAULT_BRANCH}"
+
+      ORIGINAL_HEAD=$(git rev-parse HEAD)
+      git checkout "origin/${DEFAULT_BRANCH}"
+      strictacode analyze . --details --format json --output /tmp/baseline.json
+      git checkout "${ORIGINAL_HEAD}"
+
+      ARGS="compare /tmp/analyze.json /tmp/baseline.json --output /tmp/compare.json"
+      [ -n "$DIFF_THRESHOLD" ] && ARGS="${ARGS} --threshold '${DIFF_THRESHOLD}'"
+      set +e
+      strictacode ${ARGS}
+      EXIT_CODE=$?
+      set -e
+      cat /tmp/compare.json
+      exit ${EXIT_CODE}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  needs:
+    - job: strictacode-analyze
+      artifacts: true

@@ -1,0 +1,93 @@
+name: 'Strictacode Analyze'
+description: 'Analyze code quality with strictacode. Supports absolute thresholds (STRICTACODE_*) and diff thresholds against baseline branch (STRICTACODE_*_DIFF). Requires checkout with fetch-depth 0 for baseline comparison. IMPORTANT: threshold env vars must be set as step-level env, not workflow-level env — composite actions do not inherit the workflow env context.'
+inputs:
+  install-cmd:
+    description: 'Command to install strictacode'
+    required: false
+    default: 'pip install strictacode'
+  working-directory:
+    description: 'Directory to analyze'
+    required: false
+    default: '.'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install strictacode
+      shell: bash
+      run: ${{ inputs.install-cmd }}
+
+    - name: Build threshold args
+      id: thresholds
+      shell: bash
+      run: |
+        build_threshold() {
+          local prefix="${1}"
+          local parts=""
+          if [ -n "${prefix}" ]; then
+            [ -n "$STRICTACODE_SCORE_DIFF" ] && parts="${parts}score=$STRICTACODE_SCORE_DIFF,"
+            [ -n "$STRICTACODE_RP_DIFF" ] && parts="${parts}rp=$STRICTACODE_RP_DIFF,"
+            [ -n "$STRICTACODE_OP_DIFF" ] && parts="${parts}op=$STRICTACODE_OP_DIFF,"
+            [ -n "$STRICTACODE_IMB_DIFF" ] && parts="${parts}imb=$STRICTACODE_IMB_DIFF,"
+            [ -n "$STRICTACODE_DENSITY_DIFF" ] && parts="${parts}density=$STRICTACODE_DENSITY_DIFF,"
+          else
+            [ -n "$STRICTACODE_SCORE" ] && parts="${parts}score=$STRICTACODE_SCORE,"
+            [ -n "$STRICTACODE_RP" ] && parts="${parts}rp=$STRICTACODE_RP,"
+            [ -n "$STRICTACODE_OP" ] && parts="${parts}op=$STRICTACODE_OP,"
+            [ -n "$STRICTACODE_IMB" ] && parts="${parts}imb=$STRICTACODE_IMB,"
+            [ -n "$STRICTACODE_DENSITY" ] && parts="${parts}density=$STRICTACODE_DENSITY,"
+          fi
+          echo "${parts%,}"
+        }
+
+        ABSOLUTE=$(build_threshold)
+        DIFF=$(build_threshold "diff")
+
+        echo "absolute=${ABSOLUTE}" >> "$GITHUB_OUTPUT"
+        echo "diff=${DIFF}" >> "$GITHUB_OUTPUT"
+
+    - name: Determine baseline branch
+      id: baseline
+      shell: bash
+      env:
+        PUSH_BASE: ${{ github.event.base_ref }}
+        PR_BASE: ${{ github.event.base.ref }}
+      run: |
+        BASE_REF="${PUSH_BASE:-${PR_BASE}}"
+        BRANCH="${BASE_REF#refs/heads/}"
+        [ -z "$BRANCH" ] && BRANCH=$(git rev-parse --verify origin/main >/dev/null 2>&1 && echo "main" || echo "master")
+        echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+        echo "default_branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+    - name: Analyze current code
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ARGS="analyze . --details --format json --output /tmp/analyze.json"
+        [ -n "${{ steps.thresholds.outputs.absolute }}" ] && ARGS="${ARGS} --threshold '${{ steps.thresholds.outputs.absolute }}'"
+        set +e
+        strictacode ${ARGS}
+        EXIT_CODE=$?
+        set -e
+        cat /tmp/analyze.json
+        exit ${EXIT_CODE}
+
+    - name: Compare with baseline
+      if: steps.baseline.outputs.default_branch != github.ref_name
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ORIGINAL_HEAD=$(git rev-parse HEAD)
+
+        git checkout "origin/${{ steps.baseline.outputs.default_branch }}"
+        strictacode analyze . --details --format json --output /tmp/baseline.json
+
+        git checkout "${ORIGINAL_HEAD}"
+
+        ARGS="compare /tmp/analyze.json /tmp/baseline.json --output /tmp/compare.json"
+        [ -n "${{ steps.thresholds.outputs.diff }}" ] && ARGS="${ARGS} --threshold '${{ steps.thresholds.outputs.diff }}'"
+        set +e
+        strictacode ${ARGS}
+        EXIT_CODE=$?
+        set -e
+        cat /tmp/compare.json
+        exit ${EXIT_CODE}

@@ -72,7 +72,7 @@ This tells you:
 | Refactoring planning    | Shows where "80% of pain comes from 20% of code"        |
 | Sprint retrospective    | Objective data instead of subjective opinions            |
 | Project onboarding      | Highlights the most complex modules                      |
-| CI/CD pipeline          | Blocks quality degradation                               |
+| CI/CD pipeline          | Blocks quality degradation with GitHub Actions or GitLab CI |
 
 ## Commands
 
@@ -104,3 +104,10 @@ Supported agents:
 - `codex`
 - `gemini`
 - `antigravity`
+
+## CI/CD Integration
+
+Strictacode provides ready-to-use composite actions and CI templates:
+
+- **[GitHub Actions](ci.md#github-actions)** — composite action with optional thresholds via env vars
+- **[GitLab CI](ci.md#gitlab-ci)** — remote include template with the same threshold support

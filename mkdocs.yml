@@ -41,6 +41,7 @@ nav:
   - Interpretation: interpretation.md
   - Configuration: configuration.md
   - Examples: examples.md
+  - CI/CD: ci.md
   - Report Fields: report-fields.md
 
 plugins:

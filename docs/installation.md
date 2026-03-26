@@ -51,6 +51,10 @@ Supported agents: `claude`, `cursor`, `codex`, `gemini`, `antigravity`
 
 For full command options see the [CLI Reference](cli-reference.md#strictacode-install-agent-skill).
 
+## CI/CD Integration
+
+Strictacode provides ready-to-use integrations for [GitHub Actions](ci.md#github-actions) and [GitLab CI](ci.md#gitlab-ci). Both support optional quality gates via environment variables.
+
 ## Next Steps
 
 See the [Getting Started](getting-started.md) guide for a walkthrough of your first analysis.

@@ -29,3 +29,4 @@ Supported agents: `claude`, `cursor`, `codex`, `gemini`, `antigravity`
 - [Interpretation](https://qarium.github.io/strictacode/interpretation/) — diagnostic scenarios
 - [Configuration](https://qarium.github.io/strictacode/configuration/) — config file options
 - [Examples](https://qarium.github.io/strictacode/examples/) — real-world usage
+- [CI/CD Integration](https://qarium.github.io/strictacode/ci/) — GitHub Actions and GitLab CI
