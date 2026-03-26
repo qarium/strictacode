@@ -134,6 +134,24 @@ Two jobs are defined:
 
 Same threshold variables as GitHub Actions (`STRICTACODE_*` for absolute, `STRICTACODE_*_DIFF` for diff). Set them in the `variables` section or as CI/CD variables in GitLab project settings.
 
+### Custom Stage
+
+Both jobs use `stage: test` by default. You can override the stage when including the template — YAML anchors are used for shared configuration, so the job-level `stage` key takes precedence:
+
+```yaml
+include:
+  - remote: 'https://raw.githubusercontent.com/qarium/strictacode/master/.gitlab/templates/strictacode.yml'
+
+variables:
+  STRICTACODE_SCORE: "60"
+  STRICTACODE_RP_DIFF: "5"
+
+strictacode-analyze:
+  stage: quality
+strictacode-compare:
+  stage: quality
+```
+
 ### Full Example
 
 ```yaml
