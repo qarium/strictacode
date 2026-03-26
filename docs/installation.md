@@ -7,7 +7,11 @@
 Strictacode analyzes code written in:
 - **Python** — no additional runtime required
 - **Go** — requires `go` binary in `PATH`
-- **JavaScript** — no additional runtime required
+- **JavaScript** — requires `node` and `npm` in `PATH`, plus globally installed `@babel/parser` and `@babel/traverse`:
+
+  ```bash
+  npm install -g @babel/parser @babel/traverse
+  ```
 
 ## Install from PyPI
 
