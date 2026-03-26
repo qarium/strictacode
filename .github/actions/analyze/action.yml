@@ -63,7 +63,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         ARGS="analyze . --details --format json --output /tmp/analyze.json"
-        [ -n "${{ steps.thresholds.outputs.absolute }}" ] && ARGS="${ARGS} --threshold '${{ steps.thresholds.outputs.absolute }}'"
+        [ -n "${{ steps.thresholds.outputs.absolute }}" ] && ARGS="${ARGS} --threshold ${{ steps.thresholds.outputs.absolute }}"
         set +e
         strictacode ${ARGS}
         EXIT_CODE=$?
@@ -84,7 +84,7 @@ runs:
         git checkout "${ORIGINAL_HEAD}"
 
         ARGS="compare /tmp/baseline.json /tmp/analyze.json --output /tmp/compare.json"
-        [ -n "${{ steps.thresholds.outputs.diff }}" ] && ARGS="${ARGS} --threshold '${{ steps.thresholds.outputs.diff }}'"
+        [ -n "${{ steps.thresholds.outputs.diff }}" ] && ARGS="${ARGS} --threshold ${{ steps.thresholds.outputs.diff }}"
         set +e
         strictacode ${ARGS}
         EXIT_CODE=$?

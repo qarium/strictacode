@@ -35,7 +35,7 @@ strictacode-analyze:
     - |
       ARGS="analyze . --details --format json --output /tmp/analyze.json"
       ABSOLUTE_THRESHOLD=$(build_threshold)
-      [ -n "$ABSOLUTE_THRESHOLD" ] && ARGS="${ARGS} --threshold '${ABSOLUTE_THRESHOLD}'"
+      [ -n "$ABSOLUTE_THRESHOLD" ] && ARGS="${ARGS} --threshold ${ABSOLUTE_THRESHOLD}"
       set +e
       strictacode ${ARGS}
       EXIT_CODE=$?
@@ -66,7 +66,7 @@ strictacode-compare:
       git checkout "${ORIGINAL_HEAD}"
 
       ARGS="compare /tmp/baseline.json /tmp/analyze.json --output /tmp/compare.json"
-      [ -n "$DIFF_THRESHOLD" ] && ARGS="${ARGS} --threshold '${DIFF_THRESHOLD}'"
+      [ -n "$DIFF_THRESHOLD" ] && ARGS="${ARGS} --threshold ${DIFF_THRESHOLD}"
       set +e
       strictacode ${ARGS}
       EXIT_CODE=$?
