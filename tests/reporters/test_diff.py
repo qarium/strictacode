@@ -19,7 +19,7 @@ def _make_diff(*, score=(10, 20), density=(5.0, 7.5), rp=(8, 4), op=(3, 7)):
         refactoring_pressure=rp[1],
         overengineering_pressure=op[1],
     )
-    return ProjectDiff(stat_a, stat_b)
+    return ProjectDiff(stat_b, stat_a)
 
 
 # ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ class TestTextDiffReporter:
         assert "Diff:" in captured.out
         assert "score: 10" in captured.out
         assert "complexity_density: 2.5" in captured.out
-        assert "refactoring_pressure: 4" in captured.out
+        assert "refactoring_pressure: -4" in captured.out
         assert "overengineering_pressure: 4" in captured.out
 
     def test_no_details_hides_results(self, capsys):
@@ -95,7 +95,7 @@ class TestJsonDiffReporter:
         d = data["diff"]
         assert d["score"] == 10
         assert d["complexity_density"] == 2.5
-        assert d["refactoring_pressure"] == 4
+        assert d["refactoring_pressure"] == -4
         assert d["overengineering_pressure"] == 4
 
     def test_no_details_hides_results(self, capsys):

@@ -65,7 +65,7 @@ strictacode-compare:
       strictacode analyze . --details --format json --output /tmp/baseline.json
       git checkout "${ORIGINAL_HEAD}"
 
-      ARGS="compare /tmp/analyze.json /tmp/baseline.json --output /tmp/compare.json"
+      ARGS="compare /tmp/baseline.json /tmp/analyze.json --output /tmp/compare.json"
       [ -n "$DIFF_THRESHOLD" ] && ARGS="${ARGS} --threshold '${DIFF_THRESHOLD}'"
       set +e
       strictacode ${ARGS}

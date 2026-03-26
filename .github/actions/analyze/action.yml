@@ -83,7 +83,7 @@ runs:
 
         git checkout "${ORIGINAL_HEAD}"
 
-        ARGS="compare /tmp/analyze.json /tmp/baseline.json --output /tmp/compare.json"
+        ARGS="compare /tmp/baseline.json /tmp/analyze.json --output /tmp/compare.json"
         [ -n "${{ steps.thresholds.outputs.diff }}" ] && ARGS="${ARGS} --threshold '${{ steps.thresholds.outputs.diff }}'"
         set +e
         strictacode ${ARGS}

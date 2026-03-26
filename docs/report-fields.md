@@ -273,16 +273,16 @@ Returns a structure with fields matching those described above.
 
 ## Compare Report Fields
 
-The `compare` command produces a diff report containing the absolute difference between two analysis results. Use `--details` to include the full metrics for both baseline and current.
+The `compare` command produces a diff report containing the directional difference between two analysis results (current − baseline). Positive values mean the current result is higher. Use `--details` to include the full metrics for both baseline and current.
 
 ### Diff Structure
 
 | Field                       | Type   | Description                              |
 |-----------------------------|--------|------------------------------------------|
-| `diff.score`                | int    | Absolute difference in project score     |
-| `diff.complexity_density`   | float  | Absolute difference in complexity density |
-| `diff.refactoring_pressure` | int    | Absolute difference in refactoring pressure |
-| `diff.overengineering_pressure` | int | Absolute difference in overengineering pressure |
+| `diff.score`                | int    | Directional difference in project score (current − baseline)     |
+| `diff.complexity_density`   | float  | Directional difference in complexity density (current − baseline) |
+| `diff.refactoring_pressure` | int    | Directional difference in refactoring pressure (current − baseline) |
+| `diff.overengineering_pressure` | int | Directional difference in overengineering pressure (current − baseline) |
 
 ### Details Structure (with `--details`)
 

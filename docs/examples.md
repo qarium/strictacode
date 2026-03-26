@@ -48,7 +48,7 @@ strictacode compare baseline.json current.json --details --format json --output 
 3. The PR is blocked if the diff exceeds the threshold (exit code 1)
 4. After merging into main — update `baseline.json`
 
-The `compare` command calculates the absolute difference between two results for all four metrics (Score, Complexity Density, Refactoring Pressure, Overengineering Pressure) and checks each against the threshold.
+The `compare` command calculates the difference between two results for all four metrics (Score, Complexity Density, Refactoring Pressure, Overengineering Pressure) and checks each against the threshold.
 
 ---
 

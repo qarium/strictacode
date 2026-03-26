@@ -25,16 +25,16 @@ class ProjectDiff:
 
     @property
     def score(self) -> int:
-        return abs(self._project_stat_one.score - self._project_stat_two.score)
+        return self._project_stat_one.score - self._project_stat_two.score
 
     @property
     def complexity_density(self) -> float:
-        return round(abs(self._project_stat_one.complexity_density - self._project_stat_two.complexity_density), 2)
+        return round(self._project_stat_one.complexity_density - self._project_stat_two.complexity_density, 2)
 
     @property
     def refactoring_pressure(self) -> int:
-        return abs(self._project_stat_one.refactoring_pressure - self._project_stat_two.refactoring_pressure)
+        return self._project_stat_one.refactoring_pressure - self._project_stat_two.refactoring_pressure
 
     @property
     def overengineering_pressure(self) -> int:
-        return abs(self._project_stat_one.overengineering_pressure - self._project_stat_two.overengineering_pressure)
+        return self._project_stat_one.overengineering_pressure - self._project_stat_two.overengineering_pressure

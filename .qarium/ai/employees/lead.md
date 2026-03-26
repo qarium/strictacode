@@ -6,7 +6,7 @@
 - **Each calc domain has its own Stat/Status/Metric types** — complexity, RP, OP use different status scales; no shared types between domains
 - **Click for CLI, radon for Python complexity** — radon is the standard Python cyclomatic complexity tool
 - **reporters split into reporters/result.py + reporters/diff.py** — result reporters output analysis results, diff reporters compare two reports; shared via __init__.py re-exports
-- **ProjectStat + ProjectDiff in statistics.py** — dataclass for project metrics snapshot + calculator for absolute diffs (score, density, rp, op) used by diff reporters and compare CLI
+- **ProjectStat + ProjectDiff in statistics.py** — dataclass for project metrics snapshot + calculator for directional diffs (current - baseline); sign matters — positive means current is higher; used by diff reporters and compare CLI
 - **Threshold supports imbalance checking via `abs(RP - OP)`** — `imbalance` threshold field validates balance between refactoring and overengineering pressure; uses key `IMB=` in CLI string format
 
 ## Project Structure

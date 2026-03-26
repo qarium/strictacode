@@ -171,7 +171,7 @@ def compare(baseline: str, current: str, threshold: str | None, details: bool, o
         refactoring_pressure=current_data["project"]["refactoring_pressure"]["score"],
         overengineering_pressure=current_data["project"]["overengineering_pressure"]["score"],
     )
-    project_diff = ProjectDiff(baseline_stat, current_stat)
+    project_diff = ProjectDiff(current_stat, baseline_stat)
 
     format_to_reporter = {
         "text": TextDiffReporter,

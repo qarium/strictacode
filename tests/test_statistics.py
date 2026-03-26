@@ -52,17 +52,17 @@ class TestProjectDiff:
             overengineering_pressure=7,
         )
 
-    def test_score_diff(self, stat_a, stat_b):
+    def test_score_diff_directional(self, stat_a, stat_b):
         diff = ProjectDiff(stat_a, stat_b)
-        assert diff.score == 10
+        assert diff.score == -10
 
-    def test_score_diff_absolute(self, stat_a, stat_b):
+    def test_score_diff_reversed(self, stat_a, stat_b):
         diff = ProjectDiff(stat_b, stat_a)
         assert diff.score == 10
 
-    def test_complexity_density_diff(self, stat_a, stat_b):
+    def test_complexity_density_diff_directional(self, stat_a, stat_b):
         diff = ProjectDiff(stat_a, stat_b)
-        assert diff.complexity_density == 2.5
+        assert diff.complexity_density == -2.5
 
     def test_complexity_density_rounded(self, stat_a, stat_b):
         stat_b_rated = ProjectStat(
@@ -73,15 +73,15 @@ class TestProjectDiff:
             overengineering_pressure=7,
         )
         diff = ProjectDiff(stat_a, stat_b_rated)
-        assert diff.complexity_density == 0.12
+        assert diff.complexity_density == -0.12
 
-    def test_refactoring_pressure_diff(self, stat_a, stat_b):
+    def test_refactoring_pressure_diff_directional(self, stat_a, stat_b):
         diff = ProjectDiff(stat_a, stat_b)
         assert diff.refactoring_pressure == 4
 
-    def test_overengineering_pressure_diff(self, stat_a, stat_b):
+    def test_overengineering_pressure_diff_directional(self, stat_a, stat_b):
         diff = ProjectDiff(stat_a, stat_b)
-        assert diff.overengineering_pressure == 4
+        assert diff.overengineering_pressure == -4
 
     def test_stat_properties(self, stat_a, stat_b):
         diff = ProjectDiff(stat_a, stat_b)
