@@ -11,6 +11,7 @@ class Language(str, Enum):
     GOLANG = "golang"
     PYTHON = "python"
     JAVASCRIPT = "javascript"
+    KOTLIN = "kotlin"
 
 
 @dataclass(kw_only=True)
