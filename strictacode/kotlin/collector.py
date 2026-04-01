@@ -39,8 +39,20 @@ fun collectKtFiles(root: File): List<File> {
 // BRACE BALANCING — find block range
 // startIdx is 0-based line index where the declaration starts.
 // Returns 1-based endline.
+// If expression body (= without {), returns startIdx + 1.
 // ==============================
 fun findBlockRange(lines: List<String>, startIdx: Int): Int {
+    val line = lines[startIdx]
+    // Check for expression body: fun foo(...) = expr  (no brace on same line)
+    if (!line.contains("{")) {
+        // Look for = outside of parameter list
+        val eqIdx = line.indexOf('=')
+        if (eqIdx > 0 && line.substring(eqIdx - 1, eqIdx) != "=" && line.substring(eqIdx + 1).trim().isNotEmpty()) {
+            // expression body, single line
+            return startIdx + 1
+        }
+    }
+
     var depth = 0
     var foundOpen = false
     for (i in startIdx until lines.size) {
@@ -60,7 +72,6 @@ fun findBlockRange(lines: List<String>, startIdx: Int): Int {
                         if (j + 1 < lines[i].length) {
                             val next = lines[i][j + 1]
                             if (next == '/') break  // line comment, skip rest
-                            // don't handle block comments for simplicity
                         }
                     }
                     '{' -> { depth++; foundOpen = true }
@@ -76,13 +87,15 @@ fun findBlockRange(lines: List<String>, startIdx: Int): Int {
 
 // ==============================
 // MCCABE COMPLEXITY
+// skipRanges: 0-based line ranges to skip (e.g. closure bodies)
 // ==============================
-fun mccabeComplexity(lines: List<String>, startLine: Int, endLine: Int): Int {
+fun mccabeComplexity(lines: List<String>, startLine: Int, endLine: Int, skipRanges: List<Pair<Int, Int>> = emptyList()): Int {
     var complexity = 1
     for (i in (startLine - 1) until endLine) {
         if (i >= lines.size) break
+        // Skip lines that belong to nested closures
+        if (skipRanges.any { (s, e) -> i >= s && i < e }) continue
         val line = lines[i]
-        // Count when branches: lines with "->" that aren't comments
         val trimmed = line.trim()
         if (trimmed.startsWith("//")) continue
 
@@ -92,8 +105,10 @@ fun mccabeComplexity(lines: List<String>, startLine: Int, endLine: Int): Int {
         complexity += Regex("\\bcatch\\b").findAll(line).count()
         complexity += Regex("&&").findAll(line).count()
         complexity += Regex("\\|\\|").findAll(line).count()
-        // when branches: each "->" arrow on its own line
-        if (trimmed.contains("->") && !trimmed.startsWith("when") && !trimmed.startsWith("//")) {
+        // when branches: lines like "value ->" or "else ->"
+        // but NOT lambda arrows like "x: Int ->" or "{ x ->"
+        if (trimmed.contains("->") && !trimmed.startsWith("when") && !trimmed.startsWith("//")
+            && !trimmed.contains("{") && !trimmed.startsWith("val") && !trimmed.startsWith("var")) {
             complexity++
         }
     }
@@ -215,8 +230,9 @@ fun parseFile(file: File, rootPath: String): List<Map<String, Any>> {
             if (methodMatch != null) {
                 val methodName = methodMatch.groupValues[1]
                 val methodEnd = findBlockRange(lines, i)
-                val methodComplexity = mccabeComplexity(lines, i + 1, methodEnd)
                 val closures = extractClosures(lines, i + 1, methodEnd)
+                val closureRanges = closures.map { (it["lineno"] as Int - 1) to (it["endline"] as Int) }
+                val methodComplexity = mccabeComplexity(lines, i + 1, methodEnd, closureRanges)
                 classComplexity += methodComplexity
 
                 methods.add(mapOf(
@@ -255,8 +271,9 @@ fun parseFile(file: File, rootPath: String): List<Map<String, Any>> {
             if ("{" in lines[l]) { hasBody = true; break }
             if ("=" in lines[l] && "{" !in lines[l]) break
         }
-        val complexity = if (hasBody) mccabeComplexity(lines, i + 1, endline) else 1
         val closures = if (hasBody) extractClosures(lines, i + 1, endline) else emptyList()
+        val closureRanges = closures.map { (it["lineno"] as Int - 1) to (it["endline"] as Int) }
+        val complexity = if (hasBody) mccabeComplexity(lines, i + 1, endline, closureRanges) else 1
 
         result.add(mapOf(
             "type" to "function",
