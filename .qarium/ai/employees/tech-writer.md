@@ -29,6 +29,7 @@
 | `strictacode/py/**/*.py`        | `docs/getting-started.md`, `docs/configuration.md`, `docs/index.md`                   |
 | `strictacode/go/**/*`           | `docs/getting-started.md`, `docs/configuration.md`, `docs/index.md`                   |
 | `strictacode/js/**/*`           | `docs/getting-started.md`, `docs/configuration.md`, `docs/index.md`                   |
+| `strictacode/kotlin/**/*`       | `docs/getting-started.md`, `docs/configuration.md`, `docs/index.md`                   |
 | `strictacode/skill.py`          | —                                                                                     |
 | `strictacode/utils.py`          | —                                                                                     |
 | `strictacode/__init__.py`       | —                                                                                     |

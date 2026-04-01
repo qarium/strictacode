@@ -13,6 +13,7 @@ The project language. If not specified, it is detected automatically.
 | `python`      | Python      |
 | `golang`      | Go          |
 | `javascript`  | JavaScript  |
+| `kotlin`      | Kotlin      |
 
 ### loader.include
 

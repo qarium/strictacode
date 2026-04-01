@@ -8,7 +8,7 @@ Strictacode identifies your project's pain points: spaghetti code, overengineeri
 
 ## Supported Languages
 
-Golang · Python · JavaScript
+Golang · Python · JavaScript · Kotlin
 
 ## Quick Start
 
