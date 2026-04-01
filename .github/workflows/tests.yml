@@ -106,9 +106,10 @@ jobs:
 
       - name: Install Kotlin ${{ matrix.kotlin-version }}
         run: |
+          KOTLIN_HOME="$RUNNER_TEMP/kotlinc"
           curl -L https://github.com/JetBrains/kotlin/releases/download/v${{ matrix.kotlin-version }}/kotlin-compiler-${{ matrix.kotlin-version }}.zip -o kotlinc.zip
-          unzip kotlinc.zip
-          echo "$PWD/kotlinc/bin" >> $GITHUB_PATH
+          unzip kotlinc.zip -d "$RUNNER_TEMP"
+          echo "$KOTLIN_HOME/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: |
