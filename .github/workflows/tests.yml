@@ -96,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kotlin-version: ["2.0.20", "2.0.21", "2.1.0"]
+        kotlin-version: ["2.0.20", "2.0.21", "2.1.0", "2.2.21", "2.3.20"]
     steps:
       - uses: actions/checkout@v4
 
