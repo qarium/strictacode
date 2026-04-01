@@ -89,7 +89,12 @@ fun findBlockRange(lines: List<String>, startIdx: Int): Int {
 // MCCABE COMPLEXITY
 // skipRanges: 0-based line ranges to skip (e.g. closure bodies)
 // ==============================
-fun mccabeComplexity(lines: List<String>, startLine: Int, endLine: Int, skipRanges: List<Pair<Int, Int>> = emptyList()): Int {
+fun mccabeComplexity(
+    lines: List<String>,
+    startLine: Int,
+    endLine: Int,
+    skipRanges: List<Pair<Int, Int>> = emptyList()
+): Int {
     var complexity = 1
     for (i in (startLine - 1) until endLine) {
         if (i >= lines.size) break
@@ -348,9 +353,7 @@ def collect(path: str) -> dict:
 
     if result.returncode != 0:
         if "kotlinc" in result.stderr.lower() or "not found" in result.stderr.lower():
-            raise RuntimeError(
-                "kotlinc not found. Install Kotlin SDK: https://kotlinlang.org/docs/command-line.html"
-            )
+            raise RuntimeError("kotlinc not found. Install Kotlin SDK: https://kotlinlang.org/docs/command-line.html")
         raise RuntimeError(result.stderr)
 
     return json.loads(result.stdout)

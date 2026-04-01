@@ -41,9 +41,7 @@ class TestCreateItem:
         from strictacode.kotlin.loader import _create_item
         from strictacode.loader import FileItemTypes
 
-        item = _create_item(
-            type="function", name="init", lineno=5, endline=10, complexity=2, methods=[], closures=[]
-        )
+        item = _create_item(type="function", name="init", lineno=5, endline=10, complexity=2, methods=[], closures=[])
         assert item.type == FileItemTypes.FUNCTION
 
     def test_creates_method_item(self):

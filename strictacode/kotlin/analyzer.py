@@ -217,9 +217,7 @@ def analyze(path: str) -> dict:
 
     if result.returncode != 0:
         if "kotlinc" in result.stderr.lower() or "not found" in result.stderr.lower():
-            raise RuntimeError(
-                "kotlinc not found. Install Kotlin SDK: https://kotlinlang.org/docs/command-line.html"
-            )
+            raise RuntimeError("kotlinc not found. Install Kotlin SDK: https://kotlinlang.org/docs/command-line.html")
         raise RuntimeError(result.stderr)
 
     return json.loads(result.stdout)
