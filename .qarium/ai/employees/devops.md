@@ -15,7 +15,7 @@
 | Workflow    | File                                | Trigger           | Purpose                       |
 |-------------|-------------------------------------|-------------------|-------------------------------|
 | Lint        | `.github/workflows/lint.yml`        | push/PR to master | ruff check + format           |
-| Tests       | `.github/workflows/tests.yml`       | push/PR to master | pytest + go + js matrix       |
+| Tests       | `.github/workflows/tests.yml`       | push/PR to master | pytest + go + js + kotlin matrix |
 | Docs        | `.github/workflows/docs.yml`        | push to master    | mkdocs gh-deploy              |
 | Publish     | `.github/workflows/publish.yml`     | tag v*            | PyPI release                  |
 | Strictacode | `.github/workflows/strictacode.yml` | push/PR to master | strictacode analyze + compare |
