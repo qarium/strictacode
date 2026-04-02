@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
+# AGENT: добавь докстринг к функции
 def lines_of_code(
     file_path: str,
     *,
@@ -13,6 +14,24 @@ def lines_of_code(
     ignore_prefixes: list[str] | None = None,
     ignore_blocks: list[tuple[str, str]] | None = None,
 ) -> int:
+    """Count non-blank lines of code in a file.
+
+    Optionally limits the range and skips lines matching
+    configurable prefixes or block markers.
+
+    Args:
+        file_path: Path to the source file.
+        lineno: Starting line number (1-based). Counts from the
+            beginning if None.
+        endline: Ending line number (1-based). Counts to the end
+            if None.
+        ignore_prefixes: Line prefixes to skip (e.g. comments).
+        ignore_blocks: Tuples of (start_marker, end_marker) defining
+            blocks to skip entirely.
+
+    Returns:
+        Number of non-blank, non-ignored lines.
+    """
     line_count = 0
     line_number = 0
     ignore_blocks = ignore_blocks or []
@@ -58,7 +77,18 @@ def lines_of_code(
     return line_count
 
 
+# AGENT: добавь докстринг к функции
 def _parse_gitignore(project_path):
+    """Parse .gitignore into a list of pattern strings.
+
+    Skips blank lines and comment lines (starting with ``#``).
+
+    Args:
+        project_path: Absolute or relative path to the project root.
+
+    Returns:
+        List of patterns, or an empty list if .gitignore is missing.
+    """
     gitignore_path = os.path.join(project_path, ".gitignore")
 
     if not os.path.isfile(gitignore_path):
@@ -75,7 +105,20 @@ def _parse_gitignore(project_path):
     return patterns
 
 
+# AGENT: добавь докстринг к функции
 def _should_exclude(name, patterns):
+    """Check whether *name* matches any of the given patterns.
+
+    Directory patterns (ending with ``/``) are matched without the
+    trailing slash.
+
+    Args:
+        name: File or directory name to check.
+        patterns: Glob patterns, typically from ``.gitignore``.
+
+    Returns:
+        True if *name* matches at least one pattern.
+    """
     for pattern in patterns:
         if pattern.endswith("/"):
             pattern = pattern[:-1]
@@ -86,7 +129,21 @@ def _should_exclude(name, patterns):
     return False
 
 
+# AGENT: добавь докстринг к функции
 def ignore_dirs(path, *, exclude_patterns: list[str] | None = None):
+    """Recursively collect directories excluded by .gitignore patterns.
+
+    If *exclude_patterns* is None the patterns are read from
+    ``.gitignore`` in *path*.
+
+    Args:
+        path: Root directory to walk.
+        exclude_patterns: Explicit glob patterns. Read from .gitignore
+            when None.
+
+    Returns:
+        Flat list of excluded directory paths (relative to *path*).
+    """
     exclude_patterns = _parse_gitignore(path) if exclude_patterns is None else exclude_patterns
 
     exclude_dirs = []
@@ -103,7 +160,18 @@ def ignore_dirs(path, *, exclude_patterns: list[str] | None = None):
     return exclude_dirs
 
 
+# AGENT: добавь докстринг к функции
 def source_content(filepath: str, lineno: int, endline: int) -> str:
+    """Read a range of lines from a source file.
+
+    Args:
+        filepath: Path to the file.
+        lineno: Starting line number (1-based, inclusive).
+        endline: Ending line number (1-based, inclusive).
+
+    Returns:
+        Joined lines within the specified range.
+    """
     with open(filepath, encoding="utf-8") as file:
         lines = []
         line_number = 0
@@ -121,7 +189,19 @@ def source_content(filepath: str, lineno: int, endline: int) -> str:
         return "\n".join(lines)
 
 
+# AGENT: добавь докстринг к функции
 def detect_languages(path):
+    """Detect all programming languages present in a directory tree.
+
+    Walks the tree respecting .gitignore and identifies languages
+    by file extension (``.py``, ``.go``, ``.js``/``.ts``, ``.kt``).
+
+    Args:
+        path: Root directory to scan.
+
+    Returns:
+        List of language name strings (e.g. ``["python", "kotlin"]``).
+    """
     languages = set()
     exclude_patterns = _parse_gitignore(path)
 
@@ -143,7 +223,19 @@ def detect_languages(path):
     return list(languages)
 
 
+# AGENT: добавь докстринг к функции
 def detect_language(path):
+    """Detect the dominant programming language in a directory tree.
+
+    Counts files by extension (respecting .gitignore) and returns
+    the language with the most files.
+
+    Args:
+        path: Root directory to scan.
+
+    Returns:
+        Language name string, or None if no recognised files found.
+    """
     exclude_patterns = _parse_gitignore(path)
 
     lang_counts = {}
@@ -171,6 +263,15 @@ def detect_language(path):
 
 @contextmanager
 def redirect_output(output: str):
+    """Redirect stdout and stderr to a file.
+
+    Opens the file at ``output`` for writing and replaces
+    ``sys.stdout`` and ``sys.stderr`` with the file object.
+    Restores the original streams after exiting the context.
+
+    Args:
+        output: Path to the file where stdout and stderr will be written.
+    """
     stderr = sys.stderr
     stdout = sys.stdout
 
