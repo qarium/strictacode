@@ -54,7 +54,7 @@ runs:
       run: |
         BASE_REF="${PUSH_BASE:-${PR_BASE}}"
         BRANCH="${BASE_REF#refs/heads/}"
-        [ -z "$BRANCH" ] && BRANCH=$(git rev-parse --verify origin/main >/dev/null 2>&1 && echo "main" || echo "master")
+        [ -z "$BRANCH" ] && BRANCH="${{ github.event.repository.default_branch }}"
         echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
         echo "default_branch=${BRANCH}" >> "$GITHUB_OUTPUT"
 
