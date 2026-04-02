@@ -5,7 +5,7 @@
 | Key            | Value          | Description                      |
 |----------------|----------------|----------------------------------|
 | ci_provider    | github-actions | CI provider                      |
-| trigger_branch | master         | Default branch for triggers      |
+| trigger_branch | 0.0.x          | Default branch for triggers      |
 | diff_range     | HEAD~5         | Git diff range for auto-analysis |
 
 ## Rules
@@ -19,6 +19,7 @@
 | Docs        | `.github/workflows/docs.yml`        | push to master    | mkdocs gh-deploy              |
 | Publish     | `.github/workflows/publish.yml`     | tag v*            | PyPI release                  |
 | Strictacode | `.github/workflows/strictacode.yml` | push/PR to master | strictacode analyze + compare |
+| New Version | `.github/workflows/new_version.yml` | workflow_dispatch | Create minor/major version branch |
 
 ### Conventions
 

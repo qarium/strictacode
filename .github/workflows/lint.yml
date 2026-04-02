@@ -3,10 +3,10 @@ name: Lint
 on:
   push:
     branches:
-      - master
+      - 0.0.x
   pull_request:
     branches:
-      - master
+      - 0.0.x
 
 jobs:
   ruff:
