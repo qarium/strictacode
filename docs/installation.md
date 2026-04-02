@@ -12,6 +12,7 @@ Strictacode analyzes code written in:
   ```bash
   npm install -g @babel/parser @babel/traverse
   ```
+- **Kotlin** — requires `kotlinc` binary in `PATH`
 
 ## Install from PyPI
 

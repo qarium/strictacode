@@ -21,6 +21,7 @@ Project-specific testing configuration. Used by the `employees-qa-feature` skill
 | `strictacode/__main__.py`       | `tests/cli/`       | CLI commands                     |
 | `strictacode/go/**/*`           | `tests/go/`        | Go loader and integration tests  |
 | `strictacode/js/**/*`           | `tests/js/`        | JS loader and integration tests  |
+| `strictacode/kotlin/**/*`       | `tests/kotlin/`    | Kotlin loader and integration tests |
 | `strictacode/py/**/*.py`        | `tests/py/`        | Python loader tests              |
 | `strictacode/calc/**/*.py`      | `tests/calc/`      | Calculation modules              |
 | `strictacode/reporters/**/*.py` | `tests/reporters/` | `test_result.py`, `test_diff.py` |
@@ -41,6 +42,8 @@ Coverage: exit codes, stdout/stderr output, flag combinations, error messages on
 |-----------------------------|----------------------------------------------------------------------|
 | Go subprocess collector     | `@patch("strictacode.go.collector.collect")`                         |
 | Go subprocess analyzer      | `@patch("strictacode.go.analyzer.analyze")`                          |
+| Kotlin subprocess collector | `@patch("strictacode.kotlin.collector.collect")`                     |
+| Kotlin subprocess analyzer  | `@patch("strictacode.kotlin.analyzer.analyze")`                      |
 | Python subprocess collector | `@patch("strictacode.py.collector.collect")`                         |
 | Skill installation          | `monkeypatch.setattr("strictacode.__main__.skill.install", mock_fn)` |
 
@@ -54,12 +57,13 @@ Coverage: exit codes, stdout/stderr output, flag combinations, error messages on
 | `_single_func(tmp_path, code)`     | `tests/js/`   | Write single JS file and return collect() result |
 | `_make_radon_json(root, filename)` | `tests/py/`   | Create radon-like JSON structure for mocks       |
 | `_make_go_collector_json(root)`    | `tests/go/`   | Create go-collector-like JSON for mocks          |
+| `_make_kotlin_collector_json(root)` | `tests/kotlin/` | Create Kotlin-collector-like JSON for mocks    |
 
 ### Conventions
 
 - `# boundary: ...` comments at threshold transition edges in parametrize tables
 - Never mock `builtins.open` — use `tmp_path` fixture instead
-- Integration tests use `pytest.mark.skipif` when Go/Node.js is unavailable
+- Integration tests use `pytest.mark.skipif` when Go/Node.js/Kotlin SDK is unavailable
 
 ## Lessons
 

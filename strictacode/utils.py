@@ -137,6 +137,8 @@ def detect_languages(path):
                 languages.add("golang")
             elif ext in (".js", ".ts"):
                 languages.add("javascript")
+            elif ext == ".kt":
+                languages.add("kotlin")
 
     return list(languages)
 
@@ -158,6 +160,8 @@ def detect_language(path):
                 lang_counts["golang"] = lang_counts.get("golang", 0) + 1
             elif ext in (".js", ".ts"):
                 lang_counts["javascript"] = lang_counts.get("javascript", 0) + 1
+            elif ext == ".kt":
+                lang_counts["kotlin"] = lang_counts.get("kotlin", 0) + 1
 
     if not lang_counts:
         return None

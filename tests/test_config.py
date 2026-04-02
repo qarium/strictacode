@@ -14,6 +14,7 @@ class TestLanguage:
         assert Language.GOLANG == "golang"
         assert Language.PYTHON == "python"
         assert Language.JAVASCRIPT == "javascript"
+        assert Language.KOTLIN == "kotlin"
 
     def test_is_str_enum(self):
         """Language inherits from both str and Enum, so comparison with plain
@@ -24,6 +25,7 @@ class TestLanguage:
     def test_from_string(self):
         assert Language("python") is Language.PYTHON
         assert Language("javascript") is Language.JAVASCRIPT
+        assert Language("kotlin") is Language.KOTLIN
 
 
 # ---------------------------------------------------------------------------

@@ -1,8 +1,10 @@
 import json
 import textwrap
+from unittest.mock import patch
 
 from click.testing import CliRunner
 from strictacode.__main__ import app
+from strictacode.kotlin import KotlinLoder
 
 runner = CliRunner()
 
@@ -217,3 +219,30 @@ class TestAnalyzeCommand:
         assert result.exit_code == 0
         assert "Project:" in result.output
         assert "python" in result.output.lower()
+
+
+class TestAnalyzeKotlin:
+    def test_kotlin_in_loader_map(self):
+        """KotlinLoder should be importable and Language.KOTLIN should exist."""
+        from strictacode.config import Language
+
+        assert KotlinLoder is not None
+        assert Language.KOTLIN.value == "kotlin"
+
+    @patch("strictacode.kotlin.collector.collect")
+    @patch("strictacode.kotlin.analyzer.analyze")
+    def test_kotlin_receives_class_loc_from_methods(self, mock_analyze, mock_collect, tmp_path):
+        """Kotlin should receive class_loc_from_methods=True like Go."""
+        mock_collect.return_value = {}
+        mock_analyze.return_value = {"nodes": [], "edges": []}
+        (tmp_path / "Main.kt").write_text("class App\n")
+
+        with patch("strictacode.__main__.KotlinLoder", wraps=KotlinLoder) as SpyLoader:
+            result = runner.invoke(
+                app,
+                ["analyze", str(tmp_path), "--format", "json", "--short"],
+            )
+        assert result.exit_code == 0
+        SpyLoader.assert_called_once()
+        call_kwargs = SpyLoader.call_args[1]
+        assert call_kwargs.get("class_loc_from_methods") is True

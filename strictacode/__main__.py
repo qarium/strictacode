@@ -8,6 +8,7 @@ from strictacode.analyzer import Analyzer
 from strictacode.config import Config, Language
 from strictacode.go import GoLoder
 from strictacode.js import JSLoder
+from strictacode.kotlin import KotlinLoder
 from strictacode.py import PyLoder
 from strictacode.reporters import (
     JsonDiffReporter,
@@ -74,6 +75,7 @@ def analyze(
         Language.GOLANG: GoLoder,
         Language.PYTHON: PyLoder,
         Language.JAVASCRIPT: JSLoder,
+        Language.KOTLIN: KotlinLoder,
     }
     loader_options = {}
 
@@ -84,7 +86,7 @@ def analyze(
     if config.lang is None:
         raise click.UsageError("Unknown program language")
 
-    if config.lang == Language.GOLANG:
+    if config.lang in (Language.GOLANG, Language.KOTLIN):
         loader_options["class_loc_from_methods"] = True
 
     if config.loader.include is not None:

@@ -285,6 +285,11 @@ class TestDetectLanguages:
         langs = detect_languages(str(tmp_path))
         assert "javascript" in langs
 
+    def test_kotlin_files_detected(self, tmp_path):
+        (tmp_path / "App.kt").write_text("fun main() {}\n")
+        result = detect_languages(str(tmp_path))
+        assert "kotlin" in result
+
 
 # ---------------------------------------------------------------------------
 # detect_language
