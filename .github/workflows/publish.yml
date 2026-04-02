@@ -79,60 +79,87 @@ jobs:
           NEW_TAG: ${{ steps.meta.outputs.new_tag }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          # Save diff to files (only package source)
-          git diff --stat "$PREV_TAG" HEAD -- strictacode/ > /tmp/diff_stat.txt
-          git diff "$PREV_TAG" HEAD -- strictacode/ > /tmp/diff.txt
+          # Collect changes
+          git log "$PREV_TAG"..HEAD --format="- %s" > /tmp/commits.txt
+          git diff --stat "$PREV_TAG" HEAD > /tmp/diff_stat.txt
+          git diff "$PREV_TAG" HEAD -- strictacode/ > /tmp/diff_code.txt
+          git diff "$PREV_TAG" HEAD -- docs/ > /tmp/diff_docs.txt
 
-          # Truncate diff if needed
-          if [ "$(wc -c < /tmp/diff.txt)" -gt 8000 ]; then
-            head -c 8000 /tmp/diff.txt > /tmp/diff_trimmed.txt
-            printf '\n... (diff truncated)' >> /tmp/diff_trimmed.txt
-            mv /tmp/diff_trimmed.txt /tmp/diff.txt
+          # Truncate code diff if needed
+          if [ "$(wc -c < /tmp/diff_code.txt)" -gt 8000 ]; then
+            head -c 8000 /tmp/diff_code.txt > /tmp/diff_code_trimmed.txt
+            printf '\n... (truncated)' >> /tmp/diff_code_trimmed.txt
+            mv /tmp/diff_code_trimmed.txt /tmp/diff_code.txt
+          fi
+
+          # Truncate docs diff if needed
+          if [ "$(wc -c < /tmp/diff_docs.txt)" -gt 4000 ]; then
+            head -c 4000 /tmp/diff_docs.txt > /tmp/diff_docs_trimmed.txt
+            printf '\n... (truncated)' >> /tmp/diff_docs_trimmed.txt
+            mv /tmp/diff_docs_trimmed.txt /tmp/diff_docs.txt
           fi
 
           # Check empty diff
-          if [ ! -s /tmp/diff.txt ]; then
+          if [ ! -s /tmp/diff_code.txt ] && [ ! -s /tmp/diff_docs.txt ]; then
             echo "No diff found, skipping release notes generation"
             echo "Release $NEW_TAG" > release_notes.md
             exit 0
           fi
 
-          # Build prompt file
-          python3 -c "
+          # Build prompt
+          python3 << 'PYEOF'
           import os
           new_tag = os.environ['NEW_TAG']
           repo = os.environ.get('REPO_NAME', 'project')
-          with open('/tmp/diff_stat.txt') as f: stat = f.read()
-          with open('/tmp/diff.txt') as f: diff = f.read()
-          prompt = f'''You are a DevOps engineer for the {repo} project. Based on the code diff between releases, generate Release Notes in English.
 
-          Format (strictly follow):
-          ## What is new in {new_tag}
+          def read(path):
+              try:
+                  with open(path) as f:
+                      return f.read()
+              except FileNotFoundError:
+                  return ""
 
-          ### Added
-          - description of new features
+          commits = read('/tmp/commits.txt')
+          stat = read('/tmp/diff_stat.txt')
+          code_diff = read('/tmp/diff_code.txt')
+          docs_diff = read('/tmp/diff_docs.txt')
 
-          ### Fixed
-          - description of bug fixes
-
-          ### Changed
-          - description of behavior changes
-
-          Rules:
-          - Analyze the ACTUAL code in the diff, not just commit messages
-          - Describe each change in a single line, concise and technically accurate
-          - Maximum 3 items per section, only the most important changes
-          - If a section is empty - do not include it
-          - Do not add sections not present in the template
-          - Do not write introductory text, start directly with the heading
-
-          Diff stats:
-          {stat}
-
-          Diff:
-          {diff}'''
-          with open('/tmp/prompt.txt', 'w') as f: f.write(prompt)
-          "
+          parts = [
+              f"You are a DevOps engineer for the {repo} project.",
+              "Generate Release Notes in English by following these steps:\n",
+              "Step 1. Read the documentation changes to understand context.",
+              "<docs_changes>",
+              docs_diff,
+              "</docs_changes>\n",
+              "Step 2. Review commit messages.",
+              "<commits>",
+              commits,
+              "</commits>\n",
+              "Step 3. Review the code changes.",
+              "<diff_stats>",
+              stat,
+              "</diff_stats>",
+              "<code_changes>",
+              code_diff,
+              "</code_changes>\n",
+              f"Step 4. Generate Release Notes in this exact format:",
+              f"## What is new in {new_tag}\n",
+              "### Features",
+              "- description of new features and improvements\n",
+              "### Fixes",
+              "- description of bug fixes\n",
+              "Rules:",
+              "- Group related changes into a single bullet point",
+              "- Describe each change in one line, concise and technically accurate",
+              "- Maximum 3 items per section, only the most important changes",
+              "- If a section is empty - do not include it",
+              "- Do not add sections not present in the template",
+              "- Start directly with the heading, no introductory text",
+              "- Output ONLY the release notes, nothing else",
+          ]
+          with open('/tmp/prompt.txt', 'w') as f:
+              f.write('\n'.join(parts))
+          PYEOF
 
           # Run claude-code
           npx @anthropic-ai/claude-code -p "$(cat /tmp/prompt.txt)" \
