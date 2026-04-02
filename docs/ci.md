@@ -40,7 +40,7 @@ jobs:
 1. **All branches** — runs `strictacode analyze` with `--details` and optional absolute thresholds (`STRICTACODE_*`)
 2. **Non-default branches only** — compares current code against the default branch with optional diff thresholds (`STRICTACODE_*_DIFF`)
 
-The default branch is detected from the GitHub event context (`github.event.base_ref` for push, `github.event.base.ref` for pull requests).
+The default branch is detected from the GitHub event context (`github.event.base_ref` for push, `github.event.base.ref` for pull requests), with a fallback to `github.event.repository.default_branch`.
 
 ### Threshold Variables
 
