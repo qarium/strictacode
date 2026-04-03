@@ -89,10 +89,7 @@ def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
 
 def _is_interface(node: t.Any) -> bool:
     """Check if a class_declaration node is actually an interface."""
-    for child in node.children:
-        if not child.is_named and child.type == "interface":
-            return True
-    return False
+    return any(not child.is_named and child.type == "interface" for child in node.children)
 
 
 def _is_enum(node: t.Any) -> bool:

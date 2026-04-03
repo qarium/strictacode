@@ -56,15 +56,7 @@ def _extract_declarations(filepath: str) -> list[tuple[str, list[str]]]:
     decls: list[tuple[str, list[str]]] = []
 
     for child in root.children:
-        if child.type == "class_declaration":
-            name_node = child.child_by_field_name("name")
-
-            if name_node:
-                name = name_node.text.decode()
-                supers = _extract_supers(child)
-                decls.append((name, supers))
-
-        elif child.type == "object_declaration":
+        if child.type in ("class_declaration", "object_declaration"):
             name_node = child.child_by_field_name("name")
 
             if name_node:
