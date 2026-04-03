@@ -5,6 +5,15 @@ from . import analyzer, collector
 
 
 def _create_item(**kwargs) -> FileItem:
+    """Recursively build a FileItem from a raw metric dictionary.
+
+    Args:
+        **kwargs: Metric fields (type, name, lineno, endline, complexity,
+            classname, methods, closures).
+
+    Returns:
+        Populated FileItem instance.
+    """
     return FileItem(
         type=kwargs["type"],
         name=kwargs["name"],
@@ -26,6 +35,12 @@ class KotlinLoder(Loader):
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:
+        """Collect metrics from Kotlin source files.
+
+        Returns:
+            Mapping of relative file paths to lists of FileItem instances,
+            sorted with classes before functions.
+        """
         data = collector.collect(self.root)
 
         metrics = {}
@@ -40,6 +55,11 @@ class KotlinLoder(Loader):
         return metrics
 
     def build(self):
+        """Build the inheritance graph from analyzer output.
+
+        Adds nodes and edges for types whose source files are among
+        the collected modules.
+        """
         data = analyzer.analyze(self.root)
         nodes = data.get("nodes", [])
         edges = data.get("edges", [])
