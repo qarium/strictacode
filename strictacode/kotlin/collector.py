@@ -349,14 +349,17 @@ def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity
             return
 
     # Standard decision nodes + catch_block
-    decision_types = constants.DECISION_NODES | {
-        "catch_block",
-        constants.CONJUNCTION,
-        constants.DISJUNCTION,
-    }
+    decision_types = constants.DECISION_NODES | {"catch_block"}
 
     if node.type in decision_types:
         complexity_ref[0] += 1
+
+    # binary_expression with && or || operator
+    if node.type == constants.BINARY_EXPRESSION:
+        for child in node.children:
+            if not child.is_named and child.type in constants.LOGICAL_OPS:
+                complexity_ref[0] += 1
+                break
 
     # when_entry: +1 for each non-else entry
     if node.type == constants.WHEN_ENTRY:

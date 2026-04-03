@@ -21,6 +21,6 @@ DECISION_NODES: t.Final[frozenset[str]] = frozenset({
 # When expression entries — each non-else when_entry adds +1
 WHEN_ENTRY: t.Final[str] = "when_entry"
 
-# Binary expression types that add complexity
-CONJUNCTION: t.Final[str] = "conjunction_expression"  # &&
-DISJUNCTION: t.Final[str] = "disjunction_expression"  # ||
+# Binary expression with logical operators adds complexity
+BINARY_EXPRESSION: t.Final[str] = "binary_expression"
+LOGICAL_OPS: t.Final[frozenset[str]] = frozenset({"&&", "||"})
