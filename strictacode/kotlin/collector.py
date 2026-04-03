@@ -178,9 +178,12 @@ def _parse_type_declaration(node: t.Any) -> dict[str, t.Any] | None:
         return None
 
     name = name_node.text.decode()
+
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
+
     body_node = _extract_type_body(node, ("class_body",)) if _is_interface(node) else _extract_type_body(node)
+
     methods = _extract_methods(body_node, name) if body_node else []
 
     return {
@@ -209,8 +212,10 @@ def _parse_toplevel_function(node: t.Any) -> dict[str, t.Any] | None:
         return None
 
     name = name_node.text.decode()
+
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
+
     body_node = _get_function_body(node)
     closures, complexity = _compute_body_metrics(body_node)
 
@@ -241,8 +246,10 @@ def _parse_method(node: t.Any, classname: str) -> dict[str, t.Any] | None:
         return None
 
     name = name_node.text.decode()
+
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
+
     body_node = _get_function_body(node)
     closures, complexity = _compute_body_metrics(body_node)
 
@@ -287,6 +294,7 @@ def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> N
 
     if node.type == "lambda_literal":
         name = _find_closure_name(node)
+
         lineno = node.start_point[0] + 1
         endline = node.end_point[0] + 1
 
