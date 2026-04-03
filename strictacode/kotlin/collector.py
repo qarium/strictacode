@@ -34,7 +34,14 @@ def collect(path: str) -> dict[str, list[dict[str, t.Any]]]:
 
 
 def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
-    """Parse a single Kotlin file and extract type, function, and closure metrics."""
+    """Parse a single Kotlin file and extract type, function, and closure metrics.
+
+    Args:
+        filepath: Absolute path to the Kotlin source file.
+
+    Returns:
+        List of metric dictionaries for classes, objects, and top-level functions.
+    """
     with open(filepath, "rb") as f:
         source = f.read()
 
@@ -57,12 +64,27 @@ def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
 
 
 def _is_interface(node: t.Any) -> bool:
-    """Check if a class_declaration node is actually an interface."""
+    """Check if a class_declaration node is actually an interface.
+
+    Args:
+        node: A tree-sitter class_declaration AST node.
+
+    Returns:
+        True if the node has an unnamed ``interface`` token child.
+    """
     return any(not child.is_named and child.type == "interface" for child in node.children)
 
 
 def _get_function_body(node: t.Any) -> t.Any | None:
-    """Get the function_body child node from a function_declaration."""
+    """Get the function_body child node from a function_declaration.
+
+    Args:
+        node: A tree-sitter function_declaration AST node.
+
+    Returns:
+        The block node inside function_body, the function_body itself for
+        expression bodies, or None if absent.
+    """
     for child in node.children:
         if child.type == "function_body":
             for inner in child.children:
@@ -73,7 +95,15 @@ def _get_function_body(node: t.Any) -> t.Any | None:
 
 
 def _extract_type_body(node: t.Any, body_types: tuple[str, ...] = ("class_body", "enum_class_body")) -> t.Any | None:
-    """Find the body node matching one of the given types."""
+    """Find the body node matching one of the given types.
+
+    Args:
+        node: A tree-sitter AST node to search children of.
+        body_types: Tuple of node type strings to match.
+
+    Returns:
+        The first matching child node, or None.
+    """
     for child in node.children:
         if child.type in body_types:
             return child
@@ -81,7 +111,15 @@ def _extract_type_body(node: t.Any, body_types: tuple[str, ...] = ("class_body",
 
 
 def _extract_methods(body_node: t.Any, classname: str) -> list[dict[str, t.Any]]:
-    """Extract function_declaration methods from a body node."""
+    """Extract function_declaration methods from a body node.
+
+    Args:
+        body_node: A tree-sitter class_body or enum_class_body AST node.
+        classname: Name of the enclosing type (used as classname in methods).
+
+    Returns:
+        List of method metric dictionaries.
+    """
     methods: list[dict[str, t.Any]] = []
 
     for child in body_node.children:
@@ -114,12 +152,26 @@ def _compute_body_metrics(body_node: t.Any | None) -> tuple[list[dict[str, t.Any
 
 
 def _clean_closures(closures: list[dict[str, t.Any]]) -> list[dict[str, t.Any]]:
-    """Remove internal keys (prefixed with _) from closure dicts."""
+    """Remove internal keys (prefixed with _) from closure dicts.
+
+    Args:
+        closures: List of closure dictionaries with internal ``_``-prefixed keys.
+
+    Returns:
+        List of closure dictionaries without internal keys.
+    """
     return [{k: v for k, v in c.items() if not k.startswith("_")} for c in closures]
 
 
 def _parse_type_declaration(node: t.Any) -> dict[str, t.Any] | None:
-    """Parse class_declaration or object_declaration node."""
+    """Parse class_declaration or object_declaration node.
+
+    Args:
+        node: A tree-sitter class_declaration or object_declaration AST node.
+
+    Returns:
+        Metric dictionary for the type, or None if name is missing.
+    """
     name_node = node.child_by_field_name("name")
 
     if not name_node:
@@ -128,9 +180,7 @@ def _parse_type_declaration(node: t.Any) -> dict[str, t.Any] | None:
     name = name_node.text.decode()
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
-
     body_node = _extract_type_body(node, ("class_body",)) if _is_interface(node) else _extract_type_body(node)
-
     methods = _extract_methods(body_node, name) if body_node else []
 
     return {
@@ -145,7 +195,14 @@ def _parse_type_declaration(node: t.Any) -> dict[str, t.Any] | None:
 
 
 def _parse_toplevel_function(node: t.Any) -> dict[str, t.Any] | None:
-    """Parse a top-level function_declaration."""
+    """Parse a top-level function_declaration.
+
+    Args:
+        node: A tree-sitter function_declaration AST node.
+
+    Returns:
+        Metric dictionary for the function, or None if name is missing.
+    """
     name_node = node.child_by_field_name("name")
 
     if not name_node:
@@ -155,7 +212,6 @@ def _parse_toplevel_function(node: t.Any) -> dict[str, t.Any] | None:
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
     body_node = _get_function_body(node)
-
     closures, complexity = _compute_body_metrics(body_node)
 
     return {
@@ -170,7 +226,15 @@ def _parse_toplevel_function(node: t.Any) -> dict[str, t.Any] | None:
 
 
 def _parse_method(node: t.Any, classname: str) -> dict[str, t.Any] | None:
-    """Parse a function_declaration inside a type body."""
+    """Parse a function_declaration inside a type body.
+
+    Args:
+        node: A tree-sitter function_declaration AST node.
+        classname: Name of the enclosing type.
+
+    Returns:
+        Metric dictionary for the method, or None if name is missing.
+    """
     name_node = node.child_by_field_name("name")
 
     if not name_node:
@@ -180,7 +244,6 @@ def _parse_method(node: t.Any, classname: str) -> dict[str, t.Any] | None:
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
     body_node = _get_function_body(node)
-
     closures, complexity = _compute_body_metrics(body_node)
 
     return {
@@ -196,7 +259,14 @@ def _parse_method(node: t.Any, classname: str) -> dict[str, t.Any] | None:
 
 
 def _extract_closures(body_node: t.Any) -> list[dict[str, t.Any]]:
-    """Find lambda_literal (closures) in a function body."""
+    """Find lambda_literal (closures) in a function body.
+
+    Args:
+        body_node: A tree-sitter block or lambda_literal AST node.
+
+    Returns:
+        List of closure dictionaries with internal ``_``-prefixed keys.
+    """
     closures: list[dict[str, t.Any]] = []
 
     for child in body_node.children:
@@ -206,7 +276,12 @@ def _extract_closures(body_node: t.Any) -> list[dict[str, t.Any]]:
 
 
 def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> None:
-    """Recursively find lambda_literal nodes, skipping nested function declarations."""
+    """Recursively find lambda_literal nodes, skipping nested function declarations.
+
+    Args:
+        node: Current tree-sitter AST node to examine.
+        closures: Accumulator list to append found closures to.
+    """
     if node.type == "function_declaration":
         return
 
@@ -240,7 +315,14 @@ def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> N
 
 
 def _find_closure_name(lambda_node: t.Any) -> str:
-    """Find the name of a closure by looking at parent property_declaration."""
+    """Find the name of a closure by looking at parent property_declaration.
+
+    Args:
+        lambda_node: A tree-sitter lambda_literal AST node.
+
+    Returns:
+        Variable name the lambda is assigned to, or ``"<closure>"``.
+    """
     parent = lambda_node.parent
 
     if not parent:
@@ -264,7 +346,15 @@ def _find_closure_name(lambda_node: t.Any) -> str:
 
 
 def _mccabe(node: t.Any, skip_ranges: list[tuple[int, int]] | None = None) -> int:
-    """Calculate McCabe complexity by counting decision points in the AST."""
+    """Calculate McCabe complexity by counting decision points in the AST.
+
+    Args:
+        node: Root tree-sitter AST node to analyze.
+        skip_ranges: Optional list of (start_byte, end_byte) ranges to exclude.
+
+    Returns:
+        McCabe cyclomatic complexity score (minimum 1).
+    """
     if skip_ranges is None:
         skip_ranges = []
 
@@ -275,7 +365,13 @@ def _mccabe(node: t.Any, skip_ranges: list[tuple[int, int]] | None = None) -> in
 
 
 def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity_ref: list[int]) -> None:
-    """Recursively count decision points in the AST, skipping specified byte ranges."""
+    """Recursively count decision points in the AST, skipping specified byte ranges.
+
+    Args:
+        node: Current tree-sitter AST node.
+        skip_ranges: Byte ranges of nested closures to exclude from counting.
+        complexity_ref: Single-element list holding the running complexity total.
+    """
     for start, end in skip_ranges:
         if node.start_byte >= start and node.end_byte <= end:
             return
@@ -298,12 +394,26 @@ def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity
 
 
 def _is_logical_op(node: t.Any) -> bool:
-    """Check if a binary_expression node uses && or || operator."""
+    """Check if a binary_expression node uses ``&&`` or ``||`` operator.
+
+    Args:
+        node: A tree-sitter binary_expression AST node.
+
+    Returns:
+        True if the expression uses a logical conjunction or disjunction.
+    """
     return any(not child.is_named and child.type in constants.LOGICAL_OPS for child in node.children)
 
 
 def _is_else_entry(node: t.Any) -> bool:
-    """Check if a when_entry node is an else branch."""
+    """Check if a when_entry node is an else branch.
+
+    Args:
+        node: A tree-sitter when_entry AST node.
+
+    Returns:
+        True if the entry starts with the ``else`` keyword.
+    """
     for child in node.children:
         if not child.is_named and child.type == "else":
             return True

@@ -45,7 +45,14 @@ def analyze(path: str) -> dict[str, t.Any]:
 
 
 def _extract_declarations(filepath: str) -> list[tuple[str, list[str]]]:
-    """Extract class, interface, and object declarations from a Kotlin file."""
+    """Extract class, interface, and object declarations from a Kotlin file.
+
+    Args:
+        filepath: Absolute path to the Kotlin source file.
+
+    Returns:
+        List of (name, supers) tuples for each declared type.
+    """
     with open(filepath, "rb") as f:
         source = f.read()
 
@@ -72,6 +79,12 @@ def _extract_supers(node: t.Any) -> list[str]:
 
     Handles both simple type references (``Service``) and constructor
     invocations (``Base()``).
+
+    Args:
+        node: A tree-sitter class_declaration or object_declaration AST node.
+
+    Returns:
+        List of parent type name strings.
     """
     supers: list[str] = []
 
@@ -91,8 +104,14 @@ def _extract_type_name(spec: t.Any) -> str | None:
     """Extract type name from a delegation_specifier node.
 
     Handles:
-      - ``user_type > identifier``  →  ``Service``
-      - ``constructor_invocation > user_type > identifier``  →  ``Base()``
+      - ``user_type > identifier`` → ``Service``
+      - ``constructor_invocation > user_type > identifier`` → ``Base``
+
+    Args:
+        spec: A tree-sitter delegation_specifier AST node.
+
+    Returns:
+        The type name string, or None if not found.
     """
     for child in spec.children:
         if child.type == "user_type":
@@ -107,7 +126,14 @@ def _extract_type_name(spec: t.Any) -> str | None:
 
 
 def _get_identifier(user_type_node: t.Any) -> str | None:
-    """Get the identifier text from a user_type node."""
+    """Get the identifier text from a user_type node.
+
+    Args:
+        user_type_node: A tree-sitter user_type AST node.
+
+    Returns:
+        Decoded identifier text, or None.
+    """
     for child in user_type_node.children:
         if child.type == "identifier":
             return child.text.decode()
