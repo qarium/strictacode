@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import typing as t
 
-from strictacode.kotlin import constants
+from . import constants
 
 
 def walk_kotlin_files(root: str) -> t.Iterator[str]:
