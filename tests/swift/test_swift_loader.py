@@ -29,8 +29,14 @@ class TestCreateItem:
         from strictacode.swift.loader import _create_item
 
         item = _create_item(
-            type="class", name="UserService", lineno=1, endline=30,
-            complexity=8, classname=None, methods=[], closures=[],
+            type="class",
+            name="UserService",
+            lineno=1,
+            endline=30,
+            complexity=8,
+            classname=None,
+            methods=[],
+            closures=[],
         )
         assert item.type == FileItemTypes.CLASS
         assert item.name == "UserService"
@@ -47,8 +53,14 @@ class TestCreateItem:
         from strictacode.swift.loader import _create_item
 
         item = _create_item(
-            type="method", name="getUser", lineno=10, endline=20,
-            complexity=3, classname="UserService", methods=[], closures=[],
+            type="method",
+            name="getUser",
+            lineno=10,
+            endline=20,
+            complexity=3,
+            classname="UserService",
+            methods=[],
+            closures=[],
         )
         assert item.type == FileItemTypes.METHOD
         assert item.class_name == "UserService"
@@ -62,15 +74,30 @@ def _make_swift_collector_json(root):
     return {
         str(filepath): [
             {
-                "type": "class", "name": "App", "lineno": 5, "endline": 30, "complexity": 4,
+                "type": "class",
+                "name": "App",
+                "lineno": 5,
+                "endline": 30,
+                "complexity": 4,
                 "methods": [
-                    {"type": "method", "name": "run", "lineno": 10, "endline": 25,
-                     "complexity": 3, "classname": "App", "closures": []},
+                    {
+                        "type": "method",
+                        "name": "run",
+                        "lineno": 10,
+                        "endline": 25,
+                        "complexity": 3,
+                        "classname": "App",
+                        "closures": [],
+                    },
                 ],
             },
             {
-                "type": "function", "name": "main", "lineno": 35, "endline": 40,
-                "complexity": 1, "closures": [],
+                "type": "function",
+                "name": "main",
+                "lineno": 35,
+                "endline": 40,
+                "complexity": 1,
+                "closures": [],
             },
         ],
     }
@@ -85,6 +112,7 @@ class TestSwiftLoderCollect:
 
         filepath = str(tmp_path / "Sources" / "Main.swift")
         from strictacode.loader import FileItemTypes
+
         assert filepath in result
         assert len(result[filepath]) == 2
         assert result[filepath][0].type == FileItemTypes.CLASS

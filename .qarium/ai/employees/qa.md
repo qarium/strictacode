@@ -22,6 +22,7 @@ Project-specific testing configuration. Used by the `employees-qa-feature` skill
 | `strictacode/go/**/*`           | `tests/go/`        | Go loader and integration tests  |
 | `strictacode/js/**/*`           | `tests/js/`        | JS loader and integration tests  |
 | `strictacode/kotlin/**/*`       | `tests/kotlin/`    | Kotlin loader and integration tests |
+| `strictacode/swift/**/*`        | `tests/swift/`     | Swift loader, collector, analyzer, tools |
 | `strictacode/py/**/*.py`        | `tests/py/`        | Python loader tests              |
 | `strictacode/calc/**/*.py`      | `tests/calc/`      | Calculation modules              |
 | `strictacode/reporters/**/*.py` | `tests/reporters/` | `test_result.py`, `test_diff.py` |
@@ -44,6 +45,8 @@ Coverage: exit codes, stdout/stderr output, flag combinations, error messages on
 | Go subprocess analyzer      | `@patch("strictacode.go.analyzer.analyze")`                          |
 | Kotlin subprocess collector | `@patch("strictacode.kotlin.collector.collect")`                     |
 | Kotlin subprocess analyzer  | `@patch("strictacode.kotlin.analyzer.analyze")`                      |
+| Swift subprocess collector  | `@patch("strictacode.swift.collector.collect")`                      |
+| Swift subprocess analyzer   | `@patch("strictacode.swift.analyzer.analyze")`                       |
 | Python subprocess collector | `@patch("strictacode.py.collector.collect")`                         |
 | Skill installation          | `monkeypatch.setattr("strictacode.__main__.skill.install", mock_fn)` |
 
@@ -58,6 +61,8 @@ Coverage: exit codes, stdout/stderr output, flag combinations, error messages on
 | `_make_radon_json(root, filename)` | `tests/py/`   | Create radon-like JSON structure for mocks       |
 | `_make_go_collector_json(root)`    | `tests/go/`   | Create go-collector-like JSON for mocks          |
 | `_make_kotlin_collector_json(root)` | `tests/kotlin/` | Create Kotlin-collector-like JSON for mocks    |
+| `_write_swift(tmp_path, name, code)` | `tests/swift/` | Write Swift package and return collect() result |
+| `_single_swift(tmp_path, code)` | `tests/swift/`   | Write single Swift file and return collect() result |
 
 ### Conventions
 

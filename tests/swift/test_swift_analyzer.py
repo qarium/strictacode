@@ -45,7 +45,8 @@ class TestNodes:
 class TestInheritance:
     def test_class_inherits(self, tmp_path):
         r = _write(
-            tmp_path, "inherit.swift",
+            tmp_path,
+            "inherit.swift",
             """\
             class Base {}
             class Derived: Base {}
@@ -55,7 +56,8 @@ class TestInheritance:
 
     def test_class_conforms_protocol(self, tmp_path):
         r = _write(
-            tmp_path, "conform.swift",
+            tmp_path,
+            "conform.swift",
             """\
             protocol Service {}
             class ServiceImpl: Service {}
@@ -65,7 +67,8 @@ class TestInheritance:
 
     def test_struct_conforms_protocol(self, tmp_path):
         r = _write(
-            tmp_path, "struct_proto.swift",
+            tmp_path,
+            "struct_proto.swift",
             """\
             protocol Drawable {}
             struct Circle: Drawable {}
@@ -75,7 +78,8 @@ class TestInheritance:
 
     def test_multiple_conformance(self, tmp_path):
         r = _write(
-            tmp_path, "multi.swift",
+            tmp_path,
+            "multi.swift",
             """\
             class Base {}
             protocol Readable {}
@@ -90,7 +94,8 @@ class TestInheritance:
 
     def test_protocol_inherits(self, tmp_path):
         r = _write(
-            tmp_path, "proto_ext.swift",
+            tmp_path,
+            "proto_ext.swift",
             """\
             protocol Readable {}
             protocol Writable: Readable {}
@@ -100,7 +105,8 @@ class TestInheritance:
 
     def test_actor_conforms(self, tmp_path):
         r = _write(
-            tmp_path, "actor_conf.swift",
+            tmp_path,
+            "actor_conf.swift",
             """\
             protocol Lockable {}
             actor Mutex: Lockable {}
@@ -110,7 +116,8 @@ class TestInheritance:
 
     def test_extension_conforms(self, tmp_path):
         r = _write(
-            tmp_path, "ext_conf.swift",
+            tmp_path,
+            "ext_conf.swift",
             """\
             protocol Serializable {}
             extension Data: Serializable {}
@@ -188,49 +195,22 @@ class TestProtocolConformance:
 
     def test_implicit_conformance(self, tmp_path):
         """Class with all protocol methods gets an implicit edge."""
-        (tmp_path / "proto.swift").write_text(
-            "protocol Drawable {\n"
-            "    func draw()\n"
-            "    func resize(scale: Int)\n"
-            "}\n"
-        )
-        (tmp_path / "impl.swift").write_text(
-            "class Circle {\n"
-            "    func draw() {}\n"
-            "    func resize(scale: Int) {}\n"
-            "}\n"
-        )
+        (tmp_path / "proto.swift").write_text("protocol Drawable {\n    func draw()\n    func resize(scale: Int)\n}\n")
+        (tmp_path / "impl.swift").write_text("class Circle {\n    func draw() {}\n    func resize(scale: Int) {}\n}\n")
         r = analyze(str(tmp_path))
         assert ("Circle", "Drawable") in _edge_pairs(r)
 
     def test_no_match_when_method_missing(self, tmp_path):
         """No implicit edge when class is missing a protocol method."""
-        (tmp_path / "proto.swift").write_text(
-            "protocol Drawable {\n"
-            "    func draw()\n"
-            "    func resize(scale: Int)\n"
-            "}\n"
-        )
-        (tmp_path / "impl.swift").write_text(
-            "class Circle {\n"
-            "    func draw() {}\n"
-            "}\n"
-        )
+        (tmp_path / "proto.swift").write_text("protocol Drawable {\n    func draw()\n    func resize(scale: Int)\n}\n")
+        (tmp_path / "impl.swift").write_text("class Circle {\n    func draw() {}\n}\n")
         r = analyze(str(tmp_path))
         assert ("Circle", "Drawable") not in _edge_pairs(r)
 
     def test_explicit_edge_not_duplicated(self, tmp_path):
         """Explicit conformance edge is not duplicated."""
-        (tmp_path / "proto.swift").write_text(
-            "protocol Handler {\n"
-            "    func handle()\n"
-            "}\n"
-        )
-        (tmp_path / "impl.swift").write_text(
-            "class HttpHandler: Handler {\n"
-            "    func handle() {}\n"
-            "}\n"
-        )
+        (tmp_path / "proto.swift").write_text("protocol Handler {\n    func handle()\n}\n")
+        (tmp_path / "impl.swift").write_text("class HttpHandler: Handler {\n    func handle() {}\n}\n")
         r = analyze(str(tmp_path))
         handler_edges = [e for e in r["edges"] if "HttpHandler" in e["source"]]
         assert len(handler_edges) == 1
@@ -238,11 +218,32 @@ class TestProtocolConformance:
     def test_empty_protocol_no_false_edges(self, tmp_path):
         """An empty protocol doesn't create edges to everything."""
         (tmp_path / "proto.swift").write_text("protocol Empty {}\n")
-        (tmp_path / "cls.swift").write_text(
-            "class MyClass {\n    func doWork() {}\n}\n"
-        )
+        (tmp_path / "cls.swift").write_text("class MyClass {\n    func doWork() {}\n}\n")
         r = analyze(str(tmp_path))
         assert ("MyClass", "Empty") not in _edge_pairs(r)
+
+
+class TestEmptyDirectory:
+    def test_empty_dir_returns_empty(self, tmp_path):
+        r = analyze(str(tmp_path))
+        assert r["nodes"] == []
+        assert r["edges"] == []
+
+    def test_dir_with_no_swift_files(self, tmp_path):
+        (tmp_path / "readme.txt").write_text("not swift")
+        r = analyze(str(tmp_path))
+        assert r["nodes"] == []
+        assert r["edges"] == []
+
+
+class TestCircularInheritance:
+    def test_no_crash_on_circular_inheritance(self, tmp_path):
+        """Circular inheritance should not cause infinite loops or crashes."""
+        (tmp_path / "a.swift").write_text("protocol A: B {}\nprotocol B: A {}\n")
+        r = analyze(str(tmp_path))
+        names = _node_names(r)
+        assert "A" in names
+        assert "B" in names
 
 
 class TestFiltering:

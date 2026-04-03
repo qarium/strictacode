@@ -38,7 +38,7 @@ def _find_function(result, name):
 
 class TestBasicComplexity:
     def test_empty_function(self, tmp_path):
-        r = _single_swift(tmp_path, 'func f() -> Int { return 42 }\n')
+        r = _single_swift(tmp_path, "func f() -> Int { return 42 }\n")
         assert _find_function(r, "f")["complexity"] == 1
 
     def test_single_if(self, tmp_path):
@@ -239,6 +239,65 @@ class TestClosures:
         assert w["complexity"] == 1
         assert len(w["closures"]) == 1
         assert w["closures"][0]["complexity"] == 2
+
+
+class TestWhileLoops:
+    def test_while_statement(self, tmp_path):
+        r = _single_swift(
+            tmp_path,
+            """\
+            func wait(x: Int) {
+                while x > 0 {}
+            }
+        """,
+        )
+        assert _find_function(r, "wait")["complexity"] == 2
+
+    def test_repeat_while(self, tmp_path):
+        r = _single_swift(
+            tmp_path,
+            """\
+            func repeatFunc(x: Int) {
+                repeat {} while x > 0
+            }
+        """,
+        )
+        assert _find_function(r, "repeatFunc")["complexity"] == 2
+
+
+class TestTernaryComplexity:
+    def test_ternary_not_counted(self, tmp_path):
+        """Ternary expressions are not decision nodes in McCabe complexity."""
+        r = _single_swift(
+            tmp_path,
+            """\
+            func check(x: Int) -> Int {
+                let y = x > 0 ? x : -x
+                return y
+            }
+        """,
+        )
+        assert _find_function(r, "check")["complexity"] == 1
+
+
+class TestNestedClosures:
+    def test_nested_closure_complexity(self, tmp_path):
+        r = _single_swift(
+            tmp_path,
+            """\
+            func outer() {
+                let fn = { (x: Int) -> Int in
+                    let inner = { (y: Int) -> Int in
+                        if y > 0 { return y }
+                        return -y
+                    }
+                    return inner(x)
+                }
+            }
+        """,
+        )
+        w = _find_function(r, "outer")
+        assert len(w["closures"]) >= 1
 
 
 class TestFiltering:

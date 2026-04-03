@@ -84,15 +84,17 @@ def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
                 closures = []
                 complexity = 1
 
-            items.append({
-                "type": "function",
-                "name": name,
-                "lineno": lineno,
-                "endline": endline,
-                "complexity": complexity,
-                "methods": [],
-                "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in closures],
-            })
+            items.append(
+                {
+                    "type": "function",
+                    "name": name,
+                    "lineno": lineno,
+                    "endline": endline,
+                    "complexity": complexity,
+                    "methods": [],
+                    "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in closures],
+                }
+            )
 
     return items
 
@@ -257,16 +259,18 @@ def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> N
         closure_ranges = [(c["_start_byte"], c["_end_byte"]) for c in nested_closures]
         complexity = _mccabe(node, closure_ranges)
 
-        closures.append({
-            "type": "function",
-            "name": name,
-            "lineno": lineno,
-            "endline": endline,
-            "complexity": complexity,
-            "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in nested_closures],
-            "_start_byte": node.start_byte,
-            "_end_byte": node.end_byte,
-        })
+        closures.append(
+            {
+                "type": "function",
+                "name": name,
+                "lineno": lineno,
+                "endline": endline,
+                "complexity": complexity,
+                "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in nested_closures],
+                "_start_byte": node.start_byte,
+                "_end_byte": node.end_byte,
+            }
+        )
         return
 
     for child in node.children:
@@ -328,8 +332,10 @@ def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity
             return
 
     decision_types = constants.DECISION_NODES | {
-        "switch_entry", "catch_block",
-        constants.CONJUNCTION, constants.DISJUNCTION,
+        "switch_entry",
+        "catch_block",
+        constants.CONJUNCTION,
+        constants.DISJUNCTION,
     }
 
     if node.type in decision_types:

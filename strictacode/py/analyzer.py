@@ -45,6 +45,6 @@ class Analyzer(ast.NodeVisitor):
         self.generic_visit(node)
         self.current_class = None
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, _node):
         if self.current_class:
             self.classes[self.current_class]["methods"] += 1

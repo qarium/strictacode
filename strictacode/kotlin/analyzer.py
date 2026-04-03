@@ -251,10 +251,7 @@ def _is_interface(node: t.Any) -> bool:
     Returns:
         True if the node represents a Kotlin interface.
     """
-    return any(
-        not child.is_named and child.type == "interface"
-        for child in node.children
-    )
+    return any(not child.is_named and child.type == "interface" for child in node.children)
 
 
 def _collect_method_signatures(node: t.Any) -> set[str]:
@@ -417,9 +414,9 @@ def _collect_signatures(
 
 
 def _check_interface_implementation(
-    nodes: list[str],
+    _nodes: list[str],
     edges: list[dict[str, str]],
-    all_decls: list[tuple[str, str, list[str]]],
+    _all_decls: list[tuple[str, str, list[str]]],
     path: str,
 ) -> list[dict[str, str]]:
     """Add implicit interface implementation edges via method signature matching.
@@ -429,9 +426,9 @@ def _check_interface_implementation(
     implements all methods of an interface but has no explicit edge to it.
 
     Args:
-        nodes: List of ``file:Name`` node identifiers.
+        _nodes: List of ``file:Name`` node identifiers (reserved for future use).
         edges: Existing edge list (explicit inheritance).
-        all_decls: All declarations as (rel, name, supers) tuples.
+        _all_decls: All declarations as (rel, name, supers) tuples (reserved for future use).
         path: Root project directory.
 
     Returns:

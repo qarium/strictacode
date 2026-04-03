@@ -123,15 +123,10 @@ class TestTwoPassResolution:
 
     def test_same_file_preference_for_duplicate_names(self, tmp_path):
         """When duplicate names exist, same-file match is preferred."""
-        (tmp_path / "a.kt").write_text(
-            "open class Handler\n"
-        )
+        (tmp_path / "a.kt").write_text("open class Handler\n")
         sub = tmp_path / "sub"
         sub.mkdir()
-        (sub / "b.kt").write_text(
-            "open class Handler\n"
-            "class SubHandler : Handler()\n"
-        )
+        (sub / "b.kt").write_text("open class Handler\nclass SubHandler : Handler()\n")
         r = analyze(str(tmp_path))
         # SubHandler should connect to sub/b.kt:Handler (same file)
         edges = r["edges"]
@@ -148,9 +143,7 @@ class TestTwoPassResolution:
 
     def test_external_dependency_not_linked(self, tmp_path):
         """Edges to types not declared in project are not created."""
-        (tmp_path / "svc.kt").write_text(
-            "class MyService : ExternalLib()\n"
-        )
+        (tmp_path / "svc.kt").write_text("class MyService : ExternalLib()\n")
         r = analyze(str(tmp_path))
         assert len(r["edges"]) == 0
 
@@ -171,64 +164,33 @@ class TestInterfaceMatching:
 
     def test_implicit_interface_match(self, tmp_path):
         """Class with all interface methods gets an implicit edge."""
-        (tmp_path / "iface.kt").write_text(
-            "interface Drawable {\n"
-            "    fun draw()\n"
-            "    fun resize(scale: Int)\n"
-            "}\n"
-        )
+        (tmp_path / "iface.kt").write_text("interface Drawable {\n    fun draw()\n    fun resize(scale: Int)\n}\n")
         (tmp_path / "impl.kt").write_text(
-            "class Circle : Drawable {\n"
-            "    override fun draw() {}\n"
-            "    override fun resize(scale: Int) {}\n"
-            "}\n"
+            "class Circle : Drawable {\n    override fun draw() {}\n    override fun resize(scale: Int) {}\n}\n"
         )
         r = analyze(str(tmp_path))
         assert ("Circle", "Drawable") in _edge_pairs(r)
 
     def test_no_match_when_method_missing(self, tmp_path):
         """No implicit edge when class is missing an interface method."""
-        (tmp_path / "iface.kt").write_text(
-            "interface Drawable {\n"
-            "    fun draw()\n"
-            "    fun resize(scale: Int)\n"
-            "}\n"
-        )
-        (tmp_path / "impl.kt").write_text(
-            "class Circle {\n"
-            "    fun draw() {}\n"
-            "}\n"
-        )
+        (tmp_path / "iface.kt").write_text("interface Drawable {\n    fun draw()\n    fun resize(scale: Int)\n}\n")
+        (tmp_path / "impl.kt").write_text("class Circle {\n    fun draw() {}\n}\n")
         r = analyze(str(tmp_path))
         assert ("Circle", "Drawable") not in _edge_pairs(r)
 
     def test_explicit_edge_not_duplicated(self, tmp_path):
         """Explicit inheritance edge is not duplicated by interface matching."""
-        (tmp_path / "iface.kt").write_text(
-            "interface Handler {\n"
-            "    fun handle()\n"
-            "}\n"
-        )
-        (tmp_path / "impl.kt").write_text(
-            "class HttpHandler : Handler {\n"
-            "    override fun handle() {}\n"
-            "}\n"
-        )
+        (tmp_path / "iface.kt").write_text("interface Handler {\n    fun handle()\n}\n")
+        (tmp_path / "impl.kt").write_text("class HttpHandler : Handler {\n    override fun handle() {}\n}\n")
         r = analyze(str(tmp_path))
         edges_to_handler = [e for e in r["edges"] if "HttpHandler" in e["source"]]
         assert len(edges_to_handler) == 1
 
     def test_object_implements_interface_implicitly(self, tmp_path):
         """Object declarations are also matched against interfaces."""
-        (tmp_path / "iface.kt").write_text(
-            "interface Serializer {\n"
-            "    fun serialize(data: String): ByteArray\n"
-            "}\n"
-        )
+        (tmp_path / "iface.kt").write_text("interface Serializer {\n    fun serialize(data: String): ByteArray\n}\n")
         (tmp_path / "obj.kt").write_text(
-            "object JsonSerializer {\n"
-            "    fun serialize(data: String): ByteArray = ByteArray(0)\n"
-            "}\n"
+            "object JsonSerializer {\n    fun serialize(data: String): ByteArray = ByteArray(0)\n}\n"
         )
         r = analyze(str(tmp_path))
         assert ("JsonSerializer", "Serializer") in _edge_pairs(r)
@@ -236,11 +198,7 @@ class TestInterfaceMatching:
     def test_empty_interface_no_false_edges(self, tmp_path):
         """An interface with no methods doesn't create edges to everything."""
         (tmp_path / "iface.kt").write_text("interface Empty\n")
-        (tmp_path / "cls.kt").write_text(
-            "class MyClass {\n"
-            "    fun doWork() {}\n"
-            "}\n"
-        )
+        (tmp_path / "cls.kt").write_text("class MyClass {\n    fun doWork() {}\n}\n")
         r = analyze(str(tmp_path))
         assert ("MyClass", "Empty") not in _edge_pairs(r)
 
@@ -329,11 +287,7 @@ class TestNestedClasses:
     def test_nested_in_cross_file(self, tmp_path):
         """Nested class can inherit from a type in a different file."""
         (tmp_path / "base.kt").write_text("open class Plugin\n")
-        (tmp_path / "impl.kt").write_text(
-            "class Registry {\n"
-            "    class MyPlugin : Plugin()\n"
-            "}\n"
-        )
+        (tmp_path / "impl.kt").write_text("class Registry {\n    class MyPlugin : Plugin()\n}\n")
         r = analyze(str(tmp_path))
         assert ("Registry.MyPlugin", "Plugin") in _edge_pairs(r)
 
@@ -405,20 +359,29 @@ class TestExplicitDelegation:
 
     def test_by_reference_to_project_type(self, tmp_path):
         """Delegated interface resolved when defined in another file."""
-        (tmp_path / "repo.kt").write_text(
-            "interface Repository {\n"
-            "    fun find(id: Int): String\n"
-            "}\n"
-        )
+        (tmp_path / "repo.kt").write_text("interface Repository {\n    fun find(id: Int): String\n}\n")
         (tmp_path / "cached.kt").write_text(
             "class CachedRepo : Repository by delegate {\n"
             "    val delegate = object : Repository {\n"
-            "        override fun find(id: Int) = \"\"\n"
+            '        override fun find(id: Int) = ""\n'
             "    }\n"
             "}\n"
         )
         r = analyze(str(tmp_path))
         assert ("CachedRepo", "Repository") in _edge_pairs(r)
+
+
+class TestEmptyDirectory:
+    def test_empty_dir_returns_empty(self, tmp_path):
+        r = analyze(str(tmp_path))
+        assert r["nodes"] == []
+        assert r["edges"] == []
+
+    def test_dir_with_no_kotlin_files(self, tmp_path):
+        (tmp_path / "readme.txt").write_text("not kotlin")
+        r = analyze(str(tmp_path))
+        assert r["nodes"] == []
+        assert r["edges"] == []
 
 
 class TestFiltering:

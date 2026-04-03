@@ -306,16 +306,18 @@ def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> N
         closure_ranges = [(c["_start_byte"], c["_end_byte"]) for c in nested_closures]
         complexity = _mccabe(node, closure_ranges)
 
-        closures.append({
-            "type": "function",
-            "name": name,
-            "lineno": lineno,
-            "endline": endline,
-            "complexity": complexity,
-            "closures": _clean_closures(nested_closures),
-            "_start_byte": node.start_byte,
-            "_end_byte": node.end_byte,
-        })
+        closures.append(
+            {
+                "type": "function",
+                "name": name,
+                "lineno": lineno,
+                "endline": endline,
+                "complexity": complexity,
+                "closures": _clean_closures(nested_closures),
+                "_start_byte": node.start_byte,
+                "_end_byte": node.end_byte,
+            }
+        )
         return
 
     for child in node.children:
@@ -431,8 +433,10 @@ def _is_else_entry(node: t.Any) -> bool:
 
 
 # Populate dispatch table
-_NODE_PARSERS.update({
-    "class_declaration": _parse_type_declaration,
-    "object_declaration": _parse_type_declaration,
-    "function_declaration": _parse_toplevel_function,
-})
+_NODE_PARSERS.update(
+    {
+        "class_declaration": _parse_type_declaration,
+        "object_declaration": _parse_type_declaration,
+        "function_declaration": _parse_toplevel_function,
+    }
+)

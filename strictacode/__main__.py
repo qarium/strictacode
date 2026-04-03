@@ -10,7 +10,6 @@ from strictacode.go import GoLoder
 from strictacode.js import JSLoder
 from strictacode.kotlin import KotlinLoder
 from strictacode.py import PyLoder
-from strictacode.swift import SwiftLoder
 from strictacode.reporters import (
     JsonDiffReporter,
     JsonResultReporter,
@@ -18,6 +17,7 @@ from strictacode.reporters import (
     TextResultReporter,
 )
 from strictacode.statistics import ProjectDiff, ProjectStat
+from strictacode.swift import SwiftLoder
 from strictacode.threshold import Threshold
 from strictacode.utils import detect_language
 

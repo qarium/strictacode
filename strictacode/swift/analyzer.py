@@ -341,9 +341,9 @@ def _collect_signatures(
 
 
 def _check_protocol_conformance(
-    nodes: list[str],
+    _nodes: list[str],
     edges: list[dict[str, str]],
-    all_decls: list[tuple[str, str, list[str]]],
+    _all_decls: list[tuple[str, str, list[str]]],
     path: str,
 ) -> list[dict[str, str]]:
     """Add implicit protocol conformance edges via method signature matching.
@@ -351,9 +351,9 @@ def _check_protocol_conformance(
     Similar to Kotlin's interface matching and Go's checkInterfaceImplementation.
 
     Args:
-        nodes: List of node identifiers.
+        _nodes: List of node identifiers (reserved for future use).
         edges: Existing edge list.
-        all_decls: All declarations.
+        _all_decls: All declarations (reserved for future use).
         path: Root project directory.
 
     Returns:
