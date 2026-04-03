@@ -92,16 +92,6 @@ def _is_interface(node: t.Any) -> bool:
     return any(not child.is_named and child.type == "interface" for child in node.children)
 
 
-def _is_enum(node: t.Any) -> bool:
-    """Check if a class_declaration has an enum modifier."""
-    for child in node.children:
-        if child.is_named and child.type == "modifiers":
-            for mod in child.children:
-                if mod.type == "class_modifier" and mod.text.decode() == "enum":
-                    return True
-    return False
-
-
 def _get_function_body(node: t.Any) -> t.Any | None:
     """Get the function_body child node from a function_declaration."""
     for child in node.children:
@@ -115,6 +105,28 @@ def _get_function_body(node: t.Any) -> t.Any | None:
     return None
 
 
+def _extract_type_body(node: t.Any, body_types: tuple[str, ...] = ("class_body", "enum_class_body")) -> t.Any | None:
+    """Find the body node matching one of the given types."""
+    for child in node.children:
+        if child.type in body_types:
+            return child
+    return None
+
+
+def _extract_methods(body_node: t.Any, classname: str) -> list[dict[str, t.Any]]:
+    """Extract function_declaration methods from a body node."""
+    methods: list[dict[str, t.Any]] = []
+
+    for child in body_node.children:
+        if child.type == "function_declaration":
+            method = _parse_method(child, classname)
+
+            if method:
+                methods.append(method)
+
+    return methods
+
+
 def _parse_class_declaration(node: t.Any) -> dict[str, t.Any] | None:
     """Parse class_declaration node (covers class, interface, enum, data, sealed)."""
     name_node = node.child_by_field_name("name")
@@ -126,25 +138,9 @@ def _parse_class_declaration(node: t.Any) -> dict[str, t.Any] | None:
     lineno = node.start_point[0] + 1
     endline = node.end_point[0] + 1
 
-    is_iface = _is_interface(node)
-
-    if is_iface:
-        # Interface: look for class_body and extract function signatures (no body)
-        methods: list[dict[str, t.Any]] = []
-        body_node = None
-
-        for child in node.children:
-            if child.type == "class_body":
-                body_node = child
-                break
-
-        if body_node:
-            for child in body_node.children:
-                if child.type == "function_declaration":
-                    method = _parse_method(child, name)
-
-                    if method:
-                        methods.append(method)
+    if _is_interface(node):
+        body_node = _extract_type_body(node, ("class_body",))
+        methods = _extract_methods(body_node, name) if body_node else []
 
         return {
             "type": "class",
@@ -156,32 +152,15 @@ def _parse_class_declaration(node: t.Any) -> dict[str, t.Any] | None:
             "closures": [],
         }
 
-    # Regular class or enum
-    body_node = None
-
-    for child in node.children:
-        if child.type in ("class_body", "enum_class_body"):
-            body_node = child
-            break
-
-    methods = []
-    class_complexity = 0
-
-    if body_node:
-        for child in body_node.children:
-            if child.type == "function_declaration":
-                method = _parse_method(child, name)
-
-                if method:
-                    methods.append(method)
-                    class_complexity += method["complexity"]
+    body_node = _extract_type_body(node, ("class_body", "enum_class_body"))
+    methods = _extract_methods(body_node, name) if body_node else []
 
     return {
         "type": "class",
         "name": name,
         "lineno": lineno,
         "endline": endline,
-        "complexity": class_complexity,
+        "complexity": sum(m["complexity"] for m in methods),
         "methods": methods,
         "closures": [],
     }
@@ -345,37 +324,34 @@ def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity
         if node.start_byte >= start and node.end_byte <= end:
             return
 
-    # Standard decision nodes + catch_block
     decision_types = constants.DECISION_NODES | {"catch_block"}
 
     if node.type in decision_types:
         complexity_ref[0] += 1
 
-    # binary_expression with && or || operator
     if node.type == constants.BINARY_EXPRESSION:
-        for child in node.children:
-            if not child.is_named and child.type in constants.LOGICAL_OPS:
-                complexity_ref[0] += 1
-                break
-
-    # when_entry: +1 for each non-else entry
-    if node.type == constants.WHEN_ENTRY:
-        # Check if first child is the unnamed 'else' token
-        first_named = None
-
-        for child in node.children:
-            if child.is_named:
-                first_named = child
-                break
-            # Check unnamed 'else' token
-            if not child.is_named and child.type == "else":
-                first_named = None
-                break
-
-        if first_named is not None:
+        if _is_logical_op(node):
             complexity_ref[0] += 1
 
+    if node.type == constants.WHEN_ENTRY:
+        if not _is_else_entry(node):
+            complexity_ref[0] += 1
         return  # Don't descend into when_entry children
 
     for child in node.children:
         _count_decisions(child, skip_ranges, complexity_ref)
+
+
+def _is_logical_op(node: t.Any) -> bool:
+    """Check if a binary_expression node uses && or || operator."""
+    return any(not child.is_named and child.type in constants.LOGICAL_OPS for child in node.children)
+
+
+def _is_else_entry(node: t.Any) -> bool:
+    """Check if a when_entry node is an else branch."""
+    for child in node.children:
+        if not child.is_named and child.type == "else":
+            return True
+        if child.is_named:
+            return False
+    return True
