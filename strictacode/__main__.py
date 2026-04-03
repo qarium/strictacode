@@ -10,6 +10,7 @@ from strictacode.go import GoLoder
 from strictacode.js import JSLoder
 from strictacode.kotlin import KotlinLoder
 from strictacode.py import PyLoder
+from strictacode.swift import SwiftLoder
 from strictacode.reporters import (
     JsonDiffReporter,
     JsonResultReporter,
@@ -76,6 +77,7 @@ def analyze(
         Language.PYTHON: PyLoder,
         Language.JAVASCRIPT: JSLoder,
         Language.KOTLIN: KotlinLoder,
+        Language.SWIFT: SwiftLoder,
     }
     loader_options = {}
 

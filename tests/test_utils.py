@@ -290,6 +290,11 @@ class TestDetectLanguages:
         result = detect_languages(str(tmp_path))
         assert "kotlin" in result
 
+    def test_swift_files_detected(self, tmp_path):
+        (tmp_path / "app.swift").write_text("// app\n")
+        langs = detect_languages(str(tmp_path))
+        assert "swift" in langs
+
 
 # ---------------------------------------------------------------------------
 # detect_language
@@ -309,6 +314,16 @@ class TestDetectLanguage:
 
     def test_empty_directory(self, tmp_path):
         assert detect_language(str(tmp_path)) is None
+
+    def test_detect_language_swift(self, tmp_path):
+        (tmp_path / "main.swift").write_text('print("hello")\n')
+        assert detect_language(str(tmp_path)) == "swift"
+
+    def test_swift_not_dominant_over_python(self, tmp_path):
+        (tmp_path / "a.py").write_text("pass\n")
+        (tmp_path / "b.py").write_text("pass\n")
+        (tmp_path / "main.swift").write_text('print("hi")\n')
+        assert detect_language(str(tmp_path)) == "python"
 
 
 # ---------------------------------------------------------------------------

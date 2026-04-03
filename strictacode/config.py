@@ -12,6 +12,7 @@ class Language(str, Enum):
     PYTHON = "python"
     JAVASCRIPT = "javascript"
     KOTLIN = "kotlin"
+    SWIFT = "swift"
 
 
 @dataclass(kw_only=True)
