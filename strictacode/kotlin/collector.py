@@ -1,359 +1,381 @@
-r"""
-import java.io.File
+from __future__ import annotations
 
-// ==============================
-// CONFIG
-// ==============================
-val IGNORED_DIRS = setOf("build", ".gradle", ".idea", ".git")
-val IGNORED_FILE_SUFFIXES = listOf("Test.kt", "Spec.kt")
-
-val ROOT_PATH = if (args.isNotEmpty()) args[0] else "."
-
-// ==============================
-// FILE WALKER
-// ==============================
-fun shouldIgnoreFile(file: File): Boolean {
-    val name = file.name
-    return IGNORED_FILE_SUFFIXES.any { name.endsWith(it) }
-}
-
-fun shouldIgnoreDir(dir: File): Boolean {
-    return dir.name in IGNORED_DIRS
-}
-
-fun collectKtFiles(root: File): List<File> {
-    val result = mutableListOf<File>()
-    fun walk(dir: File) {
-        dir.listFiles()?.forEach { f ->
-            when {
-                f.isDirectory && !shouldIgnoreDir(f) -> walk(f)
-                f.isFile && f.extension == "kt" && !shouldIgnoreFile(f) -> result.add(f)
-            }
-        }
-    }
-    walk(root)
-    return result
-}
-
-// ==============================
-// BRACE BALANCING — find block range
-// startIdx is 0-based line index where the declaration starts.
-// Returns 1-based endline.
-// If expression body (= without {), returns startIdx + 1.
-// ==============================
-fun findBlockRange(lines: List<String>, startIdx: Int): Int {
-    val line = lines[startIdx]
-    // Check for expression body: fun foo(...) = expr  (no brace on same line)
-    if (!line.contains("{")) {
-        // Look for = outside of parameter list
-        val eqIdx = line.indexOf('=')
-        if (eqIdx > 0 && line.substring(eqIdx - 1, eqIdx) != "=" && line.substring(eqIdx + 1).trim().isNotEmpty()) {
-            // expression body, single line
-            return startIdx + 1
-        }
-    }
-
-    var depth = 0
-    var foundOpen = false
-    for (i in startIdx until lines.size) {
-        var inString = false
-        var stringChar = '"'
-        var j = 0
-        while (j < lines[i].length) {
-            val ch = lines[i][j]
-            if (inString) {
-                if (ch == '\\') { j++; }  // skip escaped char
-                else if (ch == stringChar) { inString = false }
-            } else {
-                when (ch) {
-                    '"' -> { inString = true; stringChar = '"' }
-                    '\'' -> { inString = true; stringChar = '\'' }
-                    '/' -> {
-                        if (j + 1 < lines[i].length) {
-                            val next = lines[i][j + 1]
-                            if (next == '/') break  // line comment, skip rest
-                        }
-                    }
-                    '{' -> { depth++; foundOpen = true }
-                    '}' -> depth--
-                }
-            }
-            j++
-        }
-        if (foundOpen && depth <= 0) return i + 1
-    }
-    return lines.size
-}
-
-// ==============================
-// MCCABE COMPLEXITY
-// skipRanges: 0-based line ranges to skip (e.g. closure bodies)
-// ==============================
-fun mccabeComplexity(
-    lines: List<String>,
-    startLine: Int,
-    endLine: Int,
-    skipRanges: List<Pair<Int, Int>> = emptyList()
-): Int {
-    var complexity = 1
-    for (i in (startLine - 1) until endLine) {
-        if (i >= lines.size) break
-        // Skip lines that belong to nested closures
-        if (skipRanges.any { (s, e) -> i >= s && i < e }) continue
-        val line = lines[i]
-        val trimmed = line.trim()
-        if (trimmed.startsWith("//")) continue
-
-        complexity += Regex("\\bif\\b").findAll(line).count()
-        complexity += Regex("\\bfor\\b").findAll(line).count()
-        complexity += Regex("\\bwhile\\b").findAll(line).count()
-        complexity += Regex("\\bcatch\\b").findAll(line).count()
-        complexity += Regex("&&").findAll(line).count()
-        complexity += Regex("\\|\\|").findAll(line).count()
-        // when branches: lines like "value ->" or "else ->"
-        // but NOT lambda arrows like "x: Int ->" or "{ x ->"
-        if (trimmed.contains("->") && !trimmed.startsWith("when") && !trimmed.startsWith("//")
-            && !trimmed.contains("{") && !trimmed.startsWith("val") && !trimmed.startsWith("var")) {
-            complexity++
-        }
-    }
-    return complexity
-}
-
-// ==============================
-// EXTRACT CLOSURES (lambdas)
-// ==============================
-fun extractClosures(lines: List<String>, parentStart: Int, parentEnd: Int): List<Map<String, Any>> {
-    val closures = mutableListOf<Map<String, Any>>()
-    // Match: val/var name = { ... or just { params ->
-    val lambdaAssignPattern = Regex("(?:val|var)\\s+(\\w+)\\s*(?::\\s*[^=]+)?=\\s*\\{")
-    val lambdaArrowPattern = Regex("\\{[^}]*->")
-    var i = parentStart - 1
-    while (i < parentEnd && i < lines.size) {
-        val line = lines[i]
-        val trimmed = line.trim()
-        if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
-            i++; continue
-        }
-        // Skip declarations
-        if (trimmed.startsWith("fun ") || trimmed.startsWith("class ") || trimmed.startsWith("object ")
-            || trimmed.startsWith("interface ") || trimmed.startsWith("enum ")
-            || trimmed.startsWith("data class ")) {
-            i++; continue
-        }
-        val assignMatch = lambdaAssignPattern.find(line)
-        if (assignMatch != null) {
-            val name = assignMatch.groupValues[1]
-            val endline = findBlockRange(lines, i)
-            val complexity = mccabeComplexity(lines, i + 1, endline)
-            closures.add(mapOf(
-                "type" to "function",
-                "name" to name,
-                "lineno" to i + 1,
-                "endline" to endline,
-                "complexity" to complexity,
-                "closures" to emptyList<Map<String, Any>>()
-            ))
-            i = endline
-            continue
-        }
-        val arrowMatch = lambdaArrowPattern.find(line)
-        if (arrowMatch != null && "{" in line && "->" in line) {
-            // Anonymous lambda like: items.map { x -> ... }
-            val endline = findBlockRange(lines, i)
-            val complexity = mccabeComplexity(lines, i + 1, endline)
-            closures.add(mapOf(
-                "type" to "function",
-                "name" to "closure",
-                "lineno" to i + 1,
-                "endline" to endline,
-                "complexity" to complexity,
-                "closures" to emptyList<Map<String, Any>>()
-            ))
-            i = endline
-            continue
-        }
-        i++
-    }
-    return closures
-}
-
-// ==============================
-// PARSERS
-// ==============================
-val CLASS_PATTERN = Regex(
-    "^\\s*(?:public\\s+|private\\s+|protected\\s+|internal\\s+)?+" +
-    "(?:data\\s+|sealed\\s+|open\\s+|abstract\\s+|inner\\s+)*" +
-    "(?:class|object)\\s+(\\w+)"
-)
-val INTERFACE_PATTERN = Regex(
-    "^\\s*(?:public\\s+|private\\s+|protected\\s+|internal\\s+)?+" +
-    "interface\\s+(\\w+)"
-)
-val ENUM_CLASS_PATTERN = Regex(
-    "^\\s*(?:public\\s+|private\\s+|protected\\s+|internal\\s+)?+" +
-    "enum\\s+class\\s+(\\w+)"
-)
-val METHOD_PATTERN = Regex(
-    "^\\s+fun\\s+(\\w+)\\s*[<(]"
-)
-val TOPLEVEL_FUN_PATTERN = Regex(
-    "^fun\\s+(\\w+)\\s*[<(]"
-)
-
-fun parseFile(file: File, rootPath: String): List<Map<String, Any>> {
-    val lines = file.readLines()
-    val result = mutableListOf<Map<String, Any>>()
-    val processedLines = mutableSetOf<Int>()
-
-    // Pass 1: Find classes, objects, interfaces, enums
-    val classRanges = mutableListOf<Triple<String, Int, Int>>()
-    for (i in lines.indices) {
-        val line = lines[i]
-        val enumMatch = ENUM_CLASS_PATTERN.find(line)
-        val ifaceMatch = if (enumMatch == null) INTERFACE_PATTERN.find(line) else null
-        val classMatch = if (enumMatch == null && ifaceMatch == null) CLASS_PATTERN.find(line) else null
-
-        val match = enumMatch ?: ifaceMatch ?: classMatch ?: continue
-        val name = match.groupValues[1]
-        if (name in listOf("get", "set", "when", "for", "while", "if", "do")) continue
-
-        val endline = findBlockRange(lines, i)
-        classRanges.add(Triple(name, i + 1, endline))
-
-        for (l in i until endline) processedLines.add(l)
-    }
-
-    // Build class items with methods
-    for ((className, startLine, endLine) in classRanges) {
-        val methods = mutableListOf<Map<String, Any>>()
-        var classComplexity = 0
-
-        for (i in (startLine - 1) until endLine) {
-            if (i >= lines.size) break
-            val methodMatch = METHOD_PATTERN.find(lines[i])
-            if (methodMatch != null) {
-                val methodName = methodMatch.groupValues[1]
-                val methodEnd = findBlockRange(lines, i)
-                val closures = extractClosures(lines, i + 1, methodEnd)
-                val closureRanges = closures.map { (it["lineno"] as Int - 1) to (it["endline"] as Int) }
-                val methodComplexity = mccabeComplexity(lines, i + 1, methodEnd, closureRanges)
-                classComplexity += methodComplexity
-
-                methods.add(mapOf(
-                    "type" to "method",
-                    "name" to methodName,
-                    "lineno" to i + 1,
-                    "endline" to methodEnd,
-                    "complexity" to methodComplexity,
-                    "classname" to className,
-                    "methods" to emptyList<Map<String, Any>>(),
-                    "closures" to closures
-                ))
-            }
-        }
-
-        result.add(mapOf(
-            "type" to "class",
-            "name" to className,
-            "lineno" to startLine,
-            "endline" to endLine,
-            "complexity" to classComplexity,
-            "methods" to methods,
-            "closures" to emptyList<Map<String, Any>>()
-        ))
-    }
-
-    // Pass 2: Find top-level functions (only in lines NOT part of a class)
-    for (i in lines.indices) {
-        if (i in processedLines) continue
-        val line = lines[i]
-        val funMatch = TOPLEVEL_FUN_PATTERN.find(line) ?: continue
-        val funName = funMatch.groupValues[1]
-        val endline = findBlockRange(lines, i)
-        var hasBody = false
-        for (l in i until minOf(endline, lines.size)) {
-            if ("{" in lines[l]) { hasBody = true; break }
-            if ("=" in lines[l] && "{" !in lines[l]) break
-        }
-        val closures = if (hasBody) extractClosures(lines, i + 1, endline) else emptyList()
-        val closureRanges = closures.map { (it["lineno"] as Int - 1) to (it["endline"] as Int) }
-        val complexity = if (hasBody) mccabeComplexity(lines, i + 1, endline, closureRanges) else 1
-
-        result.add(mapOf(
-            "type" to "function",
-            "name" to funName,
-            "lineno" to i + 1,
-            "endline" to endline,
-            "complexity" to complexity,
-            "methods" to emptyList<Map<String, Any>>(),
-            "closures" to closures
-        ))
-        for (l in i until endline) processedLines.add(l)
-    }
-
-    return result
-}
-
-// ==============================
-// JSON SERIALIZATION (manual, no external deps)
-// ==============================
-fun escapeJson(s: String): String {
-    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")
-}
-
-fun toJsonValue(v: Any?): String = when (v) {
-    null -> "null"
-    is String -> "\"${escapeJson(v)}\""
-    is Number -> v.toString()
-    is Boolean -> v.toString()
-    is Map<*, *> -> {
-        val entries = v.entries.map { (k, vv) -> "\"${escapeJson(k.toString())}\":${toJsonValue(vv)}" }
-        "{${entries.joinToString(",")}}"
-    }
-    is List<*> -> {
-        val items = v.map { toJsonValue(it) }
-        "[${items.joinToString(",")}]"
-    }
-    else -> "\"${escapeJson(v.toString())}\""
-}
-
-// ==============================
-// MAIN
-// ==============================
-val root = File(ROOT_PATH).absoluteFile
-val files = collectKtFiles(root)
-val output = mutableMapOf<String, List<Map<String, Any>>>()
-
-for (file in files) {
-    val rel = file.relativeTo(root).path
-    val parsed = parseFile(file, root.path)
-    if (parsed.isNotEmpty()) {
-        output[rel] = parsed
-    }
-}
-
-println(toJsonValue(output))
-"""
-
-import json
 import os
-import subprocess
-import tempfile
+import typing as t
+
+from tree_sitter import Parser
+
+from . import constants
+from .tools import walk_kotlin_files
 
 
-def collect(path: str) -> dict:
-    with tempfile.TemporaryDirectory() as tmpdir:
-        kts_file = os.path.join(tmpdir, "collector.kts")
-        with open(kts_file, "w") as f:
-            f.write(__doc__)
+def collect(path: str) -> dict[str, list[dict[str, t.Any]]]:
+    """Collect metrics from Kotlin source files in the given directory tree.
 
-        cmd = ["kotlinc", "-script", kts_file, path]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+    Args:
+        path: Root directory to scan for Kotlin files.
 
-    if result.returncode != 0:
-        if "kotlinc" in result.stderr.lower() or "not found" in result.stderr.lower():
-            raise RuntimeError("kotlinc not found. Install Kotlin SDK: https://kotlinlang.org/docs/command-line.html")
-        raise RuntimeError(result.stderr)
+    Returns:
+        Mapping of relative file paths to lists of metric dictionaries.
+    """
+    result: dict[str, list[dict[str, t.Any]]] = {}
 
-    return json.loads(result.stdout)
+    for filepath in walk_kotlin_files(path):
+        rel = os.path.relpath(filepath, path)
+        items = _parse_file(filepath)
+
+        if items:
+            result[rel] = items
+
+    return result
+
+
+def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
+    """Parse a single Kotlin file and extract type, function, and closure metrics."""
+    with open(filepath, "rb") as f:
+        source = f.read()
+
+    parser = Parser(constants.KOTLIN)
+    tree = parser.parse(source)
+    root = tree.root_node
+
+    items: list[dict[str, t.Any]] = []
+
+    for child in root.children:
+        if child.type == "class_declaration":
+            item = _parse_class_declaration(child)
+
+            if item:
+                items.append(item)
+
+        elif child.type == "object_declaration":
+            item = _parse_object_declaration(child)
+
+            if item:
+                items.append(item)
+
+        elif child.type == "function_declaration":
+            # Top-level function
+            name_node = child.child_by_field_name("name")
+
+            if not name_node:
+                continue
+
+            name = name_node.text.decode()
+            lineno = child.start_point[0] + 1
+            endline = child.end_point[0] + 1
+            body_node = _get_function_body(child)
+
+            if body_node:
+                closures = _extract_closures(body_node)
+                closure_ranges = [(c["_start_byte"], c["_end_byte"]) for c in closures]
+                complexity = _mccabe(body_node, closure_ranges)
+            else:
+                closures = []
+                complexity = 1
+
+            items.append({
+                "type": "function",
+                "name": name,
+                "lineno": lineno,
+                "endline": endline,
+                "complexity": complexity,
+                "methods": [],
+                "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in closures],
+            })
+
+    return items
+
+
+def _is_interface(node: t.Any) -> bool:
+    """Check if a class_declaration node is actually an interface."""
+    for child in node.children:
+        if not child.is_named and child.type == "interface":
+            return True
+    return False
+
+
+def _is_enum(node: t.Any) -> bool:
+    """Check if a class_declaration has an enum modifier."""
+    for child in node.children:
+        if child.is_named and child.type == "modifiers":
+            for mod in child.children:
+                if mod.type == "class_modifier" and mod.text.decode() == "enum":
+                    return True
+    return False
+
+
+def _get_function_body(node: t.Any) -> t.Any | None:
+    """Get the function_body child node from a function_declaration."""
+    for child in node.children:
+        if child.type == "function_body":
+            # function_body contains either a block or expression
+            for inner in child.children:
+                if inner.type == "block":
+                    return inner
+            # Expression body — return the function_body itself
+            return child
+    return None
+
+
+def _parse_class_declaration(node: t.Any) -> dict[str, t.Any] | None:
+    """Parse class_declaration node (covers class, interface, enum, data, sealed)."""
+    name_node = node.child_by_field_name("name")
+
+    if not name_node:
+        return None
+
+    name = name_node.text.decode()
+    lineno = node.start_point[0] + 1
+    endline = node.end_point[0] + 1
+
+    is_iface = _is_interface(node)
+
+    if is_iface:
+        # Interface: look for class_body and extract function signatures (no body)
+        methods: list[dict[str, t.Any]] = []
+        body_node = None
+
+        for child in node.children:
+            if child.type == "class_body":
+                body_node = child
+                break
+
+        if body_node:
+            for child in body_node.children:
+                if child.type == "function_declaration":
+                    method = _parse_method(child, name)
+
+                    if method:
+                        methods.append(method)
+
+        return {
+            "type": "class",
+            "name": name,
+            "lineno": lineno,
+            "endline": endline,
+            "complexity": sum(m["complexity"] for m in methods),
+            "methods": methods,
+            "closures": [],
+        }
+
+    # Regular class or enum
+    body_node = None
+
+    for child in node.children:
+        if child.type in ("class_body", "enum_class_body"):
+            body_node = child
+            break
+
+    methods = []
+    class_complexity = 0
+
+    if body_node:
+        for child in body_node.children:
+            if child.type == "function_declaration":
+                method = _parse_method(child, name)
+
+                if method:
+                    methods.append(method)
+                    class_complexity += method["complexity"]
+
+    return {
+        "type": "class",
+        "name": name,
+        "lineno": lineno,
+        "endline": endline,
+        "complexity": class_complexity,
+        "methods": methods,
+        "closures": [],
+    }
+
+
+def _parse_object_declaration(node: t.Any) -> dict[str, t.Any] | None:
+    """Parse object_declaration node."""
+    name_node = node.child_by_field_name("name")
+
+    if not name_node:
+        return None
+
+    name = name_node.text.decode()
+    lineno = node.start_point[0] + 1
+    endline = node.end_point[0] + 1
+
+    body_node = None
+
+    for child in node.children:
+        if child.type == "class_body":
+            body_node = child
+            break
+
+    methods: list[dict[str, t.Any]] = []
+    class_complexity = 0
+
+    if body_node:
+        for child in body_node.children:
+            if child.type == "function_declaration":
+                method = _parse_method(child, name)
+
+                if method:
+                    methods.append(method)
+                    class_complexity += method["complexity"]
+
+    return {
+        "type": "class",
+        "name": name,
+        "lineno": lineno,
+        "endline": endline,
+        "complexity": class_complexity,
+        "methods": methods,
+        "closures": [],
+    }
+
+
+def _parse_method(node: t.Any, classname: str) -> dict[str, t.Any] | None:
+    """Parse a function_declaration inside a type body."""
+    name_node = node.child_by_field_name("name")
+
+    if not name_node:
+        return None
+
+    name = name_node.text.decode()
+    lineno = node.start_point[0] + 1
+    endline = node.end_point[0] + 1
+
+    body_node = _get_function_body(node)
+
+    if body_node:
+        closures = _extract_closures(body_node)
+        closure_ranges = [(c["_start_byte"], c["_end_byte"]) for c in closures]
+        complexity = _mccabe(body_node, closure_ranges)
+    else:
+        closures = []
+        complexity = 1
+
+    return {
+        "type": "method",
+        "name": name,
+        "lineno": lineno,
+        "endline": endline,
+        "complexity": complexity,
+        "classname": classname,
+        "methods": [],
+        "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in closures],
+    }
+
+
+def _extract_closures(body_node: t.Any) -> list[dict[str, t.Any]]:
+    """Find lambda_literal (closures) in a function body."""
+    closures: list[dict[str, t.Any]] = []
+
+    for child in body_node.children:
+        _find_closures_recursive(child, closures)
+
+    return closures
+
+
+def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> None:
+    """Recursively find lambda_literal nodes, skipping nested function declarations."""
+    if node.type == "function_declaration":
+        return  # Don't descend into nested functions
+
+    if node.type == "lambda_literal":
+        name = _find_closure_name(node)
+        lineno = node.start_point[0] + 1
+        endline = node.end_point[0] + 1
+
+        nested_closures: list[dict[str, t.Any]] = []
+
+        for child in node.children:
+            _find_closures_recursive(child, nested_closures)
+
+        closure_ranges = [(c["_start_byte"], c["_end_byte"]) for c in nested_closures]
+        complexity = _mccabe(node, closure_ranges)
+
+        closures.append({
+            "type": "function",
+            "name": name,
+            "lineno": lineno,
+            "endline": endline,
+            "complexity": complexity,
+            "closures": [{k: v for k, v in c.items() if not k.startswith("_")} for c in nested_closures],
+            "_start_byte": node.start_byte,
+            "_end_byte": node.end_byte,
+        })
+        return
+
+    for child in node.children:
+        _find_closures_recursive(child, closures)
+
+
+def _find_closure_name(lambda_node: t.Any) -> str:
+    """Find the name of a closure by looking at parent property_declaration."""
+    parent = lambda_node.parent
+
+    if parent:
+        # property_declaration > variable_declaration > identifier
+        if parent.type == "variable_declaration":
+            for child in parent.children:
+                if child.type == "identifier":
+                    return child.text.decode()
+        # Walk up to property_declaration if needed
+        grandparent = parent.parent
+
+        if grandparent and grandparent.type == "property_declaration":
+            for child in grandparent.children:
+                if child.type == "variable_declaration":
+                    for vc in child.children:
+                        if vc.type == "identifier":
+                            return vc.text.decode()
+
+    return "<closure>"
+
+
+def _mccabe(node: t.Any, skip_ranges: list[tuple[int, int]] | None = None) -> int:
+    """Calculate McCabe complexity by counting decision points in the AST."""
+    if skip_ranges is None:
+        skip_ranges = []
+
+    complexity_ref = [1]
+    _count_decisions(node, skip_ranges, complexity_ref)
+
+    return complexity_ref[0]
+
+
+def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity_ref: list[int]) -> None:
+    """Recursively count decision points in the AST, skipping specified byte ranges."""
+    for start, end in skip_ranges:
+        if node.start_byte >= start and node.end_byte <= end:
+            return
+
+    # Standard decision nodes + catch_block
+    decision_types = constants.DECISION_NODES | {
+        "catch_block",
+        constants.CONJUNCTION,
+        constants.DISJUNCTION,
+    }
+
+    if node.type in decision_types:
+        complexity_ref[0] += 1
+
+    # when_entry: +1 for each non-else entry
+    if node.type == constants.WHEN_ENTRY:
+        # Check if first child is the unnamed 'else' token
+        first_named = None
+
+        for child in node.children:
+            if child.is_named:
+                first_named = child
+                break
+            # Check unnamed 'else' token
+            if not child.is_named and child.type == "else":
+                first_named = None
+                break
+
+        if first_named is not None:
+            complexity_ref[0] += 1
+
+        return  # Don't descend into when_entry children
+
+    for child in node.children:
+        _count_decisions(child, skip_ranges, complexity_ref)
