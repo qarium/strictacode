@@ -1,15 +1,19 @@
+from __future__ import annotations
+
 import os
+import typing as t
 
 from ..loader import FileItem, FileItemTypes, Loader
 from . import analyzer, collector
 
 
-def _create_item(**kwargs) -> FileItem:
-    """Recursively build a FileItem from a raw metric dictionary.
+def _create_item(**kwargs: t.Any) -> FileItem:
+    """Create a FileItem from a dictionary, recursing into methods and closures.
 
     Args:
-        **kwargs: Metric fields (type, name, lineno, endline, complexity,
-            classname, methods, closures).
+        **kwargs: Dictionary with keys ``type``, ``name``, ``lineno``,
+            ``endline``, ``complexity``, ``classname``, ``methods``,
+            ``closures``.
 
     Returns:
         Populated FileItem instance.
@@ -17,33 +21,32 @@ def _create_item(**kwargs) -> FileItem:
     return FileItem(
         type=kwargs["type"],
         name=kwargs["name"],
-        lineno=kwargs["lineno"],
-        endline=kwargs["endline"],
-        complexity=kwargs["complexity"],
+        lineno=kwargs.get("lineno", 0),
+        endline=kwargs.get("endline", 0),
+        complexity=kwargs.get("complexity", 0),
         class_name=kwargs.get("classname"),
         methods=[_create_item(**i) for i in (kwargs.get("methods") or [])],
         closures=[_create_item(**i) for i in (kwargs.get("closures") or [])],
     )
 
 
-class KotlinLoder(Loader):
-    __lang__ = "kotlin"
-    __ignore_dirs__ = ["build", ".gradle"]
-    __comment_line_prefixes__ = ["//"]
-    __comment_code_blocks__ = [
-        ("/*", "*/"),
-    ]
+class SwiftLoder(Loader):
+    """Loader implementation for Swift source code analysis."""
+
+    __lang__ = "swift"
+    __ignore_dirs__: t.ClassVar[list[str]] = ["build", ".build", ".swiftpm", "DerivedData", "Packages"]
+    __comment_line_prefixes__: t.ClassVar[list[str]] = ["//", "///"]
+    __comment_code_blocks__: t.ClassVar[list[tuple[str, str]]] = [("/*", "*/"), ("/**", "*/")]
 
     def collect(self) -> dict[str, list[FileItem]]:
-        """Collect metrics from Kotlin source files.
+        """Collect Swift source metrics using the collector module.
 
         Returns:
-            Mapping of relative file paths to lists of FileItem instances,
+            Mapping of file paths to lists of FileItem instances,
             sorted with classes before functions.
         """
         data = collector.collect(self.root)
-
-        metrics = {}
+        metrics: dict[str, list[FileItem]] = {}
 
         for filepath, items in data.items():
             if filepath not in metrics:
@@ -54,11 +57,11 @@ class KotlinLoder(Loader):
 
         return metrics
 
-    def build(self):
-        """Build the inheritance graph from analyzer output.
+    def build(self) -> None:
+        """Build the inheritance graph using the analyzer module.
 
-        Adds nodes and edges for types whose source files are among
-        the collected modules.
+        Only nodes and edges referencing collected module paths
+        are added to the graph.
         """
         data = analyzer.analyze(self.root)
         nodes = data.get("nodes", [])
@@ -68,6 +71,7 @@ class KotlinLoder(Loader):
 
         for node in nodes:
             filepath = os.path.abspath(node.split(":")[0])
+
             if filepath in collected_paths:
                 self.sources.graph.add_node(node)
 

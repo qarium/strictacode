@@ -17,6 +17,7 @@ from strictacode.reporters import (
     TextResultReporter,
 )
 from strictacode.statistics import ProjectDiff, ProjectStat
+from strictacode.swift import SwiftLoder
 from strictacode.threshold import Threshold
 from strictacode.utils import detect_language
 
@@ -76,6 +77,7 @@ def analyze(
         Language.PYTHON: PyLoder,
         Language.JAVASCRIPT: JSLoder,
         Language.KOTLIN: KotlinLoder,
+        Language.SWIFT: SwiftLoder,
     }
     loader_options = {}
 

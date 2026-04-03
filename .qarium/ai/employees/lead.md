@@ -8,13 +8,14 @@
 - **reporters split into reporters/result.py + reporters/diff.py** — result reporters output analysis results, diff reporters compare two reports; shared via __init__.py re-exports
 - **ProjectStat + ProjectDiff in statistics.py** — dataclass for project metrics snapshot + calculator for directional diffs (current - baseline); sign matters — positive means current is higher; used by diff reporters and compare CLI
 - **Threshold supports imbalance checking via `abs(RP - OP)`** — `imbalance` threshold field validates balance between refactoring and overengineering pressure; uses key `IMB=` in CLI string format
-- **Go and Kotlin use `class_loc_from_methods` flag** — both languages report method LOC independently, so class LOC is computed by summing method LOCs instead of counting class body lines
+- **Go and Kotlin use `class_loc_from_methods` flag** — both languages report method LOC independently, so class LOC is computed by summing method LOCs instead of counting class body lines; Swift does NOT use this flag because methods are inside type bodies
+- **Swift uses tree-sitter for AST parsing** — unlike Go/JS/Kotlin which embed foreign-language source in Python docstrings and run as subprocess, Swift uses `tree-sitter` + `tree-sitter-swift` Python bindings for direct AST analysis; avoids external Swift toolchain dependency
 
 ## Project Structure
-- **Language support in py/, go/, js/, kotlin/ — each with loader.py, collector.py, analyzer.py** — loader subclasses base Loader, collector gathers raw metrics, analyzer builds inheritance graph
+- **Language support in py/, go/, js/, kotlin/, swift/ — each with loader.py, collector.py, analyzer.py** — loader subclasses base Loader, collector gathers raw metrics, analyzer builds inheritance graph; swift/ uses tree-sitter instead of subprocess
 - **Metrics calculation in calc/ — flat module + pressure/ sub-package** — complexity.py, score.py, pressure/refactoring.py, pressure/overengineering.py
 - **Source model hierarchy in source.py without shared base class** — Sources → PackageSource → ModuleSource → ClassSource → MethodSource/FunctionSource, each with Status + compile()
-- **Root __init__.py intentionally empty — all imports use fully-qualified strictacode.* path** — sub-packages re-export via __all__ (PyLoder, GoLoder, JSLoder, KotlinLoder, score, pressure, Complexity)
+- **Root __init__.py intentionally empty — all imports use fully-qualified strictacode.* path** — sub-packages re-export via __all__ (PyLoder, GoLoder, JSLoder, KotlinLoder, SwiftLoder, score, pressure, Complexity)
 
 ## Code Patterns
 - **Absolute package-relative imports within strictacode/** — `from .calc import score`, `from strictacode.config import Config`

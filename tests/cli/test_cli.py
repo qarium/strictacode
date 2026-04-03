@@ -5,6 +5,7 @@ from unittest.mock import patch
 from click.testing import CliRunner
 from strictacode.__main__ import app
 from strictacode.kotlin import KotlinLoder
+from strictacode.swift import SwiftLoder
 
 runner = CliRunner()
 
@@ -246,3 +247,23 @@ class TestAnalyzeKotlin:
         SpyLoader.assert_called_once()
         call_kwargs = SpyLoader.call_args[1]
         assert call_kwargs.get("class_loc_from_methods") is True
+
+
+class TestAnalyzeSwift:
+    @patch("strictacode.swift.collector.collect")
+    @patch("strictacode.swift.analyzer.analyze")
+    def test_swift_does_not_receive_class_loc_from_methods(self, mock_analyze, mock_collect, tmp_path):
+        """Swift should NOT receive class_loc_from_methods — methods are inside type body."""
+        mock_collect.return_value = {}
+        mock_analyze.return_value = {"nodes": [], "edges": []}
+        (tmp_path / "Main.swift").write_text("class App {}\n")
+
+        with patch("strictacode.__main__.SwiftLoder", wraps=SwiftLoder) as SpyLoader:
+            result = runner.invoke(
+                app,
+                ["analyze", str(tmp_path), "--format", "json", "--short"],
+            )
+        assert result.exit_code == 0
+        SpyLoader.assert_called_once()
+        call_kwargs = SpyLoader.call_args[1]
+        assert call_kwargs.get("class_loc_from_methods") is not True

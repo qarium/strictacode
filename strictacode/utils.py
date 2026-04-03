@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
-# AGENT: добавь докстринг к функции
 def lines_of_code(
     file_path: str,
     *,
@@ -77,7 +76,6 @@ def lines_of_code(
     return line_count
 
 
-# AGENT: добавь докстринг к функции
 def _parse_gitignore(project_path):
     """Parse .gitignore into a list of pattern strings.
 
@@ -105,7 +103,6 @@ def _parse_gitignore(project_path):
     return patterns
 
 
-# AGENT: добавь докстринг к функции
 def _should_exclude(name, patterns):
     """Check whether *name* matches any of the given patterns.
 
@@ -129,7 +126,6 @@ def _should_exclude(name, patterns):
     return False
 
 
-# AGENT: добавь докстринг к функции
 def ignore_dirs(path, *, exclude_patterns: list[str] | None = None):
     """Recursively collect directories excluded by .gitignore patterns.
 
@@ -160,7 +156,6 @@ def ignore_dirs(path, *, exclude_patterns: list[str] | None = None):
     return exclude_dirs
 
 
-# AGENT: добавь докстринг к функции
 def source_content(filepath: str, lineno: int, endline: int) -> str:
     """Read a range of lines from a source file.
 
@@ -189,7 +184,6 @@ def source_content(filepath: str, lineno: int, endline: int) -> str:
         return "\n".join(lines)
 
 
-# AGENT: добавь докстринг к функции
 def detect_languages(path):
     """Detect all programming languages present in a directory tree.
 
@@ -219,11 +213,12 @@ def detect_languages(path):
                 languages.add("javascript")
             elif ext == ".kt":
                 languages.add("kotlin")
+            elif ext == ".swift":
+                languages.add("swift")
 
     return list(languages)
 
 
-# AGENT: добавь докстринг к функции
 def detect_language(path):
     """Detect the dominant programming language in a directory tree.
 
@@ -254,6 +249,8 @@ def detect_language(path):
                 lang_counts["javascript"] = lang_counts.get("javascript", 0) + 1
             elif ext == ".kt":
                 lang_counts["kotlin"] = lang_counts.get("kotlin", 0) + 1
+            elif ext == ".swift":
+                lang_counts["swift"] = lang_counts.get("swift", 0) + 1
 
     if not lang_counts:
         return None
