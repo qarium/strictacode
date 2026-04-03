@@ -119,6 +119,132 @@ class TestInheritance:
         assert ("Data", "Serializable") in _edge_pairs(r)
 
 
+class TestTwoPassResolution:
+    """Tests for the two-pass name resolution fix."""
+
+    def test_child_before_parent_different_files(self, tmp_path):
+        """Edge preserved when child file is processed before parent file."""
+        (tmp_path / "a_Impl.swift").write_text("class ServiceImpl: Service {}\n")
+        (tmp_path / "b_Base.swift").write_text("class Service {}\n")
+        r = analyze(str(tmp_path))
+        assert ("ServiceImpl", "Service") in _edge_pairs(r)
+
+    def test_cross_file_inheritance(self, tmp_path):
+        """Edge created when parent is in a different file."""
+        (tmp_path / "base.swift").write_text("class Repository {}\n")
+        (tmp_path / "impl.swift").write_text("class UserRepo: Repository {}\n")
+        r = analyze(str(tmp_path))
+        assert ("UserRepo", "Repository") in _edge_pairs(r)
+
+    def test_external_dependency_not_linked(self, tmp_path):
+        """Edges to types not declared in project are not created."""
+        (tmp_path / "svc.swift").write_text("class MyView: UIView {}\n")
+        r = analyze(str(tmp_path))
+        assert len(r["edges"]) == 0
+
+    def test_no_self_edge(self, tmp_path):
+        """A type does not get an edge to itself."""
+        (tmp_path / "a.swift").write_text("class Base {}\n")
+        r = analyze(str(tmp_path))
+        for e in r["edges"]:
+            assert e["source"] != e["target"]
+
+
+class TestNestedTypes:
+    """Tests for nested type extraction."""
+
+    def test_nested_class_detected(self, tmp_path):
+        """Nested class inside another class is detected."""
+        r = _write(
+            tmp_path,
+            "outer.swift",
+            "class Outer {\n    class Inner {}\n}\n",
+        )
+        names = _node_names(r)
+        assert "Outer" in names
+        assert "Outer.Inner" in names
+
+    def test_nested_class_inherits(self, tmp_path):
+        """Nested class inheriting from top-level type gets an edge."""
+        r = _write(
+            tmp_path,
+            "nested.swift",
+            "class Base {}\nclass Container {\n    class Item: Base {}\n}\n",
+        )
+        assert ("Container.Item", "Base") in _edge_pairs(r)
+
+    def test_nested_protocol_detected(self, tmp_path):
+        """Nested protocol inside a class is detected."""
+        r = _write(
+            tmp_path,
+            "nested_proto.swift",
+            "class Factory {\n    protocol Product {}\n}\n",
+        )
+        assert "Factory.Product" in _node_names(r)
+
+
+class TestProtocolConformance:
+    """Tests for implicit protocol conformance detection via method signatures."""
+
+    def test_implicit_conformance(self, tmp_path):
+        """Class with all protocol methods gets an implicit edge."""
+        (tmp_path / "proto.swift").write_text(
+            "protocol Drawable {\n"
+            "    func draw()\n"
+            "    func resize(scale: Int)\n"
+            "}\n"
+        )
+        (tmp_path / "impl.swift").write_text(
+            "class Circle {\n"
+            "    func draw() {}\n"
+            "    func resize(scale: Int) {}\n"
+            "}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Circle", "Drawable") in _edge_pairs(r)
+
+    def test_no_match_when_method_missing(self, tmp_path):
+        """No implicit edge when class is missing a protocol method."""
+        (tmp_path / "proto.swift").write_text(
+            "protocol Drawable {\n"
+            "    func draw()\n"
+            "    func resize(scale: Int)\n"
+            "}\n"
+        )
+        (tmp_path / "impl.swift").write_text(
+            "class Circle {\n"
+            "    func draw() {}\n"
+            "}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Circle", "Drawable") not in _edge_pairs(r)
+
+    def test_explicit_edge_not_duplicated(self, tmp_path):
+        """Explicit conformance edge is not duplicated."""
+        (tmp_path / "proto.swift").write_text(
+            "protocol Handler {\n"
+            "    func handle()\n"
+            "}\n"
+        )
+        (tmp_path / "impl.swift").write_text(
+            "class HttpHandler: Handler {\n"
+            "    func handle() {}\n"
+            "}\n"
+        )
+        r = analyze(str(tmp_path))
+        handler_edges = [e for e in r["edges"] if "HttpHandler" in e["source"]]
+        assert len(handler_edges) == 1
+
+    def test_empty_protocol_no_false_edges(self, tmp_path):
+        """An empty protocol doesn't create edges to everything."""
+        (tmp_path / "proto.swift").write_text("protocol Empty {}\n")
+        (tmp_path / "cls.swift").write_text(
+            "class MyClass {\n    func doWork() {}\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("MyClass", "Empty") not in _edge_pairs(r)
+
+
 class TestFiltering:
     def test_file_filtering(self, tmp_path):
         (tmp_path / "Service.swift").write_text("class Service {}\n")

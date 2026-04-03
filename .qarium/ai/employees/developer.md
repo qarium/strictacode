@@ -17,7 +17,7 @@
 | typed signatures             | All function/method signatures must have type annotations for parameters and return types                                                                           |
 | Python 3.10 compat           | Code must run on Python 3.10+ — use `t.Optional[X]` instead of `X | None`, `t.Union` instead of `X | Y` in runtime contexts (dataclass fields, function defaults)   |
 | typing alias                 | Use `import typing as t` instead of `from typing import ...`                                                                                                        |
-| No if/else in logic          | Do not use if/else anywhere except module globals                                                                                                                   |
+| No if/else in logic          | Do not use if/else block statements anywhere except module globals; ternary expressions (`x if cond else y`) are allowed                                           |
 | No staticmethod classes      | Classes with only static methods are modules — use modules instead                                                                                                  |
 | classmethod constructors     | Use classmethod as alternative constructors (initializers)                                                                                                          |
 | No singleton classes         | Singleton class is a module — use modules instead                                                                                                                   |
@@ -42,3 +42,4 @@
 | common.py mixes constants and functions | Mixing concerns in one module hurts composition — constants and helpers have different reuse patterns | Separate into `constants.py` (import whole) + `tools.py` (import specific) |
 | Kotlin collector had if/elif in tree traversal | Using if/elif chain for AST node types prevents processing nested nodes (e.g., binary_expression inside if_expression) — elif stops traversal | Use independent `if` checks for each node type, always recurse into children after checks |
 | Kotlin collector duplicated body extraction | `_parse_class_declaration` and `_parse_object_declaration` had identical body extraction and method iteration loops | Extract shared `_extract_type_body` and `_extract_methods` helpers |
+| Visual block separation missed in review | Convention check was superficial — "empty lines present" checked globally instead of per-function | Check each function body individually: walk every `if`/`for`/`return` and verify blank line separators between logical blocks |
