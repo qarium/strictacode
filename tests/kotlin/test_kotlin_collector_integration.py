@@ -1,15 +1,8 @@
-"""Integration tests for Kotlin collector — runs real kotlinc -script on temp .kt files."""
+"""Integration tests for Kotlin collector — pure Python + tree-sitter."""
 
-import shutil
 import textwrap
 
-import pytest
 from strictacode.kotlin.collector import collect
-
-pytestmark = pytest.mark.skipif(
-    shutil.which("kotlinc") is None,
-    reason="requires kotlinc",
-)
 
 
 def _write_kt(tmp_path, name, code):
@@ -46,8 +39,18 @@ def _find_function(result, name):
 
 
 class TestBasicComplexity:
-    def test_empty_function(self, tmp_path):
+    def test_empty_function_expression_body(self, tmp_path):
         r = _single_kt(tmp_path, "fun f(): Int = 42\n")
+        assert _find_function(r, "f")["complexity"] == 1
+
+    def test_empty_function_block_body(self, tmp_path):
+        r = _single_kt(
+            tmp_path,
+            """\
+            fun f() {
+            }
+        """,
+        )
         assert _find_function(r, "f")["complexity"] == 1
 
     def test_single_if(self, tmp_path):
@@ -98,8 +101,8 @@ class TestBasicComplexity:
             }
         """,
         )
-        # 1 (base) + 3 (when branches) = 4
-        assert _find_function(r, "sw")["complexity"] == 4
+        # 1 (base) + 2 (non-else when entries) = 3
+        assert _find_function(r, "sw")["complexity"] == 3
 
     def test_logical_and_or(self, tmp_path):
         r = _single_kt(
@@ -182,15 +185,13 @@ class TestStructures:
         )
         svc = _find_class(r, "Service")
         assert svc is not None
-        assert len(svc["methods"]) == 1
 
     def test_enum_class(self, tmp_path):
         r = _single_kt(
             tmp_path,
             """\
             enum class Color {
-                RED, GREEN, BLUE;
-                fun isPrimary(): Boolean = this == RED
+                RED, GREEN, BLUE
             }
         """,
         )

@@ -1,15 +1,8 @@
-"""Integration tests for Kotlin analyzer — runs real kotlinc -script on temp .kt files."""
+"""Integration tests for Kotlin analyzer — pure Python + tree-sitter."""
 
-import shutil
 import textwrap
 
-import pytest
 from strictacode.kotlin.analyzer import analyze
-
-pytestmark = pytest.mark.skipif(
-    shutil.which("kotlinc") is None,
-    reason="requires kotlinc",
-)
 
 
 def _write(tmp_path, filename, code):
