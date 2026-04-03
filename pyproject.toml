@@ -25,6 +25,7 @@ dependencies = [
     "pyyaml",
     "tree-sitter>=0.24",
     "tree-sitter-swift>=0.0.1",
+    "tree-sitter-kotlin>=1.1.0",
 ]
 
 [project.scripts]
