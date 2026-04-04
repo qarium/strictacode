@@ -12,7 +12,8 @@ Strictacode analyzes code written in:
   ```bash
   npm install -g @babel/parser @babel/traverse
   ```
-- **Kotlin** — requires `kotlinc` binary in `PATH`
+- **Kotlin** — no additional runtime required (uses tree-sitter)
+- **Swift** — no additional runtime required (uses tree-sitter)
 
 ## Install from PyPI
 

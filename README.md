@@ -2,7 +2,7 @@
 
 Codebase health diagnostics. Find spaghetti code, overengineering, and complexity that blocks development.
 
-Golang · Python · JavaScript · Kotlin
+Golang · Python · JavaScript · Kotlin · Swift
 
 ## Quick Start
 

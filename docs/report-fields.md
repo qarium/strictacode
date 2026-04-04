@@ -23,7 +23,7 @@ The root level of the report. Describes the entire project as a whole.
 
 | Field       | Type      | Description                                                                        |
 |-------------|-----------|------------------------------------------------------------------------------------|
-| `lang`      | `string`  | Project programming language. Possible values: `python`, `golang`, `javascript`, `kotlin` |
+| `lang`      | `string`  | Project programming language. Possible values: `python`, `golang`, `javascript`, `kotlin`, `swift` |
 | `loc`       | `int`     | Total lines of code in the project (excluding comments and blank lines)            |
 | `packages`  | `int`     | Number of packages in the project                                                  |
 | `modules`   | `int`     | Number of modules (files) in the project                                           |
