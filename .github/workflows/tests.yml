@@ -36,7 +36,7 @@ jobs:
           pip install -e ".[test]"
 
       - name: Run tests
-        run: pytest --ignore=tests/go --ignore=tests/js --ignore=tests/kotlin
+        run: pytest --ignore=tests/go --ignore=tests/js --ignore=tests/kotlin --ignore=tests/swift
 
   test-go:
     runs-on: ubuntu-latest
@@ -93,10 +93,6 @@ jobs:
 
   test-kotlin:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        kotlin-version: ["2.0.21", "2.1.20", "2.2.21", "2.3.20"]
     steps:
       - uses: actions/checkout@v4
 
@@ -104,17 +100,27 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install Kotlin ${{ matrix.kotlin-version }}
+      - name: Install dependencies
         run: |
-          KOTLIN_HOME="$RUNNER_TEMP/kotlinc"
-          curl -L https://github.com/JetBrains/kotlin/releases/download/v${{ matrix.kotlin-version }}/kotlin-compiler-${{ matrix.kotlin-version }}.zip -o kotlinc.zip
-          unzip kotlinc.zip -d "$RUNNER_TEMP"
-          echo "$KOTLIN_HOME/bin" >> $GITHUB_PATH
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Run Kotlin tests
+        run: pytest tests/kotlin
+
+  test-swift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[test]"
 
-      - name: Run Kotlin integration tests
-        run: pytest tests/kotlin
+      - name: Run Swift tests
+        run: pytest tests/swift

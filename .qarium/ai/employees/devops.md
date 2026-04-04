@@ -15,7 +15,7 @@
 | Workflow    | File                                | Trigger            | Purpose                                        |
 |-------------|-------------------------------------|--------------------|------------------------------------------------|
 | Lint        | `.github/workflows/lint.yml`        | push/PR to 0.0.x   | ruff check via ruff-action + ruff format check |
-| Tests       | `.github/workflows/tests.yml`       | push/PR to 0.0.x   | pytest matrix: Python 3.10–3.14, Go 1.22–1.24, Node 18–22, Kotlin 2.0–2.3 |
+| Tests       | `.github/workflows/tests.yml`       | push/PR to 0.0.x   | pytest matrix: Python 3.10–3.14, Go 1.22–1.24, Node 18–22; Kotlin/Swift via tree-sitter |
 | Docs        | `.github/workflows/docs.yml`        | push to 0.0.x      | mkdocs gh-deploy                               |
 | Publish     | `.github/workflows/publish.yml`     | workflow_dispatch  | Caller: `qarium/ci` library-publish reusable workflow |
 | Strictacode | `.github/workflows/strictacode.yml` | push/PR to 0.0.x   | strictacode analyze + compare via composite action |
@@ -24,7 +24,7 @@
 ### Conventions
 
 - Lint uses `astral-sh/ruff-action` for check + explicit `ruff format --check` step
-- Kotlin SDK installed manually via `curl` + `unzip` (no setup action)
+- Kotlin and Swift tests run via tree-sitter without external SDK
 - Publish and New Version use caller pattern via `qarium/ci` reusable workflows
 - Pip cache shared across workflows via `actions/cache@v4` with `pyproject.toml` hash key
 - Strictacode uses composite action `.github/actions/analyze`
