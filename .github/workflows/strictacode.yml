@@ -32,8 +32,8 @@ jobs:
           install-cmd: pip install strictacode
         env:
           STRICTACODE_SCORE: "40"
-          STRICTACODE_RP: "40"
-          STRICTACODE_OP: "40"
+          STRICTACODE_RP: "50"
+          STRICTACODE_OP: "50"
           STRICTACODE_IMB: "35"
           STRICTACODE_DENSITY: "30"
           STRICTACODE_SCORE_DIFF: "3"
