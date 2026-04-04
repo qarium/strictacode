@@ -325,7 +325,7 @@ def _find_closures_recursive(node: t.Any, closures: list[dict[str, t.Any]]) -> N
 
 
 def _find_closure_name(lambda_node: t.Any) -> str:
-    """Find the name of a closure by looking at parent property_declaration.
+    """Find the name of a closure by looking at parent variable/property declarations.
 
     Args:
         lambda_node: A tree-sitter lambda_literal AST node.
@@ -333,26 +333,57 @@ def _find_closure_name(lambda_node: t.Any) -> str:
     Returns:
         Variable name the lambda is assigned to, or ``"<closure>"``.
     """
-    parent = lambda_node.parent
+    for ancestor in _walk_ancestors(lambda_node):
+        name = _find_identifier_in(ancestor)
+
+        if name:
+            return name
+
+    return "<closure>"
+
+
+def _walk_ancestors(node: t.Any) -> t.Iterator[t.Any]:
+    """Yield ancestor nodes worth inspecting for a closure name.
+
+    Checks parent (variable_declaration) then grandparent
+    (property_declaration → variable_declaration).
+
+    Args:
+        node: A tree-sitter AST node to start from.
+
+    Yields:
+        Ancestor nodes that may contain an identifier naming the closure.
+    """
+    parent = node.parent
 
     if not parent:
-        return "<closure>"
+        return
 
     if parent.type == "variable_declaration":
-        for child in parent.children:
-            if child.type == "identifier":
-                return child.text.decode()
+        yield parent
 
     grandparent = parent.parent
 
     if grandparent and grandparent.type == "property_declaration":
         for child in grandparent.children:
             if child.type == "variable_declaration":
-                for vc in child.children:
-                    if vc.type == "identifier":
-                        return vc.text.decode()
+                yield child
 
-    return "<closure>"
+
+def _find_identifier_in(node: t.Any) -> str | None:
+    """Find the first identifier child node and return its text.
+
+    Args:
+        node: A tree-sitter AST node to search children of.
+
+    Returns:
+        Decoded identifier text, or None if no identifier child found.
+    """
+    for child in node.children:
+        if child.type == "identifier":
+            return child.text.decode()
+
+    return None
 
 
 def _mccabe(node: t.Any, skip_ranges: list[tuple[int, int]] | None = None) -> int:
