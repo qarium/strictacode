@@ -9,27 +9,6 @@ from . import constants
 from .tools import walk_swift_files
 
 
-def collect(path: str) -> dict[str, list[dict[str, t.Any]]]:
-    """Collect metrics from Swift source files in the given directory tree.
-
-    Args:
-        path: Root directory to scan for Swift files.
-
-    Returns:
-        Mapping of relative file paths to lists of metric dictionaries.
-    """
-    result: dict[str, list[dict[str, t.Any]]] = {}
-
-    for filepath in walk_swift_files(path):
-        rel = os.path.relpath(filepath, path)
-        items = _parse_file(filepath)
-
-        if items:
-            result[rel] = items
-
-    return result
-
-
 def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
     """Parse a single Swift file and extract type, function, and closure metrics.
 
@@ -343,3 +322,24 @@ def _count_decisions(node: t.Any, skip_ranges: list[tuple[int, int]], complexity
 
     for child in node.children:
         _count_decisions(child, skip_ranges, complexity_ref)
+
+
+def collect(path: str) -> dict[str, list[dict[str, t.Any]]]:
+    """Collect metrics from Swift source files in the given directory tree.
+
+    Args:
+        path: Root directory to scan for Swift files.
+
+    Returns:
+        Mapping of relative file paths to lists of metric dictionaries.
+    """
+    result: dict[str, list[dict[str, t.Any]]] = {}
+
+    for filepath in walk_swift_files(path):
+        rel = os.path.relpath(filepath, path)
+        items = _parse_file(filepath)
+
+        if items:
+            result[rel] = items
+
+    return result

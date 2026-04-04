@@ -9,56 +9,6 @@ from . import constants
 from .tools import walk_kotlin_files
 
 
-def analyze(path: str) -> dict[str, t.Any]:
-    """Analyze Kotlin source files and build an inheritance graph.
-
-    Uses a two-pass algorithm: first collects all declarations to build a
-    complete name-to-files map, then resolves edges with full knowledge.
-
-    Args:
-        path: Root directory to scan for Kotlin files.
-
-    Returns:
-        Dictionary with ``nodes`` (list of ``file:Name`` strings) and
-        ``edges`` (list of ``{source, target}`` dicts).
-    """
-    # Pass 1: collect all declarations and build name → files map
-    all_decls: list[tuple[str, str, list[str]]] = []
-    name_to_files: dict[str, list[str]] = {}
-
-    for filepath in walk_kotlin_files(path):
-        rel = os.path.relpath(filepath, path)
-        decls = _extract_declarations(filepath)
-
-        for name, supers in decls:
-            all_decls.append((rel, name, supers))
-            name_to_files.setdefault(name, [])
-            name_to_files[name].append(rel)
-
-    # Build nodes
-    nodes: list[str] = []
-    for rel, name, _ in all_decls:
-        nodes.append(f"{rel}:{name}")
-
-    # Pass 2: resolve edges using complete name knowledge
-    node_set = set(nodes)
-    edges: list[dict[str, str]] = []
-
-    for rel, name, supers in all_decls:
-        node_id = f"{rel}:{name}"
-
-        for sup in supers:
-            target_id = _resolve_super(sup, name, rel, name_to_files, node_set)
-
-            if target_id and target_id != node_id:
-                edges.append({"source": node_id, "target": target_id})
-
-    # Add implicit interface implementation edges
-    edges = _check_interface_implementation(nodes, edges, all_decls, path)
-
-    return {"nodes": nodes, "edges": edges}
-
-
 def _extract_declarations(filepath: str) -> list[tuple[str, list[str]]]:
     """Extract class, interface, and object declarations from a Kotlin file.
 
@@ -465,3 +415,53 @@ def _check_interface_implementation(
                     existing.add(pair)
 
     return edges + new_edges
+
+
+def analyze(path: str) -> dict[str, t.Any]:
+    """Analyze Kotlin source files and build an inheritance graph.
+
+    Uses a two-pass algorithm: first collects all declarations to build a
+    complete name-to-files map, then resolves edges with full knowledge.
+
+    Args:
+        path: Root directory to scan for Kotlin files.
+
+    Returns:
+        Dictionary with ``nodes`` (list of ``file:Name`` strings) and
+        ``edges`` (list of ``{source, target}`` dicts).
+    """
+    # Pass 1: collect all declarations and build name → files map
+    all_decls: list[tuple[str, str, list[str]]] = []
+    name_to_files: dict[str, list[str]] = {}
+
+    for filepath in walk_kotlin_files(path):
+        rel = os.path.relpath(filepath, path)
+        decls = _extract_declarations(filepath)
+
+        for name, supers in decls:
+            all_decls.append((rel, name, supers))
+            name_to_files.setdefault(name, [])
+            name_to_files[name].append(rel)
+
+    # Build nodes
+    nodes: list[str] = []
+    for rel, name, _ in all_decls:
+        nodes.append(f"{rel}:{name}")
+
+    # Pass 2: resolve edges using complete name knowledge
+    node_set = set(nodes)
+    edges: list[dict[str, str]] = []
+
+    for rel, name, supers in all_decls:
+        node_id = f"{rel}:{name}"
+
+        for sup in supers:
+            target_id = _resolve_super(sup, name, rel, name_to_files, node_set)
+
+            if target_id and target_id != node_id:
+                edges.append({"source": node_id, "target": target_id})
+
+    # Add implicit interface implementation edges
+    edges = _check_interface_implementation(nodes, edges, all_decls, path)
+
+    return {"nodes": nodes, "edges": edges}

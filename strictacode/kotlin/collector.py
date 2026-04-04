@@ -12,25 +12,81 @@ from .tools import walk_kotlin_files
 _NODE_PARSERS: dict[str, t.Callable[[t.Any], dict[str, t.Any] | None]] = {}
 
 
-def collect(path: str) -> dict[str, list[dict[str, t.Any]]]:
-    """Collect metrics from Kotlin source files in the given directory tree.
+def _parse_type_declaration(node: t.Any) -> dict[str, t.Any] | None:
+    """Parse class_declaration or object_declaration node.
 
     Args:
-        path: Root directory to scan for Kotlin files.
+        node: A tree-sitter class_declaration or object_declaration AST node.
 
     Returns:
-        Mapping of relative file paths to lists of metric dictionaries.
+        Metric dictionary for the type, or None if name is missing.
     """
-    result: dict[str, list[dict[str, t.Any]]] = {}
+    name_node = node.child_by_field_name("name")
 
-    for filepath in walk_kotlin_files(path):
-        rel = os.path.relpath(filepath, path)
-        items = _parse_file(filepath)
+    if not name_node:
+        return None
 
-        if items:
-            result[rel] = items
+    name = name_node.text.decode()
 
-    return result
+    lineno = node.start_point[0] + 1
+    endline = node.end_point[0] + 1
+
+    body_node = _extract_type_body(node, ("class_body",)) if _is_interface(node) else _extract_type_body(node)
+
+    methods = _extract_methods(body_node, name) if body_node else []
+
+    return {
+        "type": "class",
+        "name": name,
+        "lineno": lineno,
+        "endline": endline,
+        "complexity": sum(m["complexity"] for m in methods),
+        "methods": methods,
+        "closures": [],
+    }
+
+
+def _parse_toplevel_function(node: t.Any) -> dict[str, t.Any] | None:
+    """Parse a top-level function_declaration.
+
+    Args:
+        node: A tree-sitter function_declaration AST node.
+
+    Returns:
+        Metric dictionary for the function, or None if name is missing.
+    """
+    name_node = node.child_by_field_name("name")
+
+    if not name_node:
+        return None
+
+    name = name_node.text.decode()
+
+    lineno = node.start_point[0] + 1
+    endline = node.end_point[0] + 1
+
+    body_node = _get_function_body(node)
+    closures, complexity = _compute_body_metrics(body_node)
+
+    return {
+        "type": "function",
+        "name": name,
+        "lineno": lineno,
+        "endline": endline,
+        "complexity": complexity,
+        "methods": [],
+        "closures": _clean_closures(closures),
+    }
+
+
+# Populate dispatch table
+_NODE_PARSERS.update(
+    {
+        "class_declaration": _parse_type_declaration,
+        "object_declaration": _parse_type_declaration,
+        "function_declaration": _parse_toplevel_function,
+    }
+)
 
 
 def _parse_file(filepath: str) -> list[dict[str, t.Any]]:
@@ -161,73 +217,6 @@ def _clean_closures(closures: list[dict[str, t.Any]]) -> list[dict[str, t.Any]]:
         List of closure dictionaries without internal keys.
     """
     return [{k: v for k, v in c.items() if not k.startswith("_")} for c in closures]
-
-
-def _parse_type_declaration(node: t.Any) -> dict[str, t.Any] | None:
-    """Parse class_declaration or object_declaration node.
-
-    Args:
-        node: A tree-sitter class_declaration or object_declaration AST node.
-
-    Returns:
-        Metric dictionary for the type, or None if name is missing.
-    """
-    name_node = node.child_by_field_name("name")
-
-    if not name_node:
-        return None
-
-    name = name_node.text.decode()
-
-    lineno = node.start_point[0] + 1
-    endline = node.end_point[0] + 1
-
-    body_node = _extract_type_body(node, ("class_body",)) if _is_interface(node) else _extract_type_body(node)
-
-    methods = _extract_methods(body_node, name) if body_node else []
-
-    return {
-        "type": "class",
-        "name": name,
-        "lineno": lineno,
-        "endline": endline,
-        "complexity": sum(m["complexity"] for m in methods),
-        "methods": methods,
-        "closures": [],
-    }
-
-
-def _parse_toplevel_function(node: t.Any) -> dict[str, t.Any] | None:
-    """Parse a top-level function_declaration.
-
-    Args:
-        node: A tree-sitter function_declaration AST node.
-
-    Returns:
-        Metric dictionary for the function, or None if name is missing.
-    """
-    name_node = node.child_by_field_name("name")
-
-    if not name_node:
-        return None
-
-    name = name_node.text.decode()
-
-    lineno = node.start_point[0] + 1
-    endline = node.end_point[0] + 1
-
-    body_node = _get_function_body(node)
-    closures, complexity = _compute_body_metrics(body_node)
-
-    return {
-        "type": "function",
-        "name": name,
-        "lineno": lineno,
-        "endline": endline,
-        "complexity": complexity,
-        "methods": [],
-        "closures": _clean_closures(closures),
-    }
 
 
 def _parse_method(node: t.Any, classname: str) -> dict[str, t.Any] | None:
@@ -463,11 +452,22 @@ def _is_else_entry(node: t.Any) -> bool:
     return True
 
 
-# Populate dispatch table
-_NODE_PARSERS.update(
-    {
-        "class_declaration": _parse_type_declaration,
-        "object_declaration": _parse_type_declaration,
-        "function_declaration": _parse_toplevel_function,
-    }
-)
+def collect(path: str) -> dict[str, list[dict[str, t.Any]]]:
+    """Collect metrics from Kotlin source files in the given directory tree.
+
+    Args:
+        path: Root directory to scan for Kotlin files.
+
+    Returns:
+        Mapping of relative file paths to lists of metric dictionaries.
+    """
+    result: dict[str, list[dict[str, t.Any]]] = {}
+
+    for filepath in walk_kotlin_files(path):
+        rel = os.path.relpath(filepath, path)
+        items = _parse_file(filepath)
+
+        if items:
+            result[rel] = items
+
+    return result

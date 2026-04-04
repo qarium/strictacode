@@ -12,56 +12,6 @@ _DECL_TYPES: t.Final = ("class_declaration", "protocol_declaration")
 _BODY_TYPES: t.Final = ("class_body", "protocol_body")
 
 
-def analyze(path: str) -> dict[str, t.Any]:
-    """Analyze Swift source files and build an inheritance graph.
-
-    Uses a two-pass algorithm: first collects all declarations to build a
-    complete name-to-files map, then resolves edges with full knowledge.
-
-    Args:
-        path: Root directory to scan for Swift files.
-
-    Returns:
-        Dictionary with ``nodes`` (list of ``file:Name`` strings) and
-        ``edges`` (list of ``{source, target}`` dicts).
-    """
-    # Pass 1: collect all declarations and build name → files map
-    all_decls: list[tuple[str, str, list[str]]] = []
-    name_to_files: dict[str, list[str]] = {}
-
-    for filepath in walk_swift_files(path):
-        rel = os.path.relpath(filepath, path)
-        decls = _extract_declarations(filepath)
-
-        for name, supers in decls:
-            all_decls.append((rel, name, supers))
-            name_to_files.setdefault(name, [])
-            name_to_files[name].append(rel)
-
-    # Build nodes
-    nodes: list[str] = []
-    for rel, name, _ in all_decls:
-        nodes.append(f"{rel}:{name}")
-
-    # Pass 2: resolve edges using complete name knowledge
-    node_set = set(nodes)
-    edges: list[dict[str, str]] = []
-
-    for rel, name, supers in all_decls:
-        node_id = f"{rel}:{name}"
-
-        for sup in supers:
-            target_id = _resolve_super(sup, name, rel, name_to_files, node_set)
-
-            if target_id and target_id != node_id:
-                edges.append({"source": node_id, "target": target_id})
-
-    # Add implicit protocol conformance edges
-    edges = _check_protocol_conformance(nodes, edges, all_decls, path)
-
-    return {"nodes": nodes, "edges": edges}
-
-
 def _resolve_super(
     sup: str,
     source_name: str,
@@ -83,21 +33,26 @@ def _resolve_super(
     """
     # Try qualified from enclosing scope
     parts = source_name.split(".")
+
     for i in range(len(parts) - 1, 0, -1):
         scope = ".".join(parts[:i])
         qualified = f"{scope}.{sup}"
         files = name_to_files.get(qualified)
+
         if files:
             target_file = source_rel if source_rel in files else files[0]
             target_id = f"{target_file}:{qualified}"
+
             if target_id in node_set:
                 return target_id
 
     # Simple name lookup
     files = name_to_files.get(sup)
+
     if files:
         target_file = source_rel if source_rel in files else files[0]
         target_id = f"{target_file}:{sup}"
+
         if target_id in node_set:
             return target_id
 
@@ -386,3 +341,53 @@ def _check_protocol_conformance(
                     existing.add(pair)
 
     return edges
+
+
+def analyze(path: str) -> dict[str, t.Any]:
+    """Analyze Swift source files and build an inheritance graph.
+
+    Uses a two-pass algorithm: first collects all declarations to build a
+    complete name-to-files map, then resolves edges with full knowledge.
+
+    Args:
+        path: Root directory to scan for Swift files.
+
+    Returns:
+        Dictionary with ``nodes`` (list of ``file:Name`` strings) and
+        ``edges`` (list of ``{source, target}`` dicts).
+    """
+    # Pass 1: collect all declarations and build name → files map
+    all_decls: list[tuple[str, str, list[str]]] = []
+    name_to_files: dict[str, list[str]] = {}
+
+    for filepath in walk_swift_files(path):
+        rel = os.path.relpath(filepath, path)
+        decls = _extract_declarations(filepath)
+
+        for name, supers in decls:
+            all_decls.append((rel, name, supers))
+            name_to_files.setdefault(name, [])
+            name_to_files[name].append(rel)
+
+    # Build nodes
+    nodes: list[str] = []
+    for rel, name, _ in all_decls:
+        nodes.append(f"{rel}:{name}")
+
+    # Pass 2: resolve edges using complete name knowledge
+    node_set = set(nodes)
+    edges: list[dict[str, str]] = []
+
+    for rel, name, supers in all_decls:
+        node_id = f"{rel}:{name}"
+
+        for sup in supers:
+            target_id = _resolve_super(sup, name, rel, name_to_files, node_set)
+
+            if target_id and target_id != node_id:
+                edges.append({"source": node_id, "target": target_id})
+
+    # Add implicit protocol conformance edges
+    edges = _check_protocol_conformance(nodes, edges, all_decls, path)
+
+    return {"nodes": nodes, "edges": edges}
