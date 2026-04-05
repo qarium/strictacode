@@ -88,7 +88,7 @@ def analyze(
     if config.lang is None:
         raise click.UsageError("Unknown program language")
 
-    if config.lang in (Language.GOLANG, Language.KOTLIN):
+    if config.lang == Language.GOLANG:
         loader_options["class_loc_from_methods"] = True
 
     if config.loader.include is not None:
