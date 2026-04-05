@@ -140,6 +140,7 @@ class PyLoder(Loader):
     Collects complexity metrics via radon and builds a dependency graph
     from class inheritance and type usage relationships.
     """
+
     __lang__ = "python"
     __ignore_dirs__ = [
         ".venv",
