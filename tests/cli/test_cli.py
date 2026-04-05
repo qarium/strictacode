@@ -232,8 +232,8 @@ class TestAnalyzeKotlin:
 
     @patch("strictacode.kotlin.collector.collect")
     @patch("strictacode.kotlin.analyzer.analyze")
-    def test_kotlin_receives_class_loc_from_methods(self, mock_analyze, mock_collect, tmp_path):
-        """Kotlin should receive class_loc_from_methods=True like Go."""
+    def test_kotlin_does_not_receive_class_loc_from_methods(self, mock_analyze, mock_collect, tmp_path):
+        """Kotlin should NOT receive class_loc_from_methods — methods are inside class body."""
         mock_collect.return_value = {}
         mock_analyze.return_value = {"nodes": [], "edges": []}
         (tmp_path / "Main.kt").write_text("class App\n")
@@ -246,7 +246,7 @@ class TestAnalyzeKotlin:
         assert result.exit_code == 0
         SpyLoader.assert_called_once()
         call_kwargs = SpyLoader.call_args[1]
-        assert call_kwargs.get("class_loc_from_methods") is True
+        assert "class_loc_from_methods" not in call_kwargs
 
 
 class TestAnalyzeSwift:
