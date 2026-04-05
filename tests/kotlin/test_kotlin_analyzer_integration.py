@@ -384,6 +384,132 @@ class TestEmptyDirectory:
         assert r["edges"] == []
 
 
+class TestTypeUsage:
+    """Tests for type usage edge detection."""
+
+    def test_property_type_creates_usage_edge(self, tmp_path):
+        """Property type reference creates usage edge."""
+        (tmp_path / "types.kt").write_text("class Request\nclass Handler {\n    var req: Request\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_parameter_type_creates_usage_edge(self, tmp_path):
+        """Method parameter type creates usage edge."""
+        (tmp_path / "svc.kt").write_text("class Request\nclass Service {\n    fun handle(r: Request) {}\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Service", "Request") in _edge_pairs(r)
+
+    def test_return_type_creates_usage_edge(self, tmp_path):
+        """Return type creates usage edge."""
+        (tmp_path / "resp.kt").write_text("class Response\nclass Client {\n    fun fetch(): Response = Response()\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Client", "Response") in _edge_pairs(r)
+
+    def test_constructor_creates_usage_edge(self, tmp_path):
+        """Constructor call creates usage edge."""
+        (tmp_path / "err.kt").write_text(
+            "class AFError\nclass Handler {\n    fun fail() {\n        val e = AFError()\n    }\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Handler", "AFError") in _edge_pairs(r)
+
+    def test_no_self_usage_edge(self, tmp_path):
+        """A type using itself does not create a self-edge."""
+        (tmp_path / "self.kt").write_text("class Node {\n    var child: Node\n}\n")
+        r = analyze(str(tmp_path))
+        for e in r["edges"]:
+            assert e["source"] != e["target"]
+
+    def test_no_duplicate_usage_edge(self, tmp_path):
+        """Multiple usages of same type create only one edge."""
+        (tmp_path / "dup.kt").write_text(
+            "class Request\n"
+            "class Handler {\n"
+            "    var a: Request\n"
+            "    var b: Request\n"
+            "    fun make(): Request = Request()\n"
+            "}\n"
+        )
+        r = analyze(str(tmp_path))
+        handler_req = [e for e in r["edges"] if "Handler" in e["source"] and "Request" in e["target"]]
+        assert len(handler_req) == 1
+
+    def test_base_types_ignored(self, tmp_path):
+        """Standard library types do not create edges."""
+        (tmp_path / "base.kt").write_text(
+            "class Config {\n    var name: String\n    var count: Int\n    var flag: Boolean\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert r["edges"] == []
+
+    def test_cross_file_usage(self, tmp_path):
+        """Usage edge created when type is in a different file."""
+        (tmp_path / "request.kt").write_text("class Request\n")
+        (tmp_path / "handler.kt").write_text("class Handler {\n    fun process(req: Request) {}\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_usage_with_inheritance_combined(self, tmp_path):
+        """Usage edges coexist with inheritance edges."""
+        (tmp_path / "both.kt").write_text(
+            "open class Base\nclass Request\nclass Derived : Base() {\n    var req: Request\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        pairs = _edge_pairs(r)
+        assert ("Derived", "Base") in pairs
+        assert ("Derived", "Request") in pairs
+
+    def test_no_usage_edge_for_unknown_type(self, tmp_path):
+        """Type not declared in project does not create an edge."""
+        (tmp_path / "unk.kt").write_text("class Handler {\n    var logger: Logger\n}\n")
+        r = analyze(str(tmp_path))
+        assert r["edges"] == []
+
+    def test_function_call_no_edge(self, tmp_path):
+        """Regular function call (lowercase) does not create usage edge."""
+        (tmp_path / "fn.kt").write_text(
+            'class Handler {\n    fun process() {\n        println("hello")\n        forEach { it }\n    }\n}\n'
+        )
+        r = analyze(str(tmp_path))
+        assert r["edges"] == []
+
+    def test_nested_class_usage_creates_edge(self, tmp_path):
+        """Nested class using a type creates usage edge from Outer.Inner."""
+        (tmp_path / "nested.kt").write_text(
+            "class Request\nclass Outer {\n    class Inner {\n        var req: Request\n    }\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Outer.Inner", "Request") in _edge_pairs(r)
+
+    def test_nullable_type_usage_creates_edge(self, tmp_path):
+        """Nullable type reference creates usage edge."""
+        (tmp_path / "null.kt").write_text("class Request\nclass Handler {\n    var req: Request?\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_generic_type_argument_creates_edge(self, tmp_path):
+        """Generic type argument referencing a project type creates usage edge."""
+        (tmp_path / "gen.kt").write_text("class Request\nclass Handler {\n    var items: List<Request>\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_object_usage_creates_edge(self, tmp_path):
+        """Object declaration using a type creates usage edge."""
+        (tmp_path / "obj.kt").write_text("class Config\nobject Database {\n    var cfg: Config\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Database", "Config") in _edge_pairs(r)
+
+    def test_multiple_different_usage_edges(self, tmp_path):
+        """One class using multiple project types creates multiple edges."""
+        (tmp_path / "multi.kt").write_text(
+            "class Request\nclass Response\nclass Handler {\n    var req: Request\n    var resp: Response\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        pairs = _edge_pairs(r)
+        assert ("Handler", "Request") in pairs
+        assert ("Handler", "Response") in pairs
+
+
 class TestFiltering:
     def test_file_filtering(self, tmp_path):
         (tmp_path / "Main.kt").write_text("class Service\n")

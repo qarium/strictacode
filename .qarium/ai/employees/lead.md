@@ -10,7 +10,8 @@
 - **Threshold supports imbalance checking via `abs(RP - OP)`** — `imbalance` threshold field validates balance between refactoring and overengineering pressure; uses key `IMB=` in CLI string format
 - **Go and Kotlin use `class_loc_from_methods` flag** — both languages report method LOC independently, so class LOC is computed by summing method LOCs instead of counting class body lines; Swift does NOT use this flag because methods are inside type bodies
 - **Kotlin and Swift use tree-sitter for AST parsing** — unlike Go/JS which embed foreign-language source in Python docstrings and run as subprocess, Kotlin and Swift use `tree-sitter` + language bindings (`tree-sitter-kotlin`, `tree-sitter-swift`) for direct AST analysis; avoids external toolchain dependency; Kotlin collector uses dispatch table pattern (`_NODE_PARSERS`) instead of if/else chains
-- **Swift analyzer uses 5-pass algorithm for graph construction** — Pass 1 collects declarations and builds name→files map, Pass 2 resolves inheritance/conformance edges with two-pass name resolution, Pass 3 adds implicit protocol conformance via method signature matching, Pass 4 extracts type usage from annotations/parameters/return types/constructors, Pass 5 resolves usage edges against declared types
+- **Kotlin and Swift analyzers both use 5-pass algorithm for graph construction** — Pass 1 collects declarations and builds name→files map, Pass 2 resolves inheritance/conformance edges with two-pass name resolution, Pass 3 adds implicit interface/protocol conformance via method signature matching, Pass 4 extracts type usage from properties/parameters/return types/constructors, Pass 5 resolves usage edges against declared types
+- **Kotlin uses `_BASE_TYPES` frozenset to filter stdlib types from usage edges** — same approach as Swift but with Kotlin-specific type set (String, Int, Long, Float, Double, Boolean, Byte, Short, Char, Unit, Any, Nothing, Array, List, Map, Set, MutableList, MutableMap, MutableSet, Pair, Triple, Result, Throwable, Exception)
 
 ## Project Structure
 - **Language support in py/, go/, js/, kotlin/, swift/ — each with loader.py, collector.py, analyzer.py** — loader subclasses base Loader, collector gathers raw metrics, analyzer builds inheritance graph; kotlin/ and swift/ use tree-sitter instead of subprocess
@@ -29,7 +30,7 @@
 - **redirect_output() context manager in utils.py** — redirects stdout+stderr to file with auto-restore after block exit or exception, used by BaseResultReporter.report() and BaseDiffReporter.report()
 - **Integration tests for external toolchains skip when tool not installed** — `pytestmark = pytest.mark.skipif(shutil.which("kotlinc") is None, ...)` pattern; ensures tests pass without requiring Go/Node/Kotlin SDK on CI
 - **Swift tree-sitter `user_type` wrapping requires recursive type extraction** — AST wraps type names in `user_type` → `type_identifier`, not as direct `type_identifier` children of `type_annotation` or `parameter`; use recursive `_collect_type_ids` helper to handle indirection when extracting type names
-- **Swift tree-sitter constructor calls use `call_expression` → `simple_identifier`** — NOT `constructor_expression`; detect constructors by uppercase-first-letter check on `simple_identifier` text, combined with `_BASE_TYPES` filter to exclude stdlib types
+- **Tree-sitter constructor call detection differs between languages** — Swift uses `call_expression` → `simple_identifier`, Kotlin uses `call_expression` → `identifier`; both use uppercase-first-letter check and `_BASE_TYPES` filter to exclude stdlib types; NOT `constructor_expression`
 
 ## TODO
 

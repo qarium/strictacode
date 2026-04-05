@@ -8,6 +8,129 @@ from tree_sitter import Parser
 from . import constants
 from .tools import walk_kotlin_files
 
+_OWNER_TYPES: t.Final = frozenset(
+    {
+        "class_declaration",
+        "object_declaration",
+    }
+)
+
+_BASE_TYPES: t.Final = frozenset(
+    {
+        "String",
+        "Int",
+        "Long",
+        "Float",
+        "Double",
+        "Boolean",
+        "Byte",
+        "Short",
+        "Char",
+        "Unit",
+        "Any",
+        "Nothing",
+        "Array",
+        "List",
+        "Map",
+        "Set",
+        "MutableList",
+        "MutableMap",
+        "MutableSet",
+        "Pair",
+        "Triple",
+        "Result",
+        "Throwable",
+        "Exception",
+    }
+)
+
+
+def _find_owner(node: t.Any) -> str | None:
+    """Walk up the tree to find the enclosing type declaration name."""
+    parts: list[str] = []
+    current = node.parent
+    while current:
+        if current.type in _OWNER_TYPES:
+            name = None
+            for child in current.children:
+                if child.type == "identifier":
+                    name = child.text.decode()
+                    break
+            if name:
+                parts.append(name)
+        current = current.parent
+    if not parts:
+        return None
+    parts.reverse()
+    return ".".join(parts)
+
+
+def _extract_type_usage(filepath: str, rel: str) -> dict[str, set[str]]:
+    """Extract type usage pairs from a Kotlin file."""
+    with open(filepath, "rb") as f:
+        source = f.read()
+
+    parser = Parser(constants.KOTLIN)
+    tree = parser.parse(source)
+
+    usage: dict[str, set[str]] = {}
+
+    def _walk(node: t.Any) -> None:
+        # user_type > identifier: type references in declarations
+        if (
+            node.type == "user_type"
+            and node.parent
+            and node.parent.type
+            not in (
+                "delegation_specifier",
+                "constructor_invocation",
+                "explicit_delegation",
+            )
+        ):
+            for child in node.children:
+                if child.type == "identifier":
+                    type_name = child.text.decode()
+                    owner = _find_owner(node)
+                    if owner and type_name not in _BASE_TYPES:
+                        node_id = f"{rel}:{owner}"
+                        usage.setdefault(node_id, set()).add(type_name)
+
+        # call_expression > identifier: constructor calls (filter by uppercase)
+        if node.type == "call_expression":
+            for child in node.children:
+                if child.type == "identifier":
+                    type_name = child.text.decode()
+                    if type_name and type_name[0].isupper() and type_name not in _BASE_TYPES:
+                        owner = _find_owner(node)
+                        if owner:
+                            node_id = f"{rel}:{owner}"
+                            usage.setdefault(node_id, set()).add(type_name)
+
+        for child in node.children:
+            _walk(child)
+
+    _walk(tree.root_node)
+    return usage
+
+
+def _resolve_usage_edges(
+    type_usage: dict[str, set[str]],
+    name_to_node: dict[str, str],
+    existing_edges: set[tuple[str, str]],
+) -> list[dict[str, str]]:
+    """Resolve used type names to graph node IDs and build usage edges."""
+    edges: list[dict[str, str]] = []
+    for source_node, used_types in type_usage.items():
+        for type_name in used_types:
+            target_node = name_to_node.get(type_name)
+            if not target_node or target_node == source_node:
+                continue
+            pair = (source_node, target_node)
+            if pair not in existing_edges:
+                edges.append({"source": source_node, "target": target_node})
+                existing_edges.add(pair)
+    return edges
+
 
 def _extract_declarations(filepath: str) -> list[tuple[str, list[str]]]:
     """Extract class, interface, and object declarations from a Kotlin file.
@@ -463,5 +586,21 @@ def analyze(path: str) -> dict[str, t.Any]:
 
     # Add implicit interface implementation edges
     edges = _check_interface_implementation(nodes, edges, all_decls, path)
+
+    # Pass 4: extract type usage
+    name_to_node: dict[str, str] = {}
+    for node_id in node_set:
+        _, name = node_id.rsplit(":", 1)
+        name_to_node[name] = node_id
+
+    type_usage: dict[str, set[str]] = {}
+    for filepath in walk_kotlin_files(path):
+        rel = os.path.relpath(filepath, path)
+        for nid, types in _extract_type_usage(filepath, rel).items():
+            type_usage.setdefault(nid, set()).update(types)
+
+    # Pass 5: resolve usage edges
+    existing = {(e["source"], e["target"]) for e in edges}
+    edges.extend(_resolve_usage_edges(type_usage, name_to_node, existing))
 
     return {"nodes": nodes, "edges": edges}
