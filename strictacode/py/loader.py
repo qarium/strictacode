@@ -38,6 +38,9 @@ class PyLoder(Loader):
         file_to_items = {}
 
         for filepath, items in data.items():
+            if not isinstance(items, list):
+                continue
+
             if filepath not in file_to_items:
                 file_to_items[filepath] = []
 
