@@ -34,7 +34,7 @@ jobs:
           STRICTACODE_SCORE: "40"
           STRICTACODE_RP: "50"
           STRICTACODE_OP: "50"
-          STRICTACODE_IMB: "40"
+          STRICTACODE_IMB: "25"
           STRICTACODE_DENSITY: "30"
           STRICTACODE_SCORE_DIFF: "3"
           STRICTACODE_RP_DIFF: "5"
