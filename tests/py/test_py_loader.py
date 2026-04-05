@@ -241,3 +241,94 @@ class TestPyLoaderBuild:
         loader.load()
 
         assert len(loader.sources.graph.nodes) == 0
+
+
+# ---------------------------------------------------------------------------
+# build() — usage edges
+# ---------------------------------------------------------------------------
+
+
+class TestPyLoaderBuildUsageEdges:
+    @patch("strictacode.py.analyzer.Analyzer.file")
+    @patch("strictacode.py.collector.collect")
+    def test_build_resolves_type_usage_edges(self, mock_collect, mock_analyzer_file, tmp_path):
+        models_file = tmp_path / "models.py"
+        svc_file = tmp_path / "svc.py"
+        models_file.write_text("class User: pass\nclass Token: pass\n")
+        svc_file.write_text("from models import User, Token\nclass Service: pass\n")
+
+        mock_collect.return_value = {
+            str(models_file): [{"type": "class", "name": "User", "lineno": 1, "endline": 1, "complexity": 1, "classname": None, "methods": [], "closures": []}],
+            str(svc_file): [{"type": "class", "name": "Service", "lineno": 2, "endline": 2, "complexity": 1, "classname": None, "methods": [], "closures": []}],
+        }
+
+        mock_models = MagicMock()
+        mock_models.classes = {f"{models_file}:User": {"methods": 0}, f"{models_file}:Token": {"methods": 0}}
+        mock_models.class_bases = {}
+        mock_models.import_map = {}
+        mock_models.type_usage = {}
+
+        mock_svc = MagicMock()
+        mock_svc.classes = {f"{svc_file}:Service": {"methods": 1}}
+        mock_svc.class_bases = {}
+        mock_svc.import_map = {"User": "User", "Token": "Token"}
+        mock_svc.type_usage = {f"{svc_file}:Service": {"User", "Token"}}
+
+        def _file_side_effect(filepath):
+            if filepath == str(models_file):
+                return mock_models
+            if filepath == str(svc_file):
+                return mock_svc
+            return None
+
+        mock_analyzer_file.side_effect = _file_side_effect
+
+        loader = PyLoder(str(tmp_path))
+        loader.load()
+
+        edges = loader.sources.graph.edges
+        assert f"{svc_file}:Service" in edges
+        assert f"{models_file}:User" in edges[f"{svc_file}:Service"]
+        assert f"{models_file}:Token" in edges[f"{svc_file}:Service"]
+
+    @patch("strictacode.py.analyzer.Analyzer.file")
+    @patch("strictacode.py.collector.collect")
+    def test_build_no_duplicate_edges(self, mock_collect, mock_analyzer_file, tmp_path):
+        models_file = tmp_path / "models.py"
+        svc_file = tmp_path / "svc.py"
+        models_file.write_text("class Base: pass\n")
+        svc_file.write_text("from models import Base\nclass Service(Base): pass\n")
+
+        mock_collect.return_value = {
+            str(models_file): [{"type": "class", "name": "Base", "lineno": 1, "endline": 1, "complexity": 1, "classname": None, "methods": [], "closures": []}],
+            str(svc_file): [{"type": "class", "name": "Service", "lineno": 2, "endline": 2, "complexity": 1, "classname": None, "methods": [], "closures": []}],
+        }
+
+        mock_models = MagicMock()
+        mock_models.classes = {f"{models_file}:Base": {"methods": 0}}
+        mock_models.class_bases = {}
+        mock_models.import_map = {}
+        mock_models.type_usage = {}
+
+        mock_svc = MagicMock()
+        mock_svc.classes = {f"{svc_file}:Service": {"methods": 0}}
+        mock_svc.class_bases = {f"{svc_file}:Service": ["Base"]}
+        mock_svc.import_map = {"Base": "Base"}
+        mock_svc.type_usage = {f"{svc_file}:Service": {"Base"}}
+
+        def _file_side_effect(filepath):
+            if filepath == str(models_file):
+                return mock_models
+            if filepath == str(svc_file):
+                return mock_svc
+            return None
+
+        mock_analyzer_file.side_effect = _file_side_effect
+
+        loader = PyLoder(str(tmp_path))
+        loader.load()
+
+        svc_edges = loader.sources.graph.edges.get(f"{svc_file}:Service", set())
+        # Should have exactly one edge to Base (not duplicated)
+        base_targets = [t for t in svc_edges if "Base" in t]
+        assert len(base_targets) == 1

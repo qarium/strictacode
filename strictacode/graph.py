@@ -42,3 +42,7 @@ class DiGraph:
 
     def number_of_edges(self):
         return sum(len(v) for v in self._edges.values())
+
+    def clear_edges(self):
+        """Remove all edges while keeping nodes intact."""
+        self._edges.clear()
