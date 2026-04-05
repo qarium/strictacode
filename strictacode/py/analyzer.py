@@ -3,9 +3,6 @@ import typing as t
 from collections import defaultdict
 from pathlib import Path
 
-from . import constants
-
-
 
 class Analyzer(ast.NodeVisitor):
     def __init__(self, filepath: str, module: str):
@@ -80,7 +77,7 @@ class Analyzer(ast.NodeVisitor):
         """Record constructor calls with uppercase names as type usage."""
         if self.current_class and isinstance(node.func, ast.Name):
             name = node.func.id
-            if name and name[0].isupper() and name not in constants.BASE_TYPES:
+            if name and name[0].isupper():
                 self.type_usage.setdefault(self.current_class, set()).add(name)
         self.generic_visit(node)
 
@@ -97,4 +94,3 @@ class Analyzer(ast.NodeVisitor):
             name = alias.asname or alias.name
             self.import_map[name] = alias.name
         self.generic_visit(node)
-

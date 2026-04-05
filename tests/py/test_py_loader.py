@@ -258,8 +258,30 @@ class TestPyLoaderBuildUsageEdges:
         svc_file.write_text("from models import User, Token\nclass Service: pass\n")
 
         mock_collect.return_value = {
-            str(models_file): [{"type": "class", "name": "User", "lineno": 1, "endline": 1, "complexity": 1, "classname": None, "methods": [], "closures": []}],
-            str(svc_file): [{"type": "class", "name": "Service", "lineno": 2, "endline": 2, "complexity": 1, "classname": None, "methods": [], "closures": []}],
+            str(models_file): [
+                {
+                    "type": "class",
+                    "name": "User",
+                    "lineno": 1,
+                    "endline": 1,
+                    "complexity": 1,
+                    "classname": None,
+                    "methods": [],
+                    "closures": [],
+                }
+            ],
+            str(svc_file): [
+                {
+                    "type": "class",
+                    "name": "Service",
+                    "lineno": 2,
+                    "endline": 2,
+                    "complexity": 1,
+                    "classname": None,
+                    "methods": [],
+                    "closures": [],
+                }
+            ],
         }
 
         mock_models = MagicMock()
@@ -300,8 +322,30 @@ class TestPyLoaderBuildUsageEdges:
         svc_file.write_text("from models import Base\nclass Service(Base): pass\n")
 
         mock_collect.return_value = {
-            str(models_file): [{"type": "class", "name": "Base", "lineno": 1, "endline": 1, "complexity": 1, "classname": None, "methods": [], "closures": []}],
-            str(svc_file): [{"type": "class", "name": "Service", "lineno": 2, "endline": 2, "complexity": 1, "classname": None, "methods": [], "closures": []}],
+            str(models_file): [
+                {
+                    "type": "class",
+                    "name": "Base",
+                    "lineno": 1,
+                    "endline": 1,
+                    "complexity": 1,
+                    "classname": None,
+                    "methods": [],
+                    "closures": [],
+                }
+            ],
+            str(svc_file): [
+                {
+                    "type": "class",
+                    "name": "Service",
+                    "lineno": 2,
+                    "endline": 2,
+                    "complexity": 1,
+                    "classname": None,
+                    "methods": [],
+                    "closures": [],
+                }
+            ],
         }
 
         mock_models = MagicMock()

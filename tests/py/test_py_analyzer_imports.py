@@ -45,33 +45,45 @@ class TestExtractImports:
 
 class TestMetaclass:
     def test_metaclass_in_class_bases(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Singleton(type):
                 pass
             class Service(metaclass=Singleton):
                 pass
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
         assert "Singleton" in a.class_bases.get(key, [])
 
     def test_metaclass_with_base_class(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Base:
                 pass
             class Service(Base, metaclass=Singleton):
                 pass
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
         assert "Base" in a.class_bases.get(key, [])
         assert "Singleton" in a.class_bases.get(key, [])
 
     def test_no_metaclass(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Service:
                 pass
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
         assert a.class_bases.get(key, []) == []

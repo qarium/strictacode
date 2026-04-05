@@ -1,4 +1,3 @@
-import typing as t
 from collections import defaultdict
 
 from ..loader import FileItem, FileItemTypes, Loader

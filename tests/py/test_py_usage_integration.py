@@ -11,11 +11,20 @@ def _write(tmp_path, filename, source):
 
 
 def _file_item(name, lineno=1, endline=1, complexity=1):
-    return type("F", (), {
-        "type": "class", "name": name, "lineno": lineno,
-        "endline": endline, "complexity": complexity,
-        "classname": None, "methods": [], "closures": [],
-    })()
+    return type(
+        "F",
+        (),
+        {
+            "type": "class",
+            "name": name,
+            "lineno": lineno,
+            "endline": endline,
+            "complexity": complexity,
+            "classname": None,
+            "methods": [],
+            "closures": [],
+        },
+    )()
 
 
 class TestIntegration:
@@ -36,12 +45,16 @@ class TestIntegration:
 
     def test_constructor_call_creates_edge(self, tmp_path):
         _write(tmp_path, "models.py", "class Token: pass\n")
-        svc = _write(tmp_path, "svc.py", """\
+        svc = _write(
+            tmp_path,
+            "svc.py",
+            """\
             from models import Token
             class Service:
                 def create(self):
                     token = Token()
-        """)
+        """,
+        )
 
         loader = PyLoder(str(tmp_path))
         loader.collect = lambda: {
@@ -72,11 +85,15 @@ class TestIntegration:
 
     def test_metaclass_creates_edge(self, tmp_path):
         _write(tmp_path, "meta.py", "class SingletonMeta: pass\n")
-        svc = _write(tmp_path, "svc.py", """\
+        svc = _write(
+            tmp_path,
+            "svc.py",
+            """\
             from meta import SingletonMeta
             class Service(metaclass=SingletonMeta):
                 pass
-        """)
+        """,
+        )
 
         loader = PyLoder(str(tmp_path))
         loader.collect = lambda: {

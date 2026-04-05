@@ -12,51 +12,71 @@ def _write_py(tmp_path, filename, source):
 
 class TestConstructorUsage:
     def test_constructor_call(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Service:
                 def create(self):
                     token = Token()
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
         assert "Token" in a.type_usage.get(key, set())
 
     def test_constructor_in_init(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Service:
                 def __init__(self):
                     self.engine = Engine()
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
         assert "Engine" in a.type_usage.get(key, set())
 
     def test_no_class_no_usage(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             def helper():
                 token = Token()
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         assert a.type_usage == {}
 
     def test_lowercase_call_not_captured(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Service:
                 def run(self):
                     result = helper()
-        """)
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
         assert "helper" not in a.type_usage.get(key, set())
 
-    def test_base_type_constructor_not_captured(self, tmp_path):
-        fp = _write_py(tmp_path, "svc.py", """\
+    def test_stdlib_constructor_captured(self, tmp_path):
+        fp = _write_py(
+            tmp_path,
+            "svc.py",
+            """\
             class Service:
                 def build(self):
-                    items = list()
-                    data = dict()
-        """)
+                    p = Path()
+                    u = UUID()
+        """,
+        )
         a = Analyzer.file(fp)
         key = f"{fp}:Service"
-        assert "list" not in a.type_usage.get(key, set())
-        assert "dict" not in a.type_usage.get(key, set())
+        assert "Path" in a.type_usage.get(key, set())
+        assert "UUID" in a.type_usage.get(key, set())
