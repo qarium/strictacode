@@ -10,6 +10,7 @@
 - **Threshold supports imbalance checking via `abs(RP - OP)`** — `imbalance` threshold field validates balance between refactoring and overengineering pressure; uses key `IMB=` in CLI string format
 - **Go and Kotlin use `class_loc_from_methods` flag** — both languages report method LOC independently, so class LOC is computed by summing method LOCs instead of counting class body lines; Swift does NOT use this flag because methods are inside type bodies
 - **Kotlin and Swift use tree-sitter for AST parsing** — unlike Go/JS which embed foreign-language source in Python docstrings and run as subprocess, Kotlin and Swift use `tree-sitter` + language bindings (`tree-sitter-kotlin`, `tree-sitter-swift`) for direct AST analysis; avoids external toolchain dependency; Kotlin collector uses dispatch table pattern (`_NODE_PARSERS`) instead of if/else chains
+- **Swift analyzer uses 5-pass algorithm for graph construction** — Pass 1 collects declarations and builds name→files map, Pass 2 resolves inheritance/conformance edges with two-pass name resolution, Pass 3 adds implicit protocol conformance via method signature matching, Pass 4 extracts type usage from annotations/parameters/return types/constructors, Pass 5 resolves usage edges against declared types
 
 ## Project Structure
 - **Language support in py/, go/, js/, kotlin/, swift/ — each with loader.py, collector.py, analyzer.py** — loader subclasses base Loader, collector gathers raw metrics, analyzer builds inheritance graph; kotlin/ and swift/ use tree-sitter instead of subprocess
@@ -27,14 +28,15 @@
 - **Dispatch table pattern for node type parsing** — Kotlin collector uses `_NODE_PARSERS` dict populated at module end instead of if/else chains; new node types added as dict entries
 - **redirect_output() context manager in utils.py** — redirects stdout+stderr to file with auto-restore after block exit or exception, used by BaseResultReporter.report() and BaseDiffReporter.report()
 - **Integration tests for external toolchains skip when tool not installed** — `pytestmark = pytest.mark.skipif(shutil.which("kotlinc") is None, ...)` pattern; ensures tests pass without requiring Go/Node/Kotlin SDK on CI
+- **Swift tree-sitter `user_type` wrapping requires recursive type extraction** — AST wraps type names in `user_type` → `type_identifier`, not as direct `type_identifier` children of `type_annotation` or `parameter`; use recursive `_collect_type_ids` helper to handle indirection when extracting type names
+- **Swift tree-sitter constructor calls use `call_expression` → `simple_identifier`** — NOT `constructor_expression`; detect constructors by uppercase-first-letter check on `simple_identifier` text, combined with `_BASE_TYPES` filter to exclude stdlib types
 
 ## TODO
-- **Migrate existing `X | None` to `typing.Optional[X]`** — 30+ places in source.py, __main__.py, loader.py, config.py, calc/, reporters/ use PEP 604 syntax which fails at runtime on Python 3.10
-- **Consolidate `class_loc_from_methods` conditions in `__main__.py`** — separate `if` blocks for GOLANG and KOTLIN set the same flag; merge into single `if config.lang in (Language.GOLANG, Language.KOTLIN)`
 
 ## LLM Directives
 - **NEVER add `fetch-depth: 0` to CI without explicit reason** — MkDocs Material fetches repo metadata (version, stars) from GitHub API in the browser, git tags are not needed at build time
 - **NEVER use PEP 604 `X | None` syntax in new files** — minimum supported Python is 3.10 where `X | None` in runtime annotations (dataclass fields) fails; always use `typing.Optional[X]` instead
+- **NEVER assume tree-sitter AST node types from documentation** — always verify with actual parse tree dumps; Swift tree-sitter node names differ from what grammar docs suggest (e.g., `call_expression` not `constructor_expression`, `user_type` wrapping `type_identifier`)
 
 ## Config
 

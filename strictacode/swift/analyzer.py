@@ -11,6 +11,41 @@ from .tools import walk_swift_files
 _DECL_TYPES: t.Final = ("class_declaration", "protocol_declaration")
 _BODY_TYPES: t.Final = ("class_body", "protocol_body")
 
+_OWNER_TYPES: t.Final = frozenset(
+    {
+        "class_declaration",
+        "struct_declaration",
+        "enum_declaration",
+        "actor_declaration",
+        "protocol_declaration",
+    }
+)
+
+_BASE_TYPES: t.Final = frozenset(
+    {
+        "String",
+        "Int",
+        "Float",
+        "Double",
+        "Bool",
+        "Void",
+        "Any",
+        "NSObject",
+        "Array",
+        "Dictionary",
+        "Set",
+        "Optional",
+        "Result",
+        "URL",
+        "Data",
+        "Date",
+        "Error",
+        "UUID",
+        "Character",
+        "Substring",
+    }
+)
+
 
 def _resolve_super(
     sup: str,
@@ -343,6 +378,138 @@ def _check_protocol_conformance(
     return edges
 
 
+def _find_owner(node: t.Any) -> str | None:
+    """Walk up the tree to find the enclosing type declaration name.
+
+    Args:
+        node: A tree-sitter AST node.
+
+    Returns:
+        The fully-qualified owner name (e.g. ``Outer.Inner``), or None.
+    """
+    parts: list[str] = []
+    current = node.parent
+
+    while current:
+        if current.type in _OWNER_TYPES:
+            name = _get_decl_name(current)
+            if name:
+                parts.append(name)
+        current = current.parent
+
+    if not parts:
+        return None
+
+    parts.reverse()
+    return ".".join(parts)
+
+
+def _extract_type_usage(filepath: str, rel: str) -> dict[str, set[str]]:
+    """Extract type usage pairs from a Swift file.
+
+    Scans for ``type_annotation`` and ``constructor_expression`` nodes,
+    collects referenced type names, and maps them to the enclosing
+    type declaration (class/struct/enum/actor).
+
+    Args:
+        filepath: Absolute path to the Swift source file.
+        rel: Relative file path for node ID construction.
+
+    Returns:
+        Mapping of ``rel:OwnerName`` → set of used type name strings.
+    """
+    with open(filepath, "rb") as f:
+        source = f.read()
+
+    parser = Parser(constants.SWIFT)
+    tree = parser.parse(source)
+
+    usage: dict[str, set[str]] = {}
+
+    def _collect_type_ids(node: t.Any, out: list[str]) -> None:
+        """Recursively collect type_identifier names from a subtree."""
+        if node.type == "type_identifier":
+            out.append(node.text.decode())
+            return
+        for child in node.children:
+            _collect_type_ids(child, out)
+
+    def _add_usage(node: t.Any) -> None:
+        """Extract type identifiers from a node and record usage."""
+        owner = _find_owner(node)
+        if not owner:
+            return
+        ids: list[str] = []
+        _collect_type_ids(node, ids)
+        for type_name in ids:
+            if type_name not in _BASE_TYPES:
+                node_id = f"{rel}:{owner}"
+                usage.setdefault(node_id, set()).add(type_name)
+
+    def _walk(node: t.Any) -> None:
+        # type_annotation: var x: Request
+        if node.type == "type_annotation":
+            _add_usage(node)
+
+        # parameter: _ r: Request  →  user_type child
+        if node.type == "parameter":
+            _add_usage(node)
+
+        # Return type in function_declaration: func fetch() -> Response
+        if node.type == "function_declaration":
+            for child in node.children:
+                if child.type == "user_type":
+                    _add_usage(child)
+
+        # Constructor call: Response() → call_expression with simple_identifier
+        if node.type == "call_expression":
+            for child in node.children:
+                if child.type == "simple_identifier":
+                    type_name = child.text.decode()
+                    if type_name[0].isupper() and type_name not in _BASE_TYPES:
+                        owner = _find_owner(node)
+                        if owner:
+                            node_id = f"{rel}:{owner}"
+                            usage.setdefault(node_id, set()).add(type_name)
+
+        for child in node.children:
+            _walk(child)
+
+    _walk(tree.root_node)
+    return usage
+
+
+def _resolve_usage_edges(
+    type_usage: dict[str, set[str]],
+    name_to_node: dict[str, str],
+    existing_edges: set[tuple[str, str]],
+) -> list[dict[str, str]]:
+    """Resolve used type names to graph node IDs and build usage edges.
+
+    Args:
+        type_usage: Mapping of source node ID → set of used type names.
+        name_to_node: Mapping of type name → node ID (from declarations).
+        existing_edges: Set of (source, target) pairs already in the graph.
+
+    Returns:
+        List of new edge dicts with ``source`` and ``target`` keys.
+    """
+    edges: list[dict[str, str]] = []
+
+    for source_node, used_types in type_usage.items():
+        for type_name in used_types:
+            target_node = name_to_node.get(type_name)
+            if not target_node or target_node == source_node:
+                continue
+
+            pair = (source_node, target_node)
+            if pair not in existing_edges:
+                edges.append({"source": source_node, "target": target_node})
+                existing_edges.add(pair)
+
+    return edges
+
+
 def analyze(path: str) -> dict[str, t.Any]:
     """Analyze Swift source files and build an inheritance graph.
 
@@ -389,5 +556,23 @@ def analyze(path: str) -> dict[str, t.Any]:
 
     # Add implicit protocol conformance edges
     edges = _check_protocol_conformance(nodes, edges, all_decls, path)
+
+    # Pass 4: extract type usage from annotations and constructors
+    name_to_node: dict[str, str] = {}
+    for node_id in node_set:
+        _, name = node_id.rsplit(":", 1)
+        name_to_node[name] = node_id
+
+    type_usage: dict[str, set[str]] = {}
+    for filepath in walk_swift_files(path):
+        rel = os.path.relpath(filepath, path)
+        file_usage = _extract_type_usage(filepath, rel)
+        for node_id, types in file_usage.items():
+            type_usage.setdefault(node_id, set()).update(types)
+
+    # Pass 5: resolve usage edges
+    existing = {(e["source"], e["target"]) for e in edges}
+    usage_edges = _resolve_usage_edges(type_usage, name_to_node, existing)
+    edges.extend(usage_edges)
 
     return {"nodes": nodes, "edges": edges}

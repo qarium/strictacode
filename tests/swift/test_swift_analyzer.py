@@ -246,6 +246,134 @@ class TestCircularInheritance:
         assert "B" in names
 
 
+class TestTypeUsage:
+    """Tests for type usage edge detection."""
+
+    def test_type_annotation_creates_usage_edge(self, tmp_path):
+        """Property with declared type creates usage edge."""
+        (tmp_path / "types.swift").write_text("class Request {}\nclass Handler {\n    var req: Request\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_parameter_type_creates_usage_edge(self, tmp_path):
+        """Method parameter type creates usage edge."""
+        (tmp_path / "svc.swift").write_text("class Request {}\nclass Service {\n    func handle(_ r: Request) {}\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Service", "Request") in _edge_pairs(r)
+
+    def test_return_type_creates_usage_edge(self, tmp_path):
+        """Return type creates usage edge."""
+        (tmp_path / "resp.swift").write_text(
+            "class Response {}\nclass Client {\n    func fetch() -> Response { Response() }\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Client", "Response") in _edge_pairs(r)
+
+    def test_constructor_creates_usage_edge(self, tmp_path):
+        """Constructor call creates usage edge."""
+        (tmp_path / "err.swift").write_text(
+            "class AFError {}\nclass Handler {\n    func fail() {\n        let e = AFError()\n    }\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Handler", "AFError") in _edge_pairs(r)
+
+    def test_no_self_usage_edge(self, tmp_path):
+        """A type using itself does not create a self-edge."""
+        (tmp_path / "self.swift").write_text("class Node {\n    var child: Node\n}\n")
+        r = analyze(str(tmp_path))
+        for e in r["edges"]:
+            assert e["source"] != e["target"]
+
+    def test_no_duplicate_usage_edge(self, tmp_path):
+        """Multiple usages of same type create only one edge."""
+        (tmp_path / "dup.swift").write_text(
+            "class Request {}\n"
+            "class Handler {\n"
+            "    var a: Request\n"
+            "    var b: Request\n"
+            "    func make() -> Request { Request() }\n"
+            "}\n"
+        )
+        r = analyze(str(tmp_path))
+        handler_req = [e for e in r["edges"] if "Handler" in e["source"] and "Request" in e["target"]]
+        assert len(handler_req) == 1
+
+    def test_base_types_ignored(self, tmp_path):
+        """Standard library types (String, Int, etc.) do not create edges."""
+        (tmp_path / "base.swift").write_text(
+            "class Config {\n    var name: String\n    var count: Int\n    var flag: Bool\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert r["edges"] == []
+
+    def test_cross_file_usage(self, tmp_path):
+        """Usage edge created when type is in a different file."""
+        (tmp_path / "request.swift").write_text("class Request {}\n")
+        (tmp_path / "handler.swift").write_text("class Handler {\n    func process(_ req: Request) {}\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_usage_with_inheritance_combined(self, tmp_path):
+        """Usage edges coexist with inheritance edges."""
+        (tmp_path / "both.swift").write_text(
+            "class Base {}\nclass Request {}\nclass Derived: Base {\n    var req: Request\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        pairs = _edge_pairs(r)
+        assert ("Derived", "Base") in pairs
+        assert ("Derived", "Request") in pairs
+
+    def test_no_usage_edge_for_unknown_type(self, tmp_path):
+        """Type not declared in project does not create an edge."""
+        (tmp_path / "unk.swift").write_text("class Handler {\n    var logger: Logger\n}\n")
+        r = analyze(str(tmp_path))
+        assert r["edges"] == []
+
+
+class TestTypeUsageAdditional:
+    """Additional type usage edge tests for struct/enum/optional/nested."""
+
+    def test_struct_usage_edge(self, tmp_path):
+        """Struct with typed property creates usage edge."""
+        (tmp_path / "model.swift").write_text("class Coordinate {}\nstruct Point {\n    var coord: Coordinate\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Point", "Coordinate") in _edge_pairs(r)
+
+    def test_enum_usage_edge(self, tmp_path):
+        """Enum with computed property creates usage edge."""
+        (tmp_path / "result.swift").write_text(
+            "class Logger {}\nenum Result {\n    case success\n    var log: Logger\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Result", "Logger") in _edge_pairs(r)
+
+    def test_optional_type_usage_edge(self, tmp_path):
+        """Optional type annotation Request? creates usage edge."""
+        (tmp_path / "opt.swift").write_text("class Request {}\nclass Handler {\n    var req: Request?\n}\n")
+        r = analyze(str(tmp_path))
+        assert ("Handler", "Request") in _edge_pairs(r)
+
+    def test_nested_type_usage_edge(self, tmp_path):
+        """Nested type using another type creates usage edge."""
+        (tmp_path / "nested.swift").write_text(
+            "class Config {}\nclass Container {\n    class Item {\n        var cfg: Config\n    }\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        assert ("Container.Item", "Config") in _edge_pairs(r)
+
+    def test_usage_edge_no_duplicate_with_inheritance(self, tmp_path):
+        """Same type used in property AND inherited does not create duplicate."""
+        (tmp_path / "both.swift").write_text(
+            "class Base {}\nclass Service {}\nclass Client: Base {\n    var svc: Service\n}\n"
+        )
+        r = analyze(str(tmp_path))
+        pairs = _edge_pairs(r)
+        assert ("Client", "Base") in pairs
+        assert ("Client", "Service") in pairs
+        client_svc = [e for e in r["edges"] if "Client" in e["source"] and "Service" in e["target"]]
+        assert len(client_svc) == 1
+
+
 class TestFiltering:
     def test_file_filtering(self, tmp_path):
         (tmp_path / "Service.swift").write_text("class Service {}\n")
