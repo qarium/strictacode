@@ -33,7 +33,7 @@ Use this skill when:
 
 Before running analysis, verify:
 
-1. **strictacode installed** — check via `pip show strictacode`
+1. **strictacode installed** — check via `which strictacode`
 2. **Project path specified** — if not, use current directory
 
 If strictacode is not installed:
