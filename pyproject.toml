@@ -28,6 +28,9 @@ dependencies = [
     "tree-sitter-kotlin>=1.1.0",
 ]
 
+[tool.setuptools.packages.find]
+include = ["strictacode"]
+
 [project.scripts]
 strictacode = "strictacode.__main__:app"
 
