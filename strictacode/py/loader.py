@@ -15,12 +15,15 @@ def _build_name_to_node(nodes) -> dict[str, list[str]]:
         Dict mapping class name to list of full node IDs, sorted for determinism.
     """
     name_to_nodes: dict[str, list[str]] = {}
+
     for node_id in nodes:
         if ":" in node_id:
             _, name = node_id.rsplit(":", 1)
             name_to_nodes.setdefault(name, []).append(node_id)
+
     for name in name_to_nodes:
         name_to_nodes[name].sort()
+
     return name_to_nodes
 
 
@@ -33,29 +36,33 @@ def _resolve_edges(graph, name_to_node: dict[str, list[str]], import_maps: dict)
         import_maps: Mapping from module path to import_map dicts.
     """
     resolved_edges = {}
+
     for src, targets in graph.edges.items():
         resolved = set()
         src_path = src.split(":", 1)[0]
         import_map = import_maps.get(src_path, {})
+
         for tgt in targets:
             if ":" in tgt:
                 resolved.add(tgt)
                 continue
+
             imported_name = import_map.get(tgt)
+
             if imported_name:
                 candidates = name_to_node.get(imported_name, [])
                 matched = [n for n in candidates if n.endswith(f":{imported_name}")]
                 if matched:
                     resolved.update(matched)
                     continue
+
             candidates = name_to_node.get(tgt, [])
-            if candidates:
-                resolved.update(candidates)
-            else:
-                resolved.add(tgt)
+            resolved.update(candidates or [tgt])
+
         resolved_edges[src] = resolved
 
     graph.clear_edges()
+
     for src, targets in resolved_edges.items():
         for tgt in targets:
             graph.add_edge(src, tgt)
@@ -71,9 +78,11 @@ def _collect_existing_pairs(graph) -> set[tuple[str, str]]:
         Set of (source, target) tuples for all existing edges.
     """
     pairs = set()
+
     for src, targets in graph.edges.items():
         for tgt in targets:
             pairs.add((src, tgt))
+
     return pairs
 
 
@@ -89,14 +98,18 @@ def _resolve_targets(type_name: str, import_map: dict[str, str], name_to_node: d
         List of full node IDs matching the type name.
     """
     imported_name = import_map.get(type_name)
+
     if imported_name:
         candidates = name_to_node.get(imported_name, [])
         matched = [n for n in candidates if n.endswith(f":{imported_name}")]
         if matched:
             return matched
+
     candidates = name_to_node.get(type_name, [])
+
     if candidates:
         return candidates
+
     return []
 
 
@@ -122,6 +135,11 @@ def _create_item(**kwargs) -> FileItem:
 
 
 class PyLoder(Loader):
+    """Python language loader for strictacode.
+
+    Collects complexity metrics via radon and builds a dependency graph
+    from class inheritance and type usage relationships.
+    """
     __lang__ = "python"
     __ignore_dirs__ = [
         ".venv",
@@ -136,6 +154,11 @@ class PyLoder(Loader):
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:
+        """Collect complexity metrics from Python source files via radon.
+
+        Returns:
+            Mapping from file path to list of ``FileItem`` objects.
+        """
         data = collector.collect(self.root)
 
         file_to_items = {}
@@ -192,11 +215,13 @@ class PyLoder(Loader):
 
         for module_path, type_usage in type_usages.items():
             import_map = import_maps.get(module_path, {})
+
             for source_node, used_types in type_usage.items():
                 for type_name in used_types:
                     for target in _resolve_targets(type_name, import_map, name_to_node):
                         if target != source_node:
                             pair = (source_node, target)
+
                             if pair not in existing:
                                 self.sources.graph.add_edge(source_node, target)
                                 existing.add(pair)
@@ -212,7 +237,7 @@ class PyLoder(Loader):
         for cls in class_methods:
             self.sources.graph.add_node(cls)
 
-        # Pass 3: inheritance edges
+        # Inheritance edges
         for cls, bases in class_bases.items():
             for base in bases:
                 self.sources.graph.add_edge(cls, base)
@@ -221,5 +246,5 @@ class PyLoder(Loader):
         name_to_node = _build_name_to_node(self.sources.graph.nodes)
         _resolve_edges(self.sources.graph, name_to_node, import_maps)
 
-        # Pass 5: resolve usage edges
+        # Resolve usage edges
         self._add_usage_edges(type_usages, import_maps, name_to_node)

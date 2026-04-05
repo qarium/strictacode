@@ -47,7 +47,11 @@ class Analyzer(ast.NodeVisitor):
         return analyzer
 
     def visit_ClassDef(self, node):
-        """Register a class and collect its base class names."""
+        """Register a class and collect its base class names.
+
+        Args:
+            node: The ``ast.ClassDef`` node to visit.
+        """
         cname = f"{self.filepath}:{node.name}"
 
         self.classes[cname] = {"methods": 0}
@@ -68,13 +72,21 @@ class Analyzer(ast.NodeVisitor):
         self.current_class = None
 
     def visit_FunctionDef(self, node):
-        """Count methods inside classes."""
+        """Count methods inside classes.
+
+        Args:
+            node: The ``ast.FunctionDef`` node to visit.
+        """
         if self.current_class:
             self.classes[self.current_class]["methods"] += 1
         self.generic_visit(node)
 
     def visit_Call(self, node):
-        """Record constructor calls with uppercase names as type usage."""
+        """Record constructor calls with uppercase names as type usage.
+
+        Args:
+            node: The ``ast.Call`` node to visit.
+        """
         if self.current_class and isinstance(node.func, ast.Name):
             name = node.func.id
             if name and name[0].isupper():
@@ -82,14 +94,22 @@ class Analyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
-        """Collect names from ``from ... import ...`` statements."""
+        """Collect names from ``from ... import ...`` statements.
+
+        Args:
+            node: The ``ast.ImportFrom`` node to visit.
+        """
         for alias in node.names:
             name = alias.asname or alias.name
             self.import_map[name] = alias.name
         self.generic_visit(node)
 
     def visit_Import(self, node):
-        """Collect names from ``import ...`` statements."""
+        """Collect names from ``import ...`` statements.
+
+        Args:
+            node: The ``ast.Import`` node to visit.
+        """
         for alias in node.names:
             name = alias.asname or alias.name
             self.import_map[name] = alias.name
