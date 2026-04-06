@@ -18,6 +18,7 @@ def _create_item(**kwargs) -> FileItem:
 
 
 class JSLoder(Loader):
+    """Loader implementation for JavaScript source code."""
     __lang__ = "javascript"
     __ignore_dirs__ = []
     __comment_line_prefixes__ = ["//"]
@@ -26,6 +27,12 @@ class JSLoder(Loader):
     ]
 
     def collect(self) -> dict[str, list[FileItem]]:
+        """Collect JavaScript file metrics grouped by filepath.
+
+        Returns:
+            Mapping of filepath to a list of FileItem with classes
+            sorted before other items.
+        """
         data = collector.collect(self.root)
 
         metrics = {}
@@ -39,7 +46,12 @@ class JSLoder(Loader):
 
         return metrics
 
-    def build(self):
+    def build(self) -> None:
+        """Build dependency graph from JavaScript module analysis.
+
+        Adds nodes and edges to the sources graph, filtered to only
+        modules that were previously collected.
+        """
         data = analyzer.analyze(self.root)
         nodes = data.get("nodes", [])
         edges = data.get("edges", [])
