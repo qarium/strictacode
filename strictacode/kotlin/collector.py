@@ -447,8 +447,10 @@ def _is_else_entry(node: t.Any) -> bool:
     for child in node.children:
         if not child.is_named and child.type == "else":
             return True
+
         if child.is_named:
             return False
+
     return True
 
 

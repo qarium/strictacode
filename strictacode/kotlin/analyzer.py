@@ -49,19 +49,26 @@ def _find_owner(node: t.Any) -> str | None:
     """Walk up the tree to find the enclosing type declaration name."""
     parts: list[str] = []
     current = node.parent
+
     while current:
         if current.type in _OWNER_TYPES:
             name = None
+
             for child in current.children:
                 if child.type == "identifier":
                     name = child.text.decode()
                     break
+
             if name:
                 parts.append(name)
+
         current = current.parent
+
     if not parts:
         return None
+
     parts.reverse()
+
     return ".".join(parts)
 
 
@@ -91,6 +98,7 @@ def _extract_type_usage(filepath: str, rel: str) -> dict[str, set[str]]:
                 if child.type == "identifier":
                     type_name = child.text.decode()
                     owner = _find_owner(node)
+
                     if owner and type_name not in _BASE_TYPES:
                         node_id = f"{rel}:{owner}"
                         usage.setdefault(node_id, set()).add(type_name)
@@ -100,8 +108,10 @@ def _extract_type_usage(filepath: str, rel: str) -> dict[str, set[str]]:
             for child in node.children:
                 if child.type == "identifier":
                     type_name = child.text.decode()
+
                     if type_name and type_name[0].isupper() and type_name not in _BASE_TYPES:
                         owner = _find_owner(node)
+
                         if owner:
                             node_id = f"{rel}:{owner}"
                             usage.setdefault(node_id, set()).add(type_name)
@@ -110,6 +120,7 @@ def _extract_type_usage(filepath: str, rel: str) -> dict[str, set[str]]:
             _walk(child)
 
     _walk(tree.root_node)
+
     return usage
 
 
@@ -120,15 +131,20 @@ def _resolve_usage_edges(
 ) -> list[dict[str, str]]:
     """Resolve used type names to graph node IDs and build usage edges."""
     edges: list[dict[str, str]] = []
+
     for source_node, used_types in type_usage.items():
         for type_name in used_types:
             target_node = name_to_node.get(type_name)
+
             if not target_node or target_node == source_node:
                 continue
+
             pair = (source_node, target_node)
+
             if pair not in existing_edges:
                 edges.append({"source": source_node, "target": target_node})
                 existing_edges.add(pair)
+
     return edges
 
 
@@ -222,17 +238,21 @@ def _resolve_super(
         scope = ".".join(parts[:i])
         qualified = f"{scope}.{sup}"
         files = name_to_files.get(qualified)
+
         if files:
             target_file = source_rel if source_rel in files else files[0]
             target_id = f"{target_file}:{qualified}"
+
             if target_id in node_set:
                 return target_id
 
     # 2. Simple name lookup
     files = name_to_files.get(sup)
+
     if files:
         target_file = source_rel if source_rel in files else files[0]
         target_id = f"{target_file}:{sup}"
+
         if target_id in node_set:
             return target_id
 
@@ -256,6 +276,7 @@ def _extract_supers(node: t.Any) -> list[str]:
     for child in node.children:
         if child.type == "delegation_specifiers":
             for spec in child.children:
+
                 if spec.type == "delegation_specifier":
                     name = _extract_type_name(spec)
 
@@ -388,12 +409,14 @@ def _extract_param_types(func_node: t.Any) -> list[str]:
                 for pc in param_child.children:
                     if pc.type == "parameter":
                         type_name = _get_simple_type(pc)
+
                         if type_name:
                             types.append(type_name)
                 break
 
             if param_child.type == "type":
                 type_name = _get_simple_type_text(param_child)
+
                 if type_name:
                     types.append(type_name)
                 break
@@ -438,6 +461,7 @@ def _get_simple_type_text(type_node: t.Any) -> str:
             for nc in child.children:
                 if nc.type == "user_type":
                     ident = _get_identifier(nc)
+
                     if ident:
                         return ident
 
@@ -515,6 +539,7 @@ def _check_interface_implementation(
 
     for filepath in walk_kotlin_files(path):
         rel = os.path.relpath(filepath, path)
+
         with open(filepath, "rb") as f:
             source = f.read()
 
@@ -533,6 +558,7 @@ def _check_interface_implementation(
             # Check if class implements all interface methods
             if iface_methods.issubset(class_methods):
                 pair = (class_id, iface_id)
+
                 if pair not in existing and class_id != iface_id:
                     new_edges.append({"source": class_id, "target": iface_id})
                     existing.add(pair)
@@ -568,6 +594,7 @@ def analyze(path: str) -> dict[str, t.Any]:
 
     # Build nodes
     nodes: list[str] = []
+
     for rel, name, _ in all_decls:
         nodes.append(f"{rel}:{name}")
 
@@ -594,6 +621,7 @@ def analyze(path: str) -> dict[str, t.Any]:
         name_to_node[name] = node_id
 
     type_usage: dict[str, set[str]] = {}
+
     for filepath in walk_kotlin_files(path):
         rel = os.path.relpath(filepath, path)
         for nid, types in _extract_type_usage(filepath, rel).items():
