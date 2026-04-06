@@ -74,3 +74,4 @@ Coverage: exit codes, stdout/stderr output, flag combinations, error messages on
 
 | Problem | Why | How to prevent |
 |---------|-----|----------------|
+| Skipped lint/format verification on code-style commits | Assumed formatting-only changes don't need Phase 6 verification | Always run lint + format + full test suite (Phase 6) regardless of change type |

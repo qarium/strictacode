@@ -276,7 +276,6 @@ def _extract_supers(node: t.Any) -> list[str]:
     for child in node.children:
         if child.type == "delegation_specifiers":
             for spec in child.children:
-
                 if spec.type == "delegation_specifier":
                     name = _extract_type_name(spec)
 

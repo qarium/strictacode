@@ -19,6 +19,7 @@ def _create_item(**kwargs) -> FileItem:
 
 class JSLoder(Loader):
     """Loader implementation for JavaScript source code."""
+
     __lang__ = "javascript"
     __ignore_dirs__ = []
     __comment_line_prefixes__ = ["//"]
