@@ -10,6 +10,7 @@ import (
     "log"
     "os"
     "path/filepath"
+    "sort"
     "strings"
 )
 
@@ -53,6 +54,7 @@ type Analyzer struct {
     edges      []Edge
     structs    map[string]map[string]bool  // file:struct -> method set
     interfaces map[string]map[string]bool  // file:interface -> method set
+    typeUsage  map[string]map[string]bool  // file:struct -> set of used type names
 }
 
 func NewAnalyzer() *Analyzer {
@@ -62,6 +64,7 @@ func NewAnalyzer() *Analyzer {
         edges:      make([]Edge, 0),
         structs:    make(map[string]map[string]bool),
         interfaces: make(map[string]map[string]bool),
+        typeUsage:  make(map[string]map[string]bool),
     }
 }
 
@@ -251,6 +254,174 @@ func (a *Analyzer) implements(structMethods, ifaceMethods map[string]bool) bool 
 
 //
 // ==============================
+// Type Usage Detection
+// ==============================
+var baseTypes = map[string]bool{
+    "bool": true, "string": true, "error": true, "any": true,
+    "int": true, "int8": true, "int16": true, "int32": true, "int64": true,
+    "uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
+    "float32": true, "float64": true,
+    "byte": true, "rune": true,
+}
+
+func (a *Analyzer) addUsage(owner, typeName string) {
+    if baseTypes[typeName] {
+        return
+    }
+    if _, ok := a.typeUsage[owner]; !ok {
+        a.typeUsage[owner] = make(map[string]bool)
+    }
+    a.typeUsage[owner][typeName] = true
+}
+
+func (a *Analyzer) collectTypeFromExpr(owner string, expr ast.Expr) {
+    name := a.getTypeName(expr)
+    if name != "" {
+        a.addUsage(owner, name)
+    }
+}
+
+func (a *Analyzer) collectTypesFromFieldList(owner string, fl *ast.FieldList) {
+    if fl == nil {
+        return
+    }
+    for _, field := range fl.List {
+        a.collectTypeFromExpr(owner, field.Type)
+    }
+}
+
+func (a *Analyzer) collectUsageFromFile(path, root string) {
+    file, err := parser.ParseFile(a.fset, path, nil, parser.ParseComments)
+    if err != nil {
+        return
+    }
+
+    rel, err := filepath.Rel(root, path)
+    if err != nil {
+        rel = filepath.Base(path)
+    }
+    rel = filepath.ToSlash(rel)
+
+    for _, decl := range file.Decls {
+        switch d := decl.(type) {
+        case *ast.GenDecl:
+            for _, spec := range d.Specs {
+                ts, ok := spec.(*ast.TypeSpec)
+                if !ok {
+                    continue
+                }
+                st, ok := ts.Type.(*ast.StructType)
+                if !ok {
+                    continue
+                }
+                nodeKey := fmt.Sprintf("%s:%s", rel, ts.Name.Name)
+                // Collect type usage from struct fields (named fields only;
+                // unnamed/embedded are already handled as inheritance edges)
+                if st.Fields != nil {
+                    for _, field := range st.Fields.List {
+                        if len(field.Names) > 0 {
+                            a.collectTypeFromExpr(nodeKey, field.Type)
+                        }
+                    }
+                }
+            }
+
+        case *ast.FuncDecl:
+            if d.Recv == nil {
+                continue
+            }
+            structName := receiverName(d.Recv)
+            if structName == "" {
+                continue
+            }
+            nodeKey := fmt.Sprintf("%s:%s", rel, structName)
+            if _, ok := a.nodes[nodeKey]; !ok {
+                continue
+            }
+
+            // Params and results
+            a.collectTypesFromFieldList(nodeKey, d.Type.Params)
+            a.collectTypesFromFieldList(nodeKey, d.Type.Results)
+
+            // Body: var declarations and composite literals
+            if d.Body != nil {
+                ast.Inspect(d.Body, func(n ast.Node) bool {
+                    switch node := n.(type) {
+                    case *ast.ValueSpec:
+                        if node.Type != nil {
+                            a.collectTypeFromExpr(nodeKey, node.Type)
+                        }
+                    case *ast.CompositeLit:
+                        if node.Type != nil {
+                            a.collectTypeFromExpr(nodeKey, node.Type)
+                        }
+                    case *ast.CallExpr:
+                        // new(T)
+                        if ident, ok := node.Fun.(*ast.Ident); ok && ident.Name == "new" && len(node.Args) > 0 {
+                            a.collectTypeFromExpr(nodeKey, node.Args[0])
+                        }
+                    case *ast.UnaryExpr:
+                        // &T{...}
+                        if node.Op == token.AND {
+                            if cl, ok := node.X.(*ast.CompositeLit); ok && cl.Type != nil {
+                                a.collectTypeFromExpr(nodeKey, cl.Type)
+                            }
+                        }
+                    }
+                    return true
+                })
+            }
+        }
+    }
+}
+
+func (a *Analyzer) checkTypeUsage() {
+    // Build name -> list of node IDs (sorted for determinism)
+    nameToNodes := make(map[string][]string)
+    for nodeID := range a.nodes {
+        parts := strings.SplitN(nodeID, ":", 2)
+        if len(parts) == 2 {
+            nameToNodes[parts[1]] = append(nameToNodes[parts[1]], nodeID)
+        }
+    }
+    for name := range nameToNodes {
+        sort.Strings(nameToNodes[name])
+    }
+
+    // Build existing edge set
+    existing := make(map[string]bool)
+    for _, e := range a.edges {
+        key := e.Source + "->" + e.Target
+        existing[key] = true
+    }
+
+    // Resolve usage to edges — create edge to every matching node
+    for owner, types := range a.typeUsage {
+        for typeName := range types {
+            targets, ok := nameToNodes[typeName]
+            if !ok {
+                continue
+            }
+            for _, targetNode := range targets {
+                if targetNode == owner {
+                    continue
+                }
+                key := owner + "->" + targetNode
+                if existing[key] {
+                    continue
+                }
+                a.edges = append(a.edges, Edge{
+                    Source: owner,
+                    Target: targetNode,
+                })
+                existing[key] = true
+            }
+        }
+    }
+}
+
+//
+// ==============================
 // Helpers
 // ==============================
 func receiverName(fl *ast.FieldList) string {
@@ -343,6 +514,42 @@ func main() {
     }
 
     analyzer.checkInterfaceImplementation()
+
+    // Type usage detection
+    err = filepath.Walk(rootAbs, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return nil
+        }
+        if info.IsDir() {
+            for _, ex := range ExcludeDirs {
+                if info.Name() == ex {
+                    return filepath.SkipDir
+                }
+            }
+            return nil
+        }
+        if !strings.HasSuffix(path, ".go") {
+            return nil
+        }
+        name := info.Name()
+        for _, p := range ExcludeFilePrefixes {
+            if strings.HasPrefix(name, p) {
+                return nil
+            }
+        }
+        for _, s := range ExcludeFileSuffixes {
+            if strings.HasSuffix(name, s) {
+                return nil
+            }
+        }
+        analyzer.collectUsageFromFile(path, rootAbs)
+        return nil
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    analyzer.checkTypeUsage()
 
     out, err := json.Marshal(analyzer.toJSON())
     if err != nil {
