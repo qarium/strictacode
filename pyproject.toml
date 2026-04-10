@@ -20,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "radon",
+    "radon>=4.0.0",
     "click",
     "pyyaml",
     "tree-sitter>=0.24",
