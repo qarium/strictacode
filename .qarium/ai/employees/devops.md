@@ -19,6 +19,7 @@
 | Docs        | `.github/workflows/docs.yml`        | push to 0.0.x      | mkdocs gh-deploy                               |
 | Publish     | `.github/workflows/publish.yml`     | workflow_dispatch  | Caller: `qarium/ci` library-publish reusable workflow |
 | Strictacode | `.github/workflows/strictacode.yml` | push/PR to 0.0.x   | strictacode analyze + compare via composite action |
+| Notify      | `.github/workflows/notify.yml`      | workflow_run (Publish Release completed) | Caller: `qarium/ci` library-notify reusable workflow |
 | New Version | `.github/workflows/new_version.yml` | workflow_dispatch  | Caller: `qarium/ci` library-new-version reusable workflow |
 
 ### Conventions
