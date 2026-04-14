@@ -84,6 +84,15 @@ ignore = [
     "ARG001", # unused function arguments allowed in tests
     "ARG002", # unused method arguments allowed in tests
 ]
+"strictacode/py/patch.py" = [
+    "I001",   # imports inside function for early patching
+    "ARG002", # unused args in NoOpFileConfig stub
+]
+"strictacode/py/__init__.py" = [
+    "E702",   # semicolon for early patch execution
+    "E402",   # import not at top for early patch execution
+    "I001",   # import order for early patch execution
+]
 
 [tool.ruff.format]
 quote-style = "double"
