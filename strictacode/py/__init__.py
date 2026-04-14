@@ -1,4 +1,7 @@
-from . import patch; patch.radon(); del patch
+from . import patch
+
+patch.radon()
+del patch
 
 from .loader import PyLoder
 
