@@ -97,3 +97,7 @@ ignore = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+# auto format lists
+skip-magic-trailing-comma = false
+# Linux (\n)
+line-ending = "lf"
